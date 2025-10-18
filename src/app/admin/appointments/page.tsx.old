@@ -1,0 +1,68 @@
+// Admin Appointments Page
+'use client'
+
+import AdminLayout from '@/features/admin/components/AdminLayout'
+import { AppointmentList } from '@/features/appointments/components/AppointmentList'
+import { Calendar, Clock, Users, TrendingUp } from 'lucide-react'
+
+export default function AdminAppointmentsPage() {
+  return (
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Turnos</h1>
+          <p className="mt-2 text-gray-600">
+            Administra y gestiona los turnos de los clientes
+          </p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Turnos Hoy</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">12</p>
+              </div>
+              <Calendar className="h-8 w-8 text-blue-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pendientes</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">5</p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Esta Semana</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">48</p>
+              </div>
+              <Users className="h-8 w-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Tasa Completados</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">92%</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-purple-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Appointments List */}
+        <AppointmentList />
+      </div>
+    </AdminLayout>
+  )
+}

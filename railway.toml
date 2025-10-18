@@ -1,0 +1,22 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm ci && npm run build:prod"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "web"
+port = 3000
+
+[environments.production]
+NODE_ENV = "production"
+PORT = 3000
+
+# Performance optimizations
+NEXT_SHARP_PATH = "/tmp/node_modules/sharp"
+NEXT_TELEMETRY_DISABLED = "1"
