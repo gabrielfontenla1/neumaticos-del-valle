@@ -5,10 +5,13 @@
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm ci --no-audit --no-fund"]
 
 [phases.build]
-cmds = ["npm run build:prod"]
+cmds = [
+  "rm -rf node_modules/.cache .next/cache || true",
+  "npm run build:prod"
+]
 
 [start]
 cmd = "npm run start"
