@@ -80,8 +80,8 @@ export function UnderConstruction() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed"
           >
-            Nuestra nueva plataforma digital está en desarrollo.
-            Pronto podrás gestionar tus neumáticos de forma más fácil y rápida.
+            Estamos mejorando nuestro servicio para brindarte una atención más rápida y cómoda.
+            Muy pronto podrás disfrutar de una experiencia digital única.
           </motion.p>
 
           {/* Features preview */}
