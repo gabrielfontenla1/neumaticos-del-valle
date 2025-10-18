@@ -34,6 +34,10 @@ yarn-error.log*
 .env
 .env*.local
 
+# MCP config (contains Railway token)
+.mcp.json
+.mcp.json.backup
+
 # vercel
 .vercel
 
