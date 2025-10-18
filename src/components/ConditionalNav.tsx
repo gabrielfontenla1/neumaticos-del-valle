@@ -13,11 +13,10 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
-  // Don't show navigation components on admin pages or home (under construction)
+  // Don't show navigation components on admin pages
   const isAdminRoute = pathname.startsWith('/admin')
-  const isHomePage = pathname === '/'
 
-  if (isAdminRoute || isHomePage) {
+  if (isAdminRoute) {
     return <>{children}</>
   }
 
