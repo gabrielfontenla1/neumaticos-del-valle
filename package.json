@@ -9,7 +9,7 @@
     "dev:clean": "node scripts/kill-port.js 6001 && next dev --turbopack --port 6001",
     "build": "next build",
     "build:prod": "NODE_ENV=production next build",
-    "start": "next start",
+    "start": "node scripts/start-server.js",
     "migrate": "node scripts/migrate.js",
     "test-checkout": "node scripts/test-checkout.js",
     "test": "node scripts/test-smoke.js",
