@@ -49,7 +49,7 @@ export function UnderConstruction() {
               src="/NDV_Logo_Negro.svg"
               alt="Neumáticos del Valle"
               fill
-              className="object-contain drop-shadow-2xl"
+              className="object-contain drop-shadow-2xl brightness-0 invert"
               priority
             />
           </div>
