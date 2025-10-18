@@ -42,11 +42,11 @@ export function UnderConstruction() {
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-12"
+          className="mb-16"
         >
-          <div className="relative w-64 h-64 mx-auto mb-8">
+          <div className="relative w-full max-w-4xl h-40 md:h-56 mx-auto">
             <Image
-              src="/logo.png"
+              src="/NDV_Logo_Negro.svg"
               alt="Neumáticos del Valle"
               fill
               className="object-contain drop-shadow-2xl"
@@ -113,19 +113,19 @@ export function UnderConstruction() {
           className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-400"
         >
           <a
-            href="tel:+5492234567890"
+            href="tel:03856771265"
             className="flex items-center gap-2 hover:text-[#FEE004] transition-colors"
           >
             <Phone className="w-5 h-5" />
-            <span>+54 9 223 456-7890</span>
+            <span>0385 677-1265</span>
           </a>
           <span className="hidden sm:inline">•</span>
           <a
-            href="mailto:info@neumaticosdelvallesrl.com"
+            href="mailto:info@neumaticosdelvalle.com"
             className="flex items-center gap-2 hover:text-[#FEE004] transition-colors"
           >
             <Mail className="w-5 h-5" />
-            <span>info@neumaticosdelvallesrl.com</span>
+            <span>info@neumaticosdelvalle.com</span>
           </a>
         </motion.div>
 
@@ -140,11 +140,11 @@ export function UnderConstruction() {
             <motion.div
               className="h-full bg-gradient-to-r from-[#FEE004] to-yellow-300"
               initial={{ width: "0%" }}
-              animate={{ width: "75%" }}
+              animate={{ width: "95%" }}
               transition={{ duration: 2, delay: 1.5, ease: "easeOut" }}
             />
           </div>
-          <p className="text-gray-500 text-sm mt-4">Progreso del desarrollo: 75%</p>
+          <p className="text-gray-500 text-sm mt-4">Progreso del desarrollo: 95%</p>
         </motion.div>
       </div>
 
