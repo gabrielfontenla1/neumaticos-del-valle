@@ -1,17 +1,19 @@
 # Nixpacks configuration for Railway deployment
 # https://nixpacks.com/docs/configuration/file
 
+[variables]
+NIXPACKS_NO_CACHE = "1"
+
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
 cmds = ["npm ci --no-audit --no-fund"]
+cacheDirectories = []
 
 [phases.build]
-cmds = [
-  "rm -rf node_modules/.cache .next/cache || true",
-  "npm run build:prod"
-]
+cmds = ["npm run build:prod"]
+cacheDirectories = []
 
 [start]
 cmd = "npm run start"
