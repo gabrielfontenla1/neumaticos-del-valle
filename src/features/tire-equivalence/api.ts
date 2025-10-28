@@ -40,20 +40,39 @@ export function calculateToleranceRange(
 
 /**
  * Verifica si un diámetro está dentro del rango de tolerancia
+ * Incluye los límites exactos (>=, <=) para no excluir valores en los bordes
  */
 export function isWithinTolerance(
   diameter: number,
   range: ToleranceRange
 ): boolean {
-  return diameter > range.min && diameter < range.max
+  return diameter >= range.min && diameter <= range.max
+}
+
+/**
+ * Clasifica el nivel de equivalencia según el porcentaje de diferencia
+ * @param differencePercent Porcentaje de diferencia absoluto
+ * @returns Nivel de equivalencia: 'exacta', 'muy buena', 'buena', 'aceptable'
+ */
+export function getEquivalenceLevel(differencePercent: number): string {
+  const absDiff = Math.abs(differencePercent)
+
+  if (absDiff <= 0.5) return 'exacta'
+  if (absDiff <= 1.0) return 'muy buena'
+  if (absDiff <= 2.0) return 'buena'
+  return 'aceptable' // 2.0 - 3.0%
 }
 
 /**
  * Busca cubiertas equivalentes en el catálogo
+ * @param originalSize Medidas del neumático original
+ * @param tolerancePercent Porcentaje de tolerancia en el diámetro total (default: 3%)
+ * @param allowDifferentRim Si permite rodados diferentes (default: false por seguridad)
  */
 export async function findEquivalentTires(
   originalSize: TireSize,
-  tolerancePercent: number = 3
+  tolerancePercent: number = 3,
+  allowDifferentRim: boolean = false
 ): Promise<EquivalenceResult> {
   try {
     // 1. Calcular el diámetro de referencia
@@ -87,6 +106,17 @@ export async function findEquivalentTires(
         diameter: product.diameter
       }
 
+      // IMPORTANTE: Verificar compatibilidad del rodado primero
+      // Por defecto, solo permitir el mismo rodado (a menos que se especifique lo contrario)
+      const rimCompatible = allowDifferentRim ?
+        true : // Si se permite diferente rodado, todos son compatibles
+        product.diameter === originalSize.diameter // Solo mismo rodado
+
+      // Solo continuar si el rodado es compatible
+      if (!rimCompatible) {
+        continue // Saltar este producto, no es compatible
+      }
+
       // Calcular el diámetro del producto
       const productDiameter = calculateTireDiameter(productSize)
 
@@ -94,6 +124,7 @@ export async function findEquivalentTires(
       if (isWithinTolerance(productDiameter, toleranceRange)) {
         const difference = productDiameter - referenceDiameter
         const differencePercent = (difference / referenceDiameter) * 100
+        const roundedDifferencePercent = Math.round(differencePercent * 100) / 100
 
         equivalentTires.push({
           id: product.id,
@@ -107,15 +138,27 @@ export async function findEquivalentTires(
           image_url: product.image_url,
           calculatedDiameter: productDiameter,
           difference: Math.round(difference * 100) / 100,
-          differencePercent: Math.round(differencePercent * 100) / 100
+          differencePercent: roundedDifferencePercent,
+          equivalenceLevel: getEquivalenceLevel(roundedDifferencePercent)
         })
       }
     }
 
     // 5. Ordenar por diferencia absoluta (los más cercanos primero)
-    equivalentTires.sort((a, b) =>
-      Math.abs(a.difference) - Math.abs(b.difference)
-    )
+    // En caso de empate, ordenar por marca y luego por nombre
+    equivalentTires.sort((a, b) => {
+      const diffA = Math.abs(a.difference)
+      const diffB = Math.abs(b.difference)
+
+      if (Math.abs(diffA - diffB) < 0.01) {
+        // Si la diferencia es prácticamente igual (< 0.01mm)
+        // Ordenar por marca y luego por nombre
+        const brandCompare = a.brand.localeCompare(b.brand)
+        return brandCompare !== 0 ? brandCompare : a.name.localeCompare(b.name)
+      }
+
+      return diffA - diffB
+    })
 
     return {
       originalSize,

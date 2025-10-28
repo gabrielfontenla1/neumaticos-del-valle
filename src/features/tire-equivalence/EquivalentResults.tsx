@@ -189,8 +189,12 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                               <div>
                                 <p className="text-gray-400 mb-2 font-medium">Diferencia:</p>
                                 <p className={`font-mono font-bold text-lg ${
-                                  Math.abs(tire.differencePercent) < 1
+                                  tire.equivalenceLevel === 'exacta'
                                     ? 'text-green-400'
+                                    : tire.equivalenceLevel === 'muy buena'
+                                    ? 'text-blue-400'
+                                    : tire.equivalenceLevel === 'buena'
+                                    ? 'text-cyan-400'
                                     : 'text-[#FEE004]'
                                 }`}>
                                   {tire.difference > 0 ? '+' : ''}{tire.difference.toFixed(2)} mm
@@ -199,8 +203,12 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                               <div>
                                 <p className="text-gray-400 mb-2 font-medium">Variación:</p>
                                 <p className={`font-mono font-bold text-lg ${
-                                  Math.abs(tire.differencePercent) < 1
+                                  tire.equivalenceLevel === 'exacta'
                                     ? 'text-green-400'
+                                    : tire.equivalenceLevel === 'muy buena'
+                                    ? 'text-blue-400'
+                                    : tire.equivalenceLevel === 'buena'
+                                    ? 'text-cyan-400'
                                     : 'text-[#FEE004]'
                                 }`}>
                                   {tire.differencePercent > 0 ? '+' : ''}{tire.differencePercent.toFixed(2)}%
@@ -237,11 +245,19 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                               </div>
                             )}
 
-                            {Math.abs(tire.differencePercent) < 1 && (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-[#FEE004]/10 backdrop-blur-md border-2 border-[#FEE004]/30 text-[#FEE004] rounded-lg">
+                            {tire.equivalenceLevel && (
+                              <div className={`flex items-center gap-2 px-4 py-2 backdrop-blur-md border-2 rounded-lg ${
+                                tire.equivalenceLevel === 'exacta'
+                                  ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                                  : tire.equivalenceLevel === 'muy buena'
+                                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                                  : tire.equivalenceLevel === 'buena'
+                                  ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                                  : 'bg-[#FEE004]/10 border-[#FEE004]/30 text-[#FEE004]'
+                              }`}>
                                 <CheckCircle className="w-4 h-4" strokeWidth={2.5} />
-                                <span className="text-sm font-bold">
-                                  Equivalencia Exacta
+                                <span className="text-sm font-bold capitalize">
+                                  Equivalencia {tire.equivalenceLevel}
                                 </span>
                               </div>
                             )}

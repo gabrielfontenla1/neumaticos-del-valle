@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script para importar stock de Pirelli desde Excel a Supabase
+Script mejorado para importar stock de Pirelli desde Excel a Supabase con mapeo automático de imágenes
 """
 
 import pandas as pd
@@ -37,6 +37,139 @@ else:
     print("Warning: Using anon key - may encounter RLS policy restrictions")
 
 supabase: Client = create_client(url, key)
+
+# =============================================================================
+# IMAGE MAPPING CONFIGURATION
+# =============================================================================
+
+IMAGE_MAPPINGS = {
+    # Cinturato models
+    'CINTURATO P1': '/Cinturato-P1-Verde-1505470090255.webp',
+    'CINTURATO P7': '/cinturato-p7-4505517104514.webp',
+    'CINTURATO P4': '/Cinturato-P1-Verde-1505470090255.webp',  # Use P1 for P4
+
+    # Scorpion models - specific ones first
+    'SCORPION VERDE ALL SEASON': '/Pirelli-Scorpion-Verde-All-Season-off-low-01-1505470075906.webp',
+    'S-VEAS': '/Pirelli-Scorpion-Verde-All-Season-off-low-01-1505470075906.webp',
+    'SCORPION VERDE': '/Scorpion-Verde-1505470074533.webp',
+    'S-VERD': '/Scorpion-Verde-1505470074533.webp',
+    'SCORPION ZERO ALL SEASON': '/Scorpion-Zero-All-Season-1505470086399.webp',
+    'SZROAS': '/Scorpion-Zero-All-Season-1505470086399.webp',
+    'SCORPION ZERO ASIMMETRICO': '/Scorpion-Zero-Asimmetrico-1505470076172.webp',
+    'SCORPION ZERO': '/Scorpion-Zero-1505470088294.webp',
+    'SCORPION ATR': '/Scorpion-Atr-1505470067539.webp',
+    'S-ATR': '/Scorpion-Atr-1505470067539.webp',
+    'SCORPION MTR': '/Scorpion-MTR-1505470071047.webp',
+    'S-MTR': '/Scorpion-MTR-1505470071047.webp',
+    'SCORPION ALL TERRAIN PLUS': '/Scorpion-All-Terrain-Plus-4505483375619.webp',
+    'SCORPION HT': '/Scorpion-HT-4505525112686.webp',
+    'S-HT': '/Scorpion-HT-4505525112686.webp',
+    'SCORPION STR': '/Scorpion-4505525112390.webp',
+    'SCORPION A/T+': '/Scorpion-All-Terrain-Plus-4505483375619.webp',
+    'SCORPION': '/Scorpion-4505525112390.webp',  # Generic Scorpion
+
+    # P Zero models
+    'P ZERO CORSA SYSTEM': '/Pzero-Corsa-System-Direzionale-1505470088408.webp',
+    'P ZERO CORSA': '/Pzero-Corsa-PZC4-1505470090635.webp',
+    'PZERO CORSA': '/Pzero-Corsa-PZC4-1505470090635.webp',
+    'P ZERO NERO GT': '/nerogt.jpg',
+    'NERO GT': '/nerogt.jpg',
+    'NEROGT': '/nerogt.jpg',
+    'P ZERO': '/Pzero-Nuovo-1505470072726.webp',
+    'PZERO': '/Pzero-Nuovo-1505470072726.webp',
+    'P-ZERO': '/Pzero-Nuovo-1505470072726.webp',
+
+    # P400 models
+    'P400 EVO': '/P400Evo_review_3-4.webp',
+    'P400EVO': '/P400Evo_review_3-4.webp',
+    'P400EV': '/P400Evo_review_3-4.webp',
+    'P 400 EVO': '/P400Evo_review_3-4.webp',
+
+    # P6000
+    'P6000': '/p6000.jpg',
+    'P 6000': '/p6000.jpg',
+
+    # P7
+    'P7000': '/cinturato-p7-4505517104514.webp',
+    'P7': '/cinturato-p7-4505517104514.webp',
+
+    # Chrono
+    'CHRONO': '/Chrono-1505470062195.webp',
+
+    # Winter
+    'WINTER': '/winter.jpg',
+
+    # Weather
+    'CITYNET ALL WEATHER': '/citynetallweatherx.jpg',
+    'WEATHER X': '/citynetallweatherx.jpg',
+    'WEATHER': '/citynetallweatherx.jpg',
+
+    # Dragon
+    'DRAGON': '/dragon.jpg',
+
+    # EVO (generic)
+    'EVO': '/evo.jpg',
+
+    # Formula brand models
+    'FORMULA ENERGY': '/energy.jpg',
+    'FORMULA EVO': '/evo.jpg',
+    'FORMULA DRAGON': '/dragon.jpg',
+    'FORMULA SPIDER': '/spider.jpg',
+    'FORMULA S/T': '/Scorpion-4505525112390.webp',  # Use generic tire for S/T
+
+    # Super City (motorcycle)
+    'SUPER CITY': '/supercity.jpg',
+    'SUPERCITY': '/supercity.jpg',
+
+    # Tornado (agricultural/special tires)
+    'TORNADO': '/tornado.jpg',
+
+    # MT60 (motorcycle)
+    'MT60': '/mt60.jpg',
+    'MT 60': '/mt60.jpg',
+    'MT-60': '/mt60.jpg',
+}
+
+
+def get_product_image(description, brand='PIRELLI'):
+    """
+    Determine the appropriate image for a product based on its description and brand
+
+    Args:
+        description: Product description/model string
+        brand: Product brand (default: PIRELLI)
+
+    Returns:
+        str: Path to the appropriate image file
+    """
+    # Convert to uppercase for matching
+    search_text = f"{brand} {description}".upper()
+
+    # Try exact matches first (most specific)
+    for pattern, image_path in IMAGE_MAPPINGS.items():
+        # For short patterns (abbreviations), check for word boundaries
+        if len(pattern) <= 5:
+            # Check if pattern appears as a separate word
+            if f" {pattern} " in f" {search_text} " or search_text.endswith(f" {pattern}"):
+                print(f"  → Matched '{pattern}' → {image_path}")
+                return image_path
+        else:
+            # For longer patterns, simple substring match
+            if pattern in search_text:
+                print(f"  → Matched '{pattern}' → {image_path}")
+                return image_path
+
+    # Special handling for some complex patterns
+
+    # Scorpion with A/T+ variations
+    if 'SCORPION' in search_text and ('A/T+' in search_text or 'A/T +' in search_text or 'AT+' in search_text):
+        print(f"  → Matched Scorpion A/T+ variant → /Scorpion-All-Terrain-Plus-4505483375619.webp")
+        return '/Scorpion-All-Terrain-Plus-4505483375619.webp'
+
+    # If no specific match found, return placeholder
+    print(f"  → No match found, using placeholder")
+    return '/no-image.png'
+
 
 def parse_tire_size(description):
     """
@@ -123,6 +256,11 @@ def process_excel_file(file_path):
 
     # Clean and process the data
     products = []
+    image_stats = {'mapped': 0, 'placeholder': 0}
+
+    print("\n" + "="*80)
+    print("PROCESSING PRODUCTS WITH IMAGE MAPPING")
+    print("="*80)
 
     for index, row in df.iterrows():
         # Skip rows with no description
@@ -180,10 +318,25 @@ def process_excel_file(file_path):
             # Default to auto for standard passenger car tires
             category = 'auto'
 
+        # Get brand
+        brand = str(row.get('marca', 'PIRELLI')).upper()
+
+        # Determine appropriate image using the mapping function
+        if index < 10:  # Show mapping details for first 10 products
+            print(f"\n{index+1}. {name[:60]}")
+
+        image_url = get_product_image(description, brand)
+
+        # Track image mapping statistics
+        if image_url == '/no-image.png':
+            image_stats['placeholder'] += 1
+        else:
+            image_stats['mapped'] += 1
+
         # Create the product object for Supabase
         product = {
             'name': name[:200],  # Limit name length
-            'brand': str(row.get('marca', 'PIRELLI')).upper(),
+            'brand': brand,
             'model': description[:100],  # Use description as model
             'category': category,  # Use the determined category
             'width': tire_size['width'],
@@ -200,19 +353,26 @@ def process_excel_file(file_path):
                 'subrubro': row.get('subrubro', ''),
                 'stock_por_sucursal': branch_stocks
             },
-            'image_url': '/mock-tire.png'  # Default image
+            'image_url': image_url  # Use the mapped image
         }
 
         products.append(product)
 
-    print(f"Processed {len(products)} valid products")
+    print("\n" + "="*80)
+    print("IMAGE MAPPING SUMMARY")
+    print("="*80)
+    print(f"✓ Products with specific images: {image_stats['mapped']} ({image_stats['mapped']/len(products)*100:.1f}%)")
+    print(f"✓ Products with placeholder: {image_stats['placeholder']} ({image_stats['placeholder']/len(products)*100:.1f}%)")
+    print(f"✓ Total products processed: {len(products)}")
 
     return products
 
 
 def delete_all_products():
     """Delete all existing products from the database"""
-    print("Deleting all existing products...")
+    print("\n" + "="*80)
+    print("DELETING EXISTING PRODUCTS")
+    print("="*80)
 
     try:
         # Get count of existing products
@@ -224,18 +384,21 @@ def delete_all_products():
             # Delete all products
             # Note: Supabase doesn't support delete without a filter, so we use a condition that matches all
             delete_response = supabase.table('products').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
-            print(f"Deleted all products successfully")
+            print(f"✓ Deleted all products successfully")
 
         return True
 
     except Exception as e:
-        print(f"Error deleting products: {e}")
+        print(f"❌ Error deleting products: {e}")
         return False
 
 
 def import_products_to_supabase(products):
     """Import products to Supabase in batches"""
-    print(f"Importing {len(products)} products to Supabase...")
+    print("\n" + "="*80)
+    print("IMPORTING TO SUPABASE")
+    print("="*80)
+    print(f"Importing {len(products)} products...")
 
     batch_size = 50  # Smaller batch size for better error handling
     successful = 0
@@ -263,14 +426,13 @@ def import_products_to_supabase(products):
                     failed -= 1
                 except Exception as individual_error:
                     print(f"    Failed product: {product.get('name', 'Unknown')[:50]}")
-                    # print(f"    Error: {individual_error}")
 
-    print(f"\n{'='*60}")
-    print(f"Import complete!")
-    print(f"  Successful: {successful} products")
-    print(f"  Failed: {failed} products")
-    print(f"  Total: {successful + failed} products")
-    print(f"{'='*60}")
+    print("\n" + "="*80)
+    print("IMPORT COMPLETE")
+    print("="*80)
+    print(f"✓ Successful: {successful} products")
+    print(f"✗ Failed: {failed} products")
+    print(f"📊 Total: {successful + failed} products")
 
     return successful, failed
 
@@ -284,9 +446,11 @@ def main():
         print(f"Error: File not found: {file_path}")
         sys.exit(1)
 
-    print("="*60)
-    print("PIRELLI Stock Import Script")
-    print("="*60)
+    print("="*80)
+    print("PIRELLI STOCK IMPORT WITH AUTOMATIC IMAGE MAPPING")
+    print("="*80)
+    print("Version: 2.0 - Enhanced with intelligent image mapping")
+    print("="*80)
 
     # Step 1: Delete existing products
     if not delete_all_products():
@@ -294,7 +458,7 @@ def main():
         if input().lower() != 'y':
             sys.exit(1)
 
-    # Step 2: Process Excel file
+    # Step 2: Process Excel file with image mapping
     products = process_excel_file(file_path)
 
     if not products:
@@ -302,15 +466,16 @@ def main():
         sys.exit(1)
 
     # Show sample of products to be imported
-    print("\nSample of products to import:")
-    print("-"*60)
+    print("\n" + "="*80)
+    print("SAMPLE OF PRODUCTS TO IMPORT")
+    print("="*80)
     for product in products[:3]:
-        print(f"Name: {product['name']}")
+        print(f"\nName: {product['name']}")
         print(f"  Brand: {product['brand']}")
         print(f"  Size: {product['width']}/{product['profile']}R{product['diameter']}")
         print(f"  Total Stock: {product['stock']}")
+        print(f"  Image: {product['image_url']}")
         print(f"  Stock by branch: {product['features']['stock_por_sucursal']}")
-        print()
 
     # Step 3: Import to Supabase
     successful, failed = import_products_to_supabase(products)
@@ -320,13 +485,17 @@ def main():
         'total_products': len(products),
         'successful_imports': successful,
         'failed_imports': failed,
+        'image_mapping_stats': {
+            'products_with_images': sum(1 for p in products if p['image_url'] != '/no-image.png'),
+            'products_without_images': sum(1 for p in products if p['image_url'] == '/no-image.png')
+        },
         'sample_products': products[:10]
     }
 
     with open('import_report.json', 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2, ensure_ascii=False, default=str)
 
-    print("\nImport report saved to import_report.json")
+    print("\n✓ Import report saved to import_report.json")
 
     return successful > 0
 

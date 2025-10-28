@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Package, Truck, ShieldCheck, Star, Minus, Plus, Info, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Package, Truck, ShieldCheck, Star, Minus, Plus, Info, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Product } from '../types'
 import { getProductById } from '../api'
@@ -52,11 +52,11 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
   const maxIndex = Math.max(0, equivalentTires.length - itemsPerView)
 
   const handlePrevious = () => {
-    setCurrentIndex((prev) => Math.max(0, prev - 1))
+    setCurrentIndex((prev) => (prev === 0 ? maxIndex : prev - 1))
   }
 
   const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(maxIndex, prev + 1))
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1))
   }
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
           width: product.width,
           profile: product.profile,
           diameter: product.diameter
-        })
+        }, 3, false) // 3% tolerancia, NO permitir diferentes rodados
         // Filtrar el producto actual de los resultados
         const filtered = result.equivalentTires.filter(tire => tire.id !== productId)
         setEquivalentTires(filtered)
@@ -139,8 +139,8 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
     : 0
 
   const previousPrice = priceList || product.price
-  // Using mock tire image for all products (temporary)
-  const imageUrl = "/tire.webp"
+  // Use product's actual image or fallback to no-image
+  const imageUrl = product.image_url || "/no-image.png"
 
   return (
     <div className="min-h-screen bg-[#EDEDED]">
@@ -325,6 +325,30 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                   >
                     Agregar al carrito
                   </Button>
+
+                  {/* WhatsApp Purchase Button */}
+                  <Button
+                    onClick={() => {
+                      const productName = getCleanProductName(product)
+                      const size = `${product.width}/${product.profile}R${product.diameter}`
+                      const message = encodeURIComponent(
+                        `Hola! Me interesa comprar el siguiente neumático:\n\n` +
+                        `📍 Producto: ${productName}\n` +
+                        `📏 Medida: ${size}\n` +
+                        `🏷️ Marca: ${product.brand}\n` +
+                        `💵 Precio: $${product.price.toLocaleString('es-AR')}\n` +
+                        `📦 Cantidad: ${quantity} unidad${quantity > 1 ? 'es' : ''}\n\n` +
+                        `¿Está disponible?`
+                      )
+                      const whatsappUrl = `https://wa.me/5492615555555?text=${message}`
+                      window.open(whatsappUrl, '_blank')
+                    }}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 mt-2"
+                    size="sm"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Comprar por WhatsApp
+                  </Button>
                 </div>
               )}
             </div>
@@ -386,20 +410,18 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                   <Button
                     variant="outline"
                     size="sm"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-[#FFFFFF] h-8 w-8 p-0"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-[#FFFFFF] hover:bg-gray-50 h-10 w-10 p-0 border-2"
                     onClick={handlePrevious}
-                    disabled={currentIndex === 0}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-[#FFFFFF] h-8 w-8 p-0"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-[#FFFFFF] hover:bg-gray-50 h-10 w-10 p-0 border-2"
                     onClick={handleNext}
-                    disabled={currentIndex >= maxIndex}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-5 w-5" />
                   </Button>
                 </>
               )}
@@ -432,9 +454,9 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                       >
                         <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 hover:border-gray-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out h-full flex flex-col shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
                           <div className="aspect-square bg-[#FFFFFF] rounded-md mb-3 flex items-center justify-center overflow-hidden">
-                            {/* Using mock tire image for all products (temporary) */}
+                            {/* Display actual product image or fallback */}
                             <img
-                              src="/tire.webp"
+                              src={(tire as any).image_url || "/no-image.png"}
                               alt={tire.name}
                               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
                               loading="lazy"
@@ -453,9 +475,20 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                             <p className="text-lg font-bold text-gray-900 mb-2">
                               ${Number(tire.price).toLocaleString('es-AR')}
                             </p>
-                            {Math.abs(tire.differencePercent) < 1 && (
-                              <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-600 w-fit h-5 px-2">
-                                Equivalencia exacta
+                            {tire.equivalenceLevel && (
+                              <Badge
+                                variant="secondary"
+                                className={`text-[10px] w-fit h-5 px-2 ${
+                                  tire.equivalenceLevel === 'exacta'
+                                    ? 'bg-green-50 text-green-600'
+                                    : tire.equivalenceLevel === 'muy buena'
+                                    ? 'bg-blue-50 text-blue-600'
+                                    : tire.equivalenceLevel === 'buena'
+                                    ? 'bg-sky-50 text-sky-600'
+                                    : 'bg-gray-50 text-gray-600'
+                                }`}
+                              >
+                                Equivalencia {tire.equivalenceLevel}
                               </Badge>
                             )}
                           </div>
@@ -465,23 +498,6 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                   ))}
                 </motion.div>
               </div>
-
-              {/* Dots Indicator */}
-              {equivalentTires.length > itemsPerView && (
-                <div className="flex justify-center gap-1.5 mt-6">
-                  {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentIndex(index)}
-                      className={`h-1.5 rounded-full transition-all ${
-                        index === currentIndex
-                          ? 'w-6 bg-blue-600'
-                          : 'w-1.5 bg-gray-300 hover:bg-gray-400'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-200 text-center">

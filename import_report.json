@@ -1,0 +1,287 @@
+{
+  "total_products": 741,
+  "successful_imports": 741,
+  "failed_imports": 0,
+  "sample_products": [
+    {
+      "name": "5.20S12 4T TT AR58",
+      "brand": "PIRELLI",
+      "model": "5.20S12 4T TT AR58",
+      "category": "moto",
+      "width": 0,
+      "profile": 0,
+      "diameter": 12,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "5.20S12 4T TT AR58",
+      "features": {
+        "codigo_propio": "1",
+        "codigo_proveedor": "239800",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "AUTO CONVENCIONAL",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "205/75R15 205/75R15 99T XL SCORPION ATR wl",
+      "brand": "PIRELLI",
+      "model": "205/75R15 99T XL SCORPION ATR wl",
+      "category": "camioneta",
+      "width": 205,
+      "profile": 75,
+      "diameter": 15,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "205/75R15 99T XL SCORPION ATR wl",
+      "features": {
+        "codigo_propio": "10",
+        "codigo_proveedor": "1718200",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 15",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "175/65R15 175/65R15 84T CINTURATO P4",
+      "brand": "PIRELLI",
+      "model": "175/65R15 84T CINTURATO P4",
+      "category": "auto",
+      "width": 175,
+      "profile": 65,
+      "diameter": 15,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "175/65R15 84T CINTURATO P4",
+      "features": {
+        "codigo_propio": "100",
+        "codigo_proveedor": "1825200",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 15",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "225/45R17 225/45R17 91W R-F CINTURATO P7",
+      "brand": "PIRELLI",
+      "model": "225/45R17 91W R-F CINTURATO P7",
+      "category": "auto",
+      "width": 225,
+      "profile": 45,
+      "diameter": 17,
+      "price": 100000.0,
+      "stock": 4,
+      "description": "225/45R17 91W R-F CINTURATO P7",
+      "features": {
+        "codigo_propio": "101",
+        "codigo_proveedor": "2005800",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 17",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 4,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "215/50R17 215/50R17 91V CINTURATO P7",
+      "brand": "PIRELLI",
+      "model": "215/50R17 91V CINTURATO P7",
+      "category": "auto",
+      "width": 215,
+      "profile": 50,
+      "diameter": 17,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "215/50R17 91V CINTURATO P7",
+      "features": {
+        "codigo_propio": "1017",
+        "codigo_proveedor": "2620700",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 17",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "225/45R17 225/45R17 94W XL CINTURATO P1+",
+      "brand": "PIRELLI",
+      "model": "225/45R17 94W XL CINTURATO P1+",
+      "category": "auto",
+      "width": 225,
+      "profile": 45,
+      "diameter": 17,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "225/45R17 94W XL CINTURATO P1+",
+      "features": {
+        "codigo_propio": "102",
+        "codigo_proveedor": "2916600",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 17",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "235/35R19 235/35ZR19 (87Y) P ZERO",
+      "brand": "PIRELLI",
+      "model": "235/35ZR19 (87Y) P ZERO",
+      "category": "camioneta",
+      "width": 235,
+      "profile": 35,
+      "diameter": 19,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "235/35ZR19 (87Y) P ZERO",
+      "features": {
+        "codigo_propio": "103",
+        "codigo_proveedor": "1737700",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 19",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "225/45R18 225/45R18 95W XL CINTURATO P1+",
+      "brand": "PIRELLI",
+      "model": "225/45R18 95W XL CINTURATO P1+",
+      "category": "auto",
+      "width": 225,
+      "profile": 45,
+      "diameter": 18,
+      "price": 100000.0,
+      "stock": 0,
+      "description": "225/45R18 95W XL CINTURATO P1+",
+      "features": {
+        "codigo_propio": "104",
+        "codigo_proveedor": "2917700",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 18",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 0,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "225/45R17 225/45R17 91Y R-F EUFO-@ (NB)XX",
+      "brand": "PIRELLI",
+      "model": "225/45R17 91Y R-F EUFO-@ (NB)XX",
+      "category": "auto",
+      "width": 225,
+      "profile": 45,
+      "diameter": 17,
+      "price": 100000.0,
+      "stock": 2,
+      "description": "225/45R17 91Y R-F EUFO-@ (NB)XX",
+      "features": {
+        "codigo_propio": "105",
+        "codigo_proveedor": "1499100",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 17",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 0,
+          "la_banda": 0,
+          "salta": 2,
+          "tucuman": 0,
+          "virgen": 0
+        }
+      },
+      "image_url": "/mock-tire.png"
+    },
+    {
+      "name": "225/50R17 225/50R17 98V XL CINTURATO P1+",
+      "brand": "PIRELLI",
+      "model": "225/50R17 98V XL CINTURATO P1+",
+      "category": "auto",
+      "width": 225,
+      "profile": 50,
+      "diameter": 17,
+      "price": 100000.0,
+      "stock": 6,
+      "description": "225/50R17 98V XL CINTURATO P1+",
+      "features": {
+        "codigo_propio": "106",
+        "codigo_proveedor": "2916700",
+        "proveedor": "PIRELLI NEUMATICOS SAIC",
+        "rubro": "01 - CUBIERTAS",
+        "subrubro": "ARO 17",
+        "stock_por_sucursal": {
+          "belgrano": 0,
+          "catamarca": 1,
+          "la_banda": 1,
+          "salta": 0,
+          "tucuman": 3,
+          "virgen": 1
+        }
+      },
+      "image_url": "/mock-tire.png"
+    }
+  ]
+}

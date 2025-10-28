@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button"
 import type { Product } from "@/features/products/types"
 import { QuickAddButton } from "@/features/cart/components/AddToCartButton"
 import ProductsSkeleton from "./ProductsSkeleton"
+import { useEquivalentTires } from "@/features/tire-equivalence/hooks/useEquivalentTires"
+import { EquivalencesSection } from "@/features/tire-equivalence/components/EquivalencesSection"
 
 interface ProductsClientProps {
   products: Product[]
@@ -430,6 +432,28 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
     return filtered
   }, [products, debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy])
+
+  // Detect when all 3 size filters are selected to show equivalences
+  const shouldShowEquivalences =
+    selectedWidth !== "all" &&
+    selectedProfile !== "all" &&
+    selectedDiameter !== "all"
+
+  // Fetch equivalent tires when all filters are selected
+  const {
+    equivalents,
+    loading: loadingEquivalents
+  } = useEquivalentTires({
+    width: selectedWidth !== "all" ? Number(selectedWidth) : null,
+    profile: selectedProfile !== "all" ? Number(selectedProfile) : null,
+    diameter: selectedDiameter !== "all" ? Number(selectedDiameter) : null,
+    enabled: shouldShowEquivalences,
+    tolerancePercent: 3,
+    allowDifferentRim: false
+  })
+
+  // Determine if there are exact matches with stock
+  const hasExactMatch = filteredProducts.length > 0
 
   // Reset page when filters change
   useEffect(() => {
@@ -1229,6 +1253,20 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                   </div>
                 )}
               </>
+            )}
+
+            {/* Equivalences Section - Only show when all 3 size filters are selected */}
+            {shouldShowEquivalences && (
+              <EquivalencesSection
+                equivalentTires={equivalents}
+                hasExactMatch={hasExactMatch}
+                loading={loadingEquivalents}
+                originalSize={{
+                  width: Number(selectedWidth),
+                  profile: Number(selectedProfile),
+                  diameter: Number(selectedDiameter)
+                }}
+              />
             )}
           </div>
         </div>
