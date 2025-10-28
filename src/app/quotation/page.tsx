@@ -1,11 +1,11 @@
 'use client';
 
-import { ModernWizard } from '@/features/quotation/components/ModernWizard';
+import { QuotationWizard } from '@/features/quotation/components/QuotationWizard';
 
 export default function QuotationPage() {
   return (
     <div className="min-h-screen bg-black">
-      <ModernWizard />
+      <QuotationWizard />
     </div>
   );
 }

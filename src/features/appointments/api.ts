@@ -2,7 +2,33 @@
 
 import { supabase, handleSupabaseError } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
-import type { Appointment, AppointmentFormData, Branch } from './types'
+import type { Appointment, AppointmentFormData, Branch, Service } from './types'
+
+// Service operations
+export async function getAppointmentServices() {
+  try {
+    const { data, error } = await supabase
+      .from('appointment_services')
+      .select('*')
+      .order('name')
+
+    if (error) throw error
+
+    // Map database records to Service type
+    const services: Service[] = ((data as any[]) || []).map((service: any) => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      duration: service.duration,
+      price: parseFloat(service.price),
+      voucherEligible: service.id === 'tire-repair' // Only tire repair is voucher eligible
+    }))
+
+    return { data: services }
+  } catch (error) {
+    return handleSupabaseError(error)
+  }
+}
 
 // Branch operations
 export async function getBranches() {

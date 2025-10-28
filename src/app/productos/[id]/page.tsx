@@ -1,4 +1,4 @@
-import ProductDetailImproved from '@/features/products/catalog/ProductDetailImproved'
+import ProductDetail from '@/features/products/catalog/ProductDetail'
 
 interface PageProps {
   params: Promise<{
@@ -13,5 +13,5 @@ export const metadata = {
 
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params
-  return <ProductDetailImproved productId={id} />
+  return <ProductDetail productId={id} />
 }

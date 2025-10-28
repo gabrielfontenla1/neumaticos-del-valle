@@ -1,5 +1,5 @@
 import { Navbar } from '@/components/Navbar'
-import ProductsClientImproved from './ProductsClientImproved'
+import ProductsClient from './ProductsClient'
 
 // Force dynamic rendering for pages using useSearchParams
 export const dynamic = 'force-dynamic'
@@ -15,7 +15,7 @@ export default function ProductsPage() {
   return (
     <div>
       <Navbar />
-      <ProductsClientImproved products={[]} stats={null} />
+      <ProductsClient products={[]} stats={null} />
     </div>
   )
 }

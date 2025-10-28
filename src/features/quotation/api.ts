@@ -1,4 +1,111 @@
 import { TireModel, Service, Vehicle } from './types';
+import { supabase } from '@/lib/supabase';
+
+// === DATABASE API FUNCTIONS ===
+
+// Fetch quotation services from database
+export async function getQuotationServices(): Promise<Service[]> {
+  try {
+    const { data, error } = await supabase
+      .from('quotation_services')
+      .select('*')
+      .order('name');
+
+    if (error) throw error;
+
+    return (data || []).map((service: any) => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      icon: service.icon,
+      price: parseFloat(service.price),
+      priceType: service.price_type as 'per-tire' | 'flat',
+      selected: false // UI state, not stored in database
+    }));
+  } catch (error) {
+    console.error('Error fetching quotation services:', error);
+    return availableServices; // Fallback to hardcoded data
+  }
+}
+
+// Fetch vehicle brands from database
+export async function getVehicleBrands(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('vehicle_brands')
+      .select('name')
+      .order('name');
+
+    if (error) throw error;
+
+    return (data || []).map((brand: any) => brand.name);
+  } catch (error) {
+    console.error('Error fetching vehicle brands:', error);
+    return vehicleBrands; // Fallback to hardcoded data
+  }
+}
+
+// Fetch vehicle models for a specific brand from database
+export async function getVehicleModelsByBrand(brandName: string): Promise<string[]> {
+  try {
+    // First get the brand ID
+    const { data: brandData, error: brandError } = await supabase
+      .from('vehicle_brands')
+      .select('id')
+      .eq('name', brandName)
+      .single();
+
+    if (brandError) throw brandError;
+
+    // Then get models for that brand
+    const { data: modelsData, error: modelsError } = await supabase
+      .from('vehicle_models')
+      .select('name')
+      .eq('brand_id', brandData.id)
+      .order('name');
+
+    if (modelsError) throw modelsError;
+
+    return (modelsData || []).map((model: any) => model.name);
+  } catch (error) {
+    console.error('Error fetching vehicle models:', error);
+    return vehicleModels[brandName] || []; // Fallback to hardcoded data
+  }
+}
+
+// Fetch all vehicle models grouped by brand from database
+export async function getAllVehicleModels(): Promise<Record<string, string[]>> {
+  try {
+    const { data: brandsData, error: brandsError } = await supabase
+      .from('vehicle_brands')
+      .select('id, name')
+      .order('name');
+
+    if (brandsError) throw brandsError;
+
+    const { data: modelsData, error: modelsError } = await supabase
+      .from('vehicle_models')
+      .select('brand_id, name')
+      .order('name');
+
+    if (modelsError) throw modelsError;
+
+    // Group models by brand
+    const modelsByBrand: Record<string, string[]> = {};
+    (brandsData || []).forEach((brand: any) => {
+      modelsByBrand[brand.name] = (modelsData || [])
+        .filter((model: any) => model.brand_id === brand.id)
+        .map((model: any) => model.name);
+    });
+
+    return modelsByBrand;
+  } catch (error) {
+    console.error('Error fetching all vehicle models:', error);
+    return vehicleModels; // Fallback to hardcoded data
+  }
+}
+
+// === HARDCODED DATA (FALLBACK / LEGACY) ===
 
 // Datos de vehículos
 export const vehicleBrands = [
