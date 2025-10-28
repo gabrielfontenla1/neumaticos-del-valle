@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+
+interface ProductIdRow {
+  id: string
+}
 
 export async function POST() {
   try {
+    // Create a direct Supabase client (avoiding Proxy type issues)
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
     // First, get all products (no limit to update all)
     const { data: products, error: fetchError } = await supabase
       .from('products')
@@ -18,15 +29,17 @@ export async function POST() {
       return NextResponse.json({ error: 'No products found' }, { status: 404 })
     }
 
+    const productsList = products as ProductIdRow[]
+
     // Update each product with random stock between 0 and 50
     // Make sure at least 50% have stock > 0
-    const updates = []
-    for (let i = 0; i < products.length; i++) {
+    const updates: { id: string; stock: number }[] = []
+    for (let i = 0; i < productsList.length; i++) {
       const hasStock = i % 2 === 0 || Math.random() > 0.3 // ~70% will have stock
       const stockValue = hasStock ? Math.floor(Math.random() * 50) + 1 : 0
 
       updates.push({
-        id: products[i].id,
+        id: productsList[i].id,
         stock: stockValue
       })
     }
@@ -39,9 +52,10 @@ export async function POST() {
       const batch = updates.slice(i, i + batchSize)
 
       for (const update of batch) {
-        const { error: updateError } = await supabase
+        const updateData = { stock_quantity: update.stock }
+        const { error: updateError } = await (supabase as any)
           .from('products')
-          .update({ stock: update.stock })
+          .update(updateData)
           .eq('id', update.id)
 
         if (updateError) {
@@ -56,7 +70,7 @@ export async function POST() {
       success: true,
       message: `Updated ${totalUpdated} products with stock values`,
       totalUpdated,
-      totalProducts: products.length
+      totalProducts: productsList.length
     })
 
   } catch (error) {
