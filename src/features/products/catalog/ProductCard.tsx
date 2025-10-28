@@ -77,7 +77,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
           <Image
-            src={product.images?.[0] || '/placeholder-tire.png'}
+            src={product.image_url || '/placeholder-tire.png'}
             alt={product.name}
             fill
             className="object-contain p-2"

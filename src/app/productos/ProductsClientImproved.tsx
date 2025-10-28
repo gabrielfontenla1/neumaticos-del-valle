@@ -1030,7 +1030,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                           <div className="w-full aspect-square bg-[#FFFFFF] relative overflow-hidden">
                             <Link href={`/productos/${product.id}`} className="block w-full h-full">
                               <img
-                                src="/tire.webp"
+                                src={product.image_url || "/tire.webp"}
                                 alt={product.name}
                                 className="w-full h-full object-contain p-3 lg:p-4 group-hover:scale-105 transition-transform duration-500 ease-out"
                                 loading="lazy"

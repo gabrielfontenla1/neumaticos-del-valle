@@ -1,0 +1,65 @@
+{
+  "image_mappings": {
+    "Cinturato P1": [
+      "Cinturato-P1-Verde-1505470090255.webp"
+    ],
+    "Cinturato P7": [
+      "cinturato-p7-4505517104514.webp",
+      "Cinturato-P7-1505470083092.webp"
+    ],
+    "Scorpion HT": [
+      "Scorpion-HT-4505525112686.webp"
+    ],
+    "Scorpion Verde All Season": [
+      "Pirelli-Scorpion-Verde-All-Season-off-low-01-1505470075906.webp"
+    ],
+    "Scorpion Verde": [
+      "Scorpion-Verde-1505470074533 (1).webp",
+      "Scorpion-Verde-1505470074533.webp"
+    ],
+    "Scorpion Zero All Season": [
+      "Scorpion-Zero-All-Season-1505470086399.webp"
+    ],
+    "Scorpion Zero": [
+      "Scorpion-Zero-1505470088294.webp"
+    ],
+    "Scorpion Zero Asimmetrico": [
+      "Scorpion-Zero-Asimmetrico-1505470076172.webp"
+    ],
+    "Scorpion": [
+      "Scorpion-4505525112390.webp"
+    ],
+    "Scorpion ATR": [
+      "Scorpion-Atr-1505470067539.webp"
+    ],
+    "Scorpion MTR": [
+      "Scorpion-MTR-1505470071047.webp"
+    ],
+    "Scorpion All Terrain Plus": [
+      "Scorpion-All-Terrain-Plus-4505483375619.webp"
+    ],
+    "P Zero Corsa System": [
+      "Pzero-Corsa-System-Direzionale-1505470088408.webp"
+    ],
+    "P Zero Corsa": [
+      "Pzero-Corsa-PZC4-1505470090635.webp"
+    ],
+    "P Zero": [
+      "Pzero-Nuovo-1505470072726.webp",
+      "Pzero-vecchio-1505470066413.webp"
+    ],
+    "P400 Evo": [
+      "P400Evo_review_3-4.webp"
+    ],
+    "Chrono": [
+      "Chrono-1505470062195.webp"
+    ]
+  },
+  "default_image": "/placeholder-tire.png",
+  "matching_rules": [
+    "Check for exact model name match",
+    "Check for partial model name match",
+    "Check for model variations (spaces, hyphens)",
+    "Use default image if no match found"
+  ]
+}

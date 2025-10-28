@@ -86,7 +86,7 @@ for product in products:
     product_name = product.get('name', '')
     product_model = product.get('model', '')
     product_description = product.get('description', '')
-    current_images = product.get('images', [])
+    current_image_url = product.get('image_url', '')
 
     # Clean the text to match against mappings
     search_text = f"{product_name} {product_model} {product_description}".upper()
@@ -116,10 +116,10 @@ for product in products:
 
     if matched_image:
         # Check if image needs to be updated
-        if not current_images or current_images[0] != matched_image:
+        if not current_image_url or current_image_url == '/mock-tire.png' or current_image_url != matched_image:
             # Update product with new image
             update_data = {
-                'images': [matched_image]
+                'image_url': matched_image
             }
 
             try:
