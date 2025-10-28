@@ -145,9 +145,9 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
               >
                 <Link href={`/productos/${tire.id}`} className="block group">
                   <div className="bg-white/5 backdrop-blur-lg border-2 border-white/10 overflow-hidden hover:border-[#FEE004] transition-all duration-300 hover:shadow-2xl hover:shadow-[#FEE004]/10 rounded-2xl">
-                    <div className="flex flex-col sm:flex-row gap-6 p-6 md:p-8">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-6 md:p-8">
                       {/* Image */}
-                      <div className="w-full sm:w-64 h-64 bg-white/5 relative flex-shrink-0 rounded-xl overflow-hidden border-2 border-white/10">
+                      <div className="w-full sm:w-64 h-48 sm:h-64 bg-white/5 relative flex-shrink-0 rounded-xl overflow-hidden border-2 border-white/10">
                         {/* Using mock tire image for all products (temporary) */}
                         <img
                           src="/tire.webp"
@@ -158,37 +158,66 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                      <div className="flex-1 flex flex-col justify-between min-w-0 space-y-3 sm:space-y-4">
                         {/* Top Section */}
-                        <div>
+                        <div className="space-y-3 sm:space-y-4">
+                          {/* Brand */}
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs sm:text-sm text-gray-400 font-semibold uppercase tracking-wider">
+                              {tire.brand}
+                            </p>
+                            {tire.equivalenceLevel && (
+                              <div className={`flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border rounded-full text-xs font-bold ${
+                                tire.equivalenceLevel === 'exacta'
+                                  ? 'bg-green-500/10 border-green-500/40 text-green-400'
+                                  : tire.equivalenceLevel === 'muy buena'
+                                  ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
+                                  : tire.equivalenceLevel === 'buena'
+                                  ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400'
+                                  : 'bg-[#FEE004]/10 border-[#FEE004]/40 text-[#FEE004]'
+                              }`}>
+                                <CheckCircle className="w-3 h-3" strokeWidth={2.5} />
+                                <span className="capitalize hidden sm:inline">
+                                  {tire.equivalenceLevel}
+                                </span>
+                                <span className="capitalize sm:hidden">
+                                  ✓ {tire.equivalenceLevel}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
                           {/* Title */}
-                          <h3 className="text-2xl font-bold text-white mb-3 line-clamp-2 leading-tight group-hover:text-[#FEE004] transition-colors">
+                          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white line-clamp-2 leading-tight group-hover:text-[#FEE004] transition-colors">
                             {tire.name}
                           </h3>
 
-                          {/* Brand */}
-                          <p className="text-sm text-gray-400 mb-5 font-medium">
-                            Marca: <span className="text-gray-300">{tire.brand}</span>
-                          </p>
+                          {/* Size - Large display */}
+                          <div className="inline-block">
+                            <p className="font-mono font-bold text-white text-xl sm:text-2xl bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                              {tire.width}/{tire.profile} R{tire.diameter}
+                            </p>
+                          </div>
 
-                          {/* Size Info */}
-                          <div className="bg-white/5 backdrop-blur-md rounded-xl p-5 mb-6 border-2 border-white/10">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm">
+                          {/* Stock */}
+                          {tire.stock > 0 ? (
+                            <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                              <span>Stock: {tire.stock}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-red-400 text-sm font-medium">
+                              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                              <span>Sin stock</span>
+                            </div>
+                          )}
+
+                          {/* Size Info - Compact Grid */}
+                          <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 sm:p-4 border border-white/10">
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs sm:text-sm">
                               <div>
-                                <p className="text-gray-400 mb-2 font-medium">Medida:</p>
-                                <p className="font-mono font-bold text-white text-lg">
-                                  {tire.width}/{tire.profile} R{tire.diameter}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-gray-400 mb-2 font-medium">Diámetro:</p>
-                                <p className="font-mono font-bold text-white text-lg">
-                                  {tire.calculatedDiameter.toFixed(2)} mm
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-gray-400 mb-2 font-medium">Diferencia:</p>
-                                <p className={`font-mono font-bold text-lg ${
+                                <p className="text-gray-400 mb-1 font-medium">Diferencia:</p>
+                                <p className={`font-mono font-bold ${
                                   tire.equivalenceLevel === 'exacta'
                                     ? 'text-green-400'
                                     : tire.equivalenceLevel === 'muy buena'
@@ -201,8 +230,8 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                                 </p>
                               </div>
                               <div>
-                                <p className="text-gray-400 mb-2 font-medium">Variación:</p>
-                                <p className={`font-mono font-bold text-lg ${
+                                <p className="text-gray-400 mb-1 font-medium">Variación:</p>
+                                <p className={`font-mono font-bold ${
                                   tire.equivalenceLevel === 'exacta'
                                     ? 'text-green-400'
                                     : tire.equivalenceLevel === 'muy buena'
@@ -218,50 +247,16 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                           </div>
                         </div>
 
-                        {/* Bottom Section */}
-                        <div>
-                          {/* Price */}
-                          <div className="flex items-baseline gap-3 mb-4">
-                            <span className="text-5xl font-bold text-white">
+                        {/* Bottom Section - Price */}
+                        <div className="border-t border-white/10 pt-3 sm:pt-4">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
                               ${Number(tire.price).toLocaleString('es-AR')}
                             </span>
                           </div>
-
-                          {/* Stock & Match */}
-                          <div className="flex flex-wrap items-center gap-3">
-                            {tire.stock > 0 ? (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 backdrop-blur-md border-2 border-green-500/30 text-green-400 rounded-lg">
-                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                <span className="text-sm font-bold">
-                                  En stock ({tire.stock} disponibles)
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 backdrop-blur-md border-2 border-red-500/30 text-red-400 rounded-lg">
-                                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                                <span className="text-sm font-bold">
-                                  Sin stock
-                                </span>
-                              </div>
-                            )}
-
-                            {tire.equivalenceLevel && (
-                              <div className={`flex items-center gap-2 px-4 py-2 backdrop-blur-md border-2 rounded-lg ${
-                                tire.equivalenceLevel === 'exacta'
-                                  ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                                  : tire.equivalenceLevel === 'muy buena'
-                                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                                  : tire.equivalenceLevel === 'buena'
-                                  ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                                  : 'bg-[#FEE004]/10 border-[#FEE004]/30 text-[#FEE004]'
-                              }`}>
-                                <CheckCircle className="w-4 h-4" strokeWidth={2.5} />
-                                <span className="text-sm font-bold capitalize">
-                                  Equivalencia {tire.equivalenceLevel}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                          <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                            Precio por unidad
+                          </p>
                         </div>
                       </div>
                     </div>
