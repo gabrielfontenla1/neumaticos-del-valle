@@ -39,6 +39,7 @@ export async function getProducts(
       query = query.lte('price', filters.maxPrice)
     }
     if (filters.inStock) {
+      // Try with 'stock' field (it might be 'stock' instead of 'stock_quantity' in the DB)
       query = query.gt('stock', 0)
     }
 
@@ -54,8 +55,14 @@ export async function getProducts(
 
     if (error) throw error
 
+    // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
+    const mappedData = data?.map((product: any) => ({
+      ...product,
+      stock: product.stock || product.stock_quantity || 0
+    })) || []
+
     return {
-      data: data as Product[],
+      data: mappedData as Product[],
       total: count || 0,
       page,
       totalPages: Math.ceil((count || 0) / limit),
@@ -63,6 +70,7 @@ export async function getProducts(
     }
   } catch (error) {
     console.error('Error fetching products:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return {
       data: [],
       total: 0,
@@ -83,7 +91,16 @@ export async function getProductById(id: string) {
       .single()
 
     if (error) throw error
-    return data as Product
+
+    // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
+    if (data) {
+      const mappedProduct = {
+        ...data,
+        stock: data.stock || data.stock_quantity || 0
+      }
+      return mappedProduct as Product
+    }
+    return null
   } catch (error) {
     console.error('Error fetching product:', error)
     return null
@@ -164,53 +181,35 @@ export async function getSizes() {
   }
 }
 
+import {
+  normalizeExcelRow,
+  convertToProduct,
+  parseTireSize,
+  determineCategory,
+  cleanDescription,
+  processStockBySucursal
+} from './utils/importHelpers'
+
 // Importar productos desde Excel/CSV
-export async function importProducts(rows: ImportRow[]) {
+export async function importProducts(rows: ImportRow[], deleteExisting = false) {
   try {
-    const products = rows.map(row => ({
-      name: row.name?.toString().trim(),
-      brand: row.brand?.toString().trim(),
-      model: row.model?.toString().trim() || null,
-      category: row.category?.toString().trim() || 'neumatico',
-      width: row.width ? parseInt(row.width.toString()) : null,
-      profile: row.profile ? parseInt(row.profile.toString()) : null,
-      diameter: row.diameter ? parseInt(row.diameter.toString()) : null,
-      price: parseFloat(row.price?.toString().replace(/[^0-9.-]/g, '') || '0'),
-      stock: row.stock ? parseInt(row.stock.toString()) : 0,
-      description: row.description?.toString().trim() || null,
-      features: row.features || {}
-    }))
+    // Llamar al nuevo endpoint API que usa service role key
+    const response = await fetch('/api/admin/import-products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(deleteExisting ? { 'X-Delete-Existing': 'true' } : {})
+      },
+      body: JSON.stringify({ products: rows })
+    })
 
-    // Importar en batches de 100
-    const batchSize = 100
-    const results = []
+    const result = await response.json()
 
-    // Create untyped client to avoid type inference issues
-    const untypedClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    for (let i = 0; i < products.length; i += batchSize) {
-      const batch = products.slice(i, i + batchSize)
-      const { data, error } = await untypedClient
-        .from('products')
-        .insert(batch)
-        .select()
-
-      if (error) {
-        console.error(`Error importing batch ${i / batchSize + 1}:`, error)
-        results.push({ success: false, error: error.message, batch: i / batchSize + 1 })
-      } else {
-        results.push({ success: true, count: data?.length || 0, batch: i / batchSize + 1 })
-      }
+    if (!response.ok) {
+      throw new Error(result.error || 'Error al importar productos')
     }
 
-    return {
-      success: results.every(r => r.success),
-      results,
-      totalImported: results.reduce((acc, r) => acc + (r.count || 0), 0)
-    }
+    return result
   } catch (error) {
     console.error('Error importing products:', error)
     return {
@@ -248,7 +247,14 @@ export async function getFeaturedProducts() {
       .limit(8)
 
     if (error) throw error
-    return data as Product[]
+
+    // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
+    const mappedData = data?.map((product: any) => ({
+      ...product,
+      stock: product.stock || product.stock_quantity || 0
+    })) || []
+
+    return mappedData as Product[]
   } catch (error) {
     console.error('Error fetching featured products:', error)
     return []

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Check, AlertCircle } from 'lucide-react'
-import { useCart } from '../hooks/useCart'
+import { useCartContext } from '@/providers/CartProvider'
 
 interface AddToCartButtonProps {
   productId: string
@@ -22,7 +22,7 @@ export function AddToCartButton({
   className = '',
   variant = 'default'
 }: AddToCartButtonProps) {
-  const { addItem } = useCart()
+  const { addItem } = useCartContext()
   const [isAdding, setIsAdding] = useState(false)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
@@ -175,43 +175,95 @@ export function QuickAddButton({
   productId: string
   disabled?: boolean
 }) {
-  const { addItem } = useCart()
-  const [isAdding, setIsAdding] = useState(false)
+  const { addItem } = useCartContext()
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation if inside a link
     e.stopPropagation()
 
-    if (disabled || isAdding) return
+    if (disabled || status !== 'idle') return
 
-    setIsAdding(true)
+    setStatus('loading')
 
     try {
-      await addItem(productId, 1)
+      const success = await addItem(productId, 1)
+
+      if (success) {
+        setStatus('success')
+        // Show success state for 1 second, then return to idle
+        setTimeout(() => setStatus('idle'), 1000)
+      } else {
+        setStatus('idle')
+      }
     } catch (error) {
       console.error('Error adding to cart:', error)
-    } finally {
-      setTimeout(() => setIsAdding(false), 1000)
+      setStatus('idle')
     }
+  }
+
+  // Button background color based on status
+  const getButtonColor = () => {
+    if (disabled) return 'bg-gray-300'
+    if (status === 'success') return 'bg-green-600'
+    return 'bg-blue-600 hover:bg-blue-700'
   }
 
   return (
     <motion.button
       onClick={handleQuickAdd}
-      disabled={disabled || isAdding}
-      whileTap={{ scale: 0.9 }}
+      disabled={disabled || status !== 'idle'}
+      animate={{
+        scale: status === 'success' ? [1, 1.15, 1] : 1,
+      }}
+      transition={{
+        duration: 0.4,
+        ease: "easeOut"
+      }}
+      whileTap={status === 'idle' ? { scale: 0.9 } : {}}
+      whileHover={status === 'idle' && !disabled ? { scale: 1.1 } : {}}
       className={`
-        p-2 rounded-full
-        ${disabled ? 'bg-gray-300' : 'bg-blue-600 hover:bg-blue-700'}
-        text-white transition-colors
+        w-12 h-12 rounded-full flex items-center justify-center
+        ${getButtonColor()}
+        text-white transition-all duration-200
         disabled:cursor-not-allowed disabled:opacity-50
+        shadow-md hover:shadow-lg
       `}
       title="Agregar al carrito"
     >
-      {isAdding ? (
-        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+      {status === 'loading' ? (
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+      ) : status === 'success' ? (
+        <motion.svg
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M5 13l4 4L19 7"
+          />
+        </motion.svg>
       ) : (
-        <ShoppingCart className="h-5 w-5" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
       )}
     </motion.button>
   )

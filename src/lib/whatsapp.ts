@@ -1,4 +1,4 @@
-import { CartItem, CustomerData, VoucherData } from '@/features/cart/types'
+import { CartItem, CartTotals, CustomerData, VoucherData } from '@/features/cart/types'
 
 // WhatsApp numbers for each store
 export const WHATSAPP_NUMBERS = {
@@ -157,4 +157,43 @@ export function openWhatsAppQuickInquiry(
   const url = buildWhatsAppUrl(phone, message)
 
   window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+// Generate simple cart message (no customer data required)
+export function generateSimpleCartMessage(
+  items: CartItem[],
+  totals: CartTotals
+): string {
+  const lines = [
+    `🛞 *PEDIDO NEUMÁTICOS DEL VALLE*`,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    ``,
+    `📦 *PRODUCTOS:*`,
+    ``
+  ]
+
+  // Add items
+  items.forEach((item, index) => {
+    const tire = generateTireDescription(item)
+    const price = item.sale_price || item.price
+    lines.push(
+      `${index + 1}. *${item.brand} ${item.name}*`,
+      `   ${tire}`,
+      `   Cantidad: ${item.quantity}`,
+      `   ${formatPrice(price)} c/u`,
+      ``
+    )
+  })
+
+  // Add totals
+  lines.push(
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `💰 *TOTAL: ${formatPrice(totals.total)}*`,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    ``,
+    `Hola! Me gustaría cotizar estos productos.`,
+    `¿Tienen disponibilidad?`
+  )
+
+  return lines.join('\n')
 }

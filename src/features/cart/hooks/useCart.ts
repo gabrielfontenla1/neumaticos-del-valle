@@ -10,7 +10,7 @@ import {
   removeFromCart,
   clearCart,
   calculateCartTotals
-} from '../api'
+} from '../api-local' // Using local storage implementation
 
 interface UseCartReturn {
   items: CartItem[]
@@ -22,10 +22,6 @@ interface UseCartReturn {
   removeItem: (itemId: string) => Promise<boolean>
   clearAll: () => Promise<boolean>
   refreshCart: () => Promise<void>
-  isOpen: boolean
-  openCart: () => void
-  closeCart: () => void
-  toggleCart: () => void
 }
 
 const CART_SESSION_KEY = 'ndv_cart_session'
@@ -41,7 +37,6 @@ export function useCart(): UseCartReturn {
     items_count: 0
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [isOpen, setIsOpen] = useState(false)
 
   // Get or create session ID
   const getSessionId = useCallback((): string => {
@@ -92,7 +87,6 @@ export function useCart(): UseCartReturn {
       const success = await addToCart(sessionId, productId, quantity)
       if (success) {
         await loadCart()
-        setIsOpen(true) // Open cart when item is added
       }
       return success
     } catch (error) {
@@ -152,11 +146,6 @@ export function useCart(): UseCartReturn {
     }
   }, [getSessionId, loadCart])
 
-  // Cart UI state
-  const openCart = useCallback(() => setIsOpen(true), [])
-  const closeCart = useCallback(() => setIsOpen(false), [])
-  const toggleCart = useCallback(() => setIsOpen(prev => !prev), [])
-
   return {
     items,
     totals,
@@ -166,10 +155,6 @@ export function useCart(): UseCartReturn {
     updateQuantity,
     removeItem,
     clearAll,
-    refreshCart: loadCart,
-    isOpen,
-    openCart,
-    closeCart,
-    toggleCart
+    refreshCart: loadCart
   }
 }

@@ -13,7 +13,8 @@ export interface Product {
   description?: string
   price: number
   price_list?: number
-  stock: number
+  stock: number  // Keep this for compatibility
+  stock_quantity?: number  // Actual DB field
   image_url?: string
   is_featured?: boolean
   features?: Record<string, any>

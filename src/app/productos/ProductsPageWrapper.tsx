@@ -26,13 +26,13 @@ export default function ProductsPageWrapper({ children }: { children: React.Reac
       <AnimatePresence>
         {isLoading && (
           <motion.div
-            className="fixed inset-0 overflow-auto bg-gray-50"
+            className="fixed inset-0 overflow-auto bg-[#EDEDED]"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             style={{ zIndex: 40 }}
           >
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-[#EDEDED]">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header with title skeleton */}
                 <div className="mb-8">
@@ -47,7 +47,7 @@ export default function ProductsPageWrapper({ children }: { children: React.Reac
                   {/* Stats cards skeleton */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div key={i} className="bg-[#FFFFFF] p-4 rounded-lg border border-gray-200">
                         <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mb-2" />
                         <div className="h-7 w-16 bg-gray-200 rounded animate-pulse" />
                       </div>
@@ -58,7 +58,7 @@ export default function ProductsPageWrapper({ children }: { children: React.Reac
                 <div className="flex flex-col lg:flex-row gap-8">
                   {/* Filters sidebar skeleton */}
                   <div className="lg:w-72">
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-6">
                       {/* Search input skeleton */}
                       <div className="mb-6">
                         <div className="h-5 w-24 bg-gray-200 rounded animate-pulse mb-3" />
@@ -99,9 +99,9 @@ export default function ProductsPageWrapper({ children }: { children: React.Reac
                     {/* Product grid skeleton */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-                        <div key={i} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                          {/* Image skeleton */}
-                          <div className="aspect-square bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer" />
+                        <div key={i} className="bg-[#FFFFFF] border border-gray-200 rounded-lg overflow-hidden">
+                          {/* Image skeleton - cuadrada */}
+                          <div className="w-full aspect-square bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer" />
 
                           {/* Content skeleton */}
                           <div className="p-5">

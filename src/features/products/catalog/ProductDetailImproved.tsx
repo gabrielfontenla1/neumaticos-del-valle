@@ -26,6 +26,28 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
   const [currentIndex, setCurrentIndex] = useState(0)
   const { addItem } = useCart()
 
+  // Function to get clean product name without dimension duplication
+  const getCleanProductName = (item: Product | EquivalentTire) => {
+    if (item.width && item.profile && item.diameter &&
+        item.width > 0 && item.profile > 0 && item.diameter > 0) {
+      const dimensionPattern = `${item.width}/${item.profile}R${item.diameter}`
+      const name = item.name || ''
+
+      // Remove the dimension pattern from the beginning of the name
+      if (name.startsWith(dimensionPattern)) {
+        return name.substring(dimensionPattern.length).trim()
+      }
+
+      // Also try with lowercase 'r'
+      const dimensionPatternLower = `${item.width}/${item.profile}r${item.diameter}`
+      if (name.toLowerCase().startsWith(dimensionPatternLower.toLowerCase())) {
+        return name.substring(dimensionPatternLower.length).trim()
+      }
+    }
+
+    return item.name
+  }
+
   const itemsPerView = 3
   const maxIndex = Math.max(0, equivalentTires.length - itemsPerView)
 
@@ -78,7 +100,7 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#EDEDED]">
         <Navbar />
         <div className="flex justify-center items-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -89,16 +111,16 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#EDEDED]">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
+          <div className="text-center bg-[#FFFFFF] rounded-lg border border-gray-200 p-12">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Producto no encontrado</h2>
-            <p className="text-gray-600 mb-6">El producto que buscas no existe o fue eliminado.</p>
-            <Button asChild>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Producto no encontrado</h2>
+            <p className="text-sm text-gray-600 mb-6">El producto que buscas no existe o fue eliminado.</p>
+            <Button asChild size="sm">
               <Link href="/productos" className="inline-flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3 w-3" />
                 Volver al catálogo
               </Link>
             </Button>
@@ -108,31 +130,38 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
     )
   }
 
-  // Calculate discount (simulated like in products list)
-  const discountPercentage = 25
-  const previousPrice = Math.floor(product.price * (1 + discountPercentage / 100))
-  const imageUrl = product.image_url || '/placeholder-tire.png'
+  // Get price_list from features if available
+  const priceList = product.price_list || (product.features as any)?.price_list || 0
+
+  // Calculate actual discount percentage
+  const discountPercentage = priceList && priceList > product.price
+    ? Math.round(((priceList - product.price) / priceList) * 100)
+    : 0
+
+  const previousPrice = priceList || product.price
+  // Using mock tire image for all products (temporary)
+  const imageUrl = "/tire.webp"
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#EDEDED]">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Breadcrumb */}
-        <div className="mb-6">
-          <Button variant="ghost" size="sm" asChild>
+        <div className="mb-4">
+          <Button variant="ghost" size="sm" asChild className="h-auto py-1 px-2">
             <Link href="/productos" className="inline-flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Volver al catálogo
+              <ArrowLeft className="h-3 w-3" />
+              <span className="text-xs">Volver al catálogo</span>
             </Link>
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Image */}
           <div className="space-y-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-8">
-              <div className="relative aspect-square bg-white">
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+              <div className="relative aspect-square bg-[#FFFFFF]">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
@@ -140,85 +169,87 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                     className="w-full h-full object-contain"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                    <Package className="h-24 w-24 text-gray-300" />
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <Package className="h-20 w-20 text-gray-400" />
                   </div>
                 )}
               </div>
             </div>
 
             {/* Features Cards */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                <Truck className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                <p className="text-xs text-gray-600">Envío gratis</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                <Truck className="h-5 w-5 text-green-600 mx-auto mb-1.5" />
+                <p className="text-[10px] text-gray-600">Envío gratis</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                <ShieldCheck className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-                <p className="text-xs text-gray-600">Garantía oficial</p>
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                <ShieldCheck className="h-5 w-5 text-blue-600 mx-auto mb-1.5" />
+                <p className="text-[10px] text-gray-600">Garantía oficial</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                <Star className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
-                <p className="text-xs text-gray-600">Calidad premium</p>
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                <Star className="h-5 w-5 text-yellow-500 mx-auto mb-1.5" />
+                <p className="text-[10px] text-gray-600">Calidad premium</p>
               </div>
             </div>
           </div>
 
           {/* Right Column - Info */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Main Info Card */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-5 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
               {/* Brand and Stock Status */}
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-500 uppercase tracking-wide">{product.brand}</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] text-gray-500 uppercase tracking-wider">{product.brand}</p>
                 {product.stock > 0 ? (
-                  <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100">
+                  <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-[10px] h-5 px-2">
                     Stock disponible
                   </Badge>
                 ) : (
-                  <Badge variant="destructive">
+                  <Badge variant="destructive" className="text-[10px] h-5 px-2">
                     Sin stock
                   </Badge>
                 )}
               </div>
 
               {/* Product Name */}
-              <h1 className="text-2xl font-normal text-gray-900 mb-4 leading-tight">
-                {product.name}
+              <h1 className="text-lg font-semibold text-gray-900 mb-3 leading-tight">
+                {getCleanProductName(product)}
               </h1>
 
               {/* Rating */}
-              <div className="flex items-center gap-1 mb-6">
-                <span className="text-sm text-gray-900">4.7</span>
+              <div className="flex items-center gap-1 mb-4">
+                <span className="text-xs text-gray-900">4.7</span>
                 <div className="flex items-center text-blue-500">
                   {"★★★★★".split("").map((star, i) => (
-                    <span key={i} className="text-sm">{i < 4 ? "★" : "☆"}</span>
+                    <span key={i} className="text-xs">{i < 4 ? "★" : "☆"}</span>
                   ))}
                 </div>
-                <span className="text-sm text-gray-500 ml-1">({Math.floor(product.stock * 10 + 100)} valoraciones)</span>
+                <span className="text-[11px] text-gray-500 ml-1">({Math.floor(product.stock * 10 + 100)} valoraciones)</span>
               </div>
 
               {/* Price */}
-              <div className="mb-6 pb-6 border-b border-gray-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base text-gray-500 line-through">
-                    ${previousPrice.toLocaleString('es-AR')}
-                  </span>
-                  <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100">
-                    {discountPercentage}% OFF
-                  </Badge>
-                </div>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-normal text-gray-900">
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                {discountPercentage > 0 && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-gray-500 line-through">
+                      ${previousPrice.toLocaleString('es-AR')}
+                    </span>
+                    <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-[10px] h-5 px-2">
+                      {discountPercentage}% OFF
+                    </Badge>
+                  </div>
+                )}
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-2xl font-bold text-gray-900">
                     ${Number(product.price).toLocaleString('es-AR')}
                   </span>
                 </div>
-                <div className="text-base text-gray-700">
+                <div className="text-xs text-gray-700">
                   6 cuotas de ${Math.floor(product.price / 6).toLocaleString('es-AR')}
                 </div>
                 {product.stock > 15 && (
-                  <div className="mt-3">
-                    <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100">
+                  <div className="mt-2">
+                    <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-[10px] h-5 px-2">
                       Llega gratis hoy
                     </Badge>
                   </div>
@@ -226,24 +257,25 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
               </div>
 
               {/* Size Information */}
-              {(product.width && product.profile && product.diameter) && (
-                <div className="mb-6 pb-6 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-3">Medida del neumático</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-2xl font-bold text-gray-900 mb-3">
+              {(product.width && product.profile && product.diameter &&
+                product.width > 0 && product.profile > 0 && product.diameter > 0) && (
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <h3 className="text-xs font-semibold text-gray-900 mb-2">Medida del neumático</h3>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-lg font-bold text-gray-900 mb-2">
                       {product.width}/{product.profile} R{product.diameter}
                     </p>
-                    <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div className="grid grid-cols-3 gap-2 text-[11px]">
                       <div>
-                        <p className="text-gray-500 mb-1">Ancho</p>
+                        <p className="text-gray-500 mb-0.5">Ancho</p>
                         <p className="font-medium text-gray-900">{product.width} mm</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 mb-1">Perfil</p>
+                        <p className="text-gray-500 mb-0.5">Perfil</p>
                         <p className="font-medium text-gray-900">{product.profile}%</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 mb-1">Rodado</p>
+                        <p className="text-gray-500 mb-0.5">Rodado</p>
                         <p className="font-medium text-gray-900">{product.diameter}"</p>
                       </div>
                     </div>
@@ -253,43 +285,43 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
 
               {/* Quantity and Add to Cart */}
               {product.stock > 0 && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-900 mb-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-900 mb-2">
                     Cantidad: {quantity}
                   </label>
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="flex items-center border border-gray-300 rounded-lg">
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => setQuantity(q => Math.max(1, q - 1))}
                         disabled={quantity <= 1}
-                        className="rounded-none rounded-l-lg"
+                        className="rounded-none rounded-l-lg h-8 w-8 p-0"
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3 w-3" />
                       </Button>
-                      <span className="px-6 py-2 text-base font-medium text-gray-900 border-x border-gray-300">
+                      <span className="px-4 py-1 text-sm font-medium text-gray-900 border-x border-gray-300">
                         {quantity}
                       </span>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
                         disabled={quantity >= product.stock}
-                        className="rounded-none rounded-r-lg"
+                        className="rounded-none rounded-r-lg h-8 w-8 p-0"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3 w-3" />
                       </Button>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-[11px] text-gray-500">
                       ({product.stock} disponibles)
                     </span>
                   </div>
 
                   <Button
                     onClick={handleAddToCart}
-                    className="w-full"
-                    size="lg"
+                    className="w-full bg-black hover:bg-gray-800 text-white"
+                    size="sm"
                   >
                     Agregar al carrito
                   </Button>
@@ -299,21 +331,21 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
 
             {/* Description Card */}
             {product.description && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Descripción</h3>
-                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                <h3 className="text-xs font-semibold text-gray-900 mb-2">Descripción</h3>
+                <p className="text-[11px] text-gray-700 leading-relaxed">{product.description}</p>
               </div>
             )}
 
             {/* Features Card */}
             {product.features && Object.keys(product.features).length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Características técnicas</h3>
-                <dl className="space-y-3">
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                <h3 className="text-xs font-semibold text-gray-900 mb-2">Características técnicas</h3>
+                <dl className="space-y-2">
                   {Object.entries(product.features).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
-                      <dt className="text-sm text-gray-600 capitalize">{key.replace(/_/g, ' ')}</dt>
-                      <dd className="text-sm font-medium text-gray-900">{String(value)}</dd>
+                    <div key={key} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
+                      <dt className="text-[11px] text-gray-600 capitalize">{key.replace(/_/g, ' ')}</dt>
+                      <dd className="text-[11px] font-medium text-gray-900">{String(value)}</dd>
                     </div>
                   ))}
                 </dl>
@@ -321,15 +353,15 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
             )}
 
             {/* Category Card */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Categoría:</span>
-                <span className="text-sm font-medium text-gray-900 capitalize">{product.category}</span>
+                <span className="text-[11px] text-gray-600">Categoría:</span>
+                <span className="text-[11px] font-medium text-gray-900 capitalize">{product.category}</span>
               </div>
               {product.model && (
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <span className="text-sm text-gray-600">Modelo:</span>
-                  <span className="text-sm font-medium text-gray-900">{product.model}</span>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                  <span className="text-[11px] text-gray-600">Modelo:</span>
+                  <span className="text-[11px] font-medium text-gray-900">{product.model}</span>
                 </div>
               )}
             </div>
@@ -338,36 +370,36 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
 
         {/* Equivalent Tires Carousel - Full Width */}
         {equivalentTires.length > 0 && (
-          <div className="mt-12 bg-white rounded-lg border border-gray-200 p-8">
-            <div className="flex items-center gap-2 mb-6">
-              <Info className="h-5 w-5 text-blue-600" />
-              <h3 className="text-xl font-semibold text-gray-900">Neumáticos compatibles</h3>
-              <Badge variant="secondary" className="ml-auto">
+          <div className="mt-8 bg-[#FFFFFF] rounded-lg border border-gray-200 p-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="h-4 w-4 text-blue-600" />
+              <h3 className="text-base font-semibold text-gray-900">Neumáticos compatibles</h3>
+              <Badge variant="secondary" className="ml-auto text-[10px] h-5 px-2">
                 {equivalentTires.length} disponibles
               </Badge>
             </div>
 
-            <div className="relative px-12">
+            <div className="relative px-8">
               {/* Navigation Buttons */}
               {equivalentTires.length > itemsPerView && (
                 <>
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-white"
+                    size="sm"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-[#FFFFFF] h-8 w-8 p-0"
                     onClick={handlePrevious}
                     disabled={currentIndex === 0}
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-white"
+                    size="sm"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg bg-[#FFFFFF] h-8 w-8 p-0"
                     onClick={handleNext}
                     disabled={currentIndex >= maxIndex}
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </>
               )}
@@ -398,30 +430,31 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
                         href={`/productos/${tire.id}`}
                         className="block group h-full"
                       >
-                        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 hover:border-blue-600 hover:shadow-lg transition-all h-full flex flex-col">
-                          <div className="aspect-square bg-white rounded-md mb-4 flex items-center justify-center overflow-hidden">
-                            {tire.image_url ? (
-                              <img
-                                src={tire.image_url}
-                                alt={tire.name}
-                                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                              />
-                            ) : (
-                              <Package className="h-20 w-20 text-gray-300" />
-                            )}
+                        <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 hover:border-gray-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out h-full flex flex-col shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+                          <div className="aspect-square bg-[#FFFFFF] rounded-md mb-3 flex items-center justify-center overflow-hidden">
+                            {/* Using mock tire image for all products (temporary) */}
+                            <img
+                              src="/tire.webp"
+                              alt={tire.name}
+                              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
+                              loading="lazy"
+                            />
                           </div>
                           <div className="flex-1 flex flex-col">
-                            <p className="text-base font-medium text-gray-900 line-clamp-2 mb-2">
-                              {tire.name}
+                            <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
+                              {getCleanProductName(tire)}
                             </p>
-                            <p className="text-sm text-gray-500 mb-3">
-                              {tire.width}/{tire.profile} R{tire.diameter}
-                            </p>
-                            <p className="text-xl font-bold text-gray-900 mb-3">
+                            {tire.width && tire.profile && tire.diameter &&
+                             tire.width > 0 && tire.profile > 0 && tire.diameter > 0 && (
+                              <p className="text-[11px] text-gray-500 mb-2">
+                                {tire.width}/{tire.profile} R{tire.diameter}
+                              </p>
+                            )}
+                            <p className="text-lg font-bold text-gray-900 mb-2">
                               ${Number(tire.price).toLocaleString('es-AR')}
                             </p>
                             {Math.abs(tire.differencePercent) < 1 && (
-                              <Badge variant="secondary" className="text-xs bg-green-50 text-green-600 w-fit">
+                              <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-600 w-fit h-5 px-2">
                                 Equivalencia exacta
                               </Badge>
                             )}
@@ -435,15 +468,15 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
 
               {/* Dots Indicator */}
               {equivalentTires.length > itemsPerView && (
-                <div className="flex justify-center gap-2 mt-8">
+                <div className="flex justify-center gap-1.5 mt-6">
                   {Array.from({ length: maxIndex + 1 }).map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentIndex(index)}
-                      className={`h-2 rounded-full transition-all ${
+                      className={`h-1.5 rounded-full transition-all ${
                         index === currentIndex
-                          ? 'w-8 bg-blue-600'
-                          : 'w-2 bg-gray-300 hover:bg-gray-400'
+                          ? 'w-6 bg-blue-600'
+                          : 'w-1.5 bg-gray-300 hover:bg-gray-400'
                       }`}
                     />
                   ))}
@@ -451,26 +484,26 @@ export default function ProductDetailImproved({ productId }: ProductDetailProps)
               )}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+            <div className="mt-6 pt-4 border-t border-gray-200 text-center">
               <Link
                 href="/equivalencias"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
               >
                 Ver calculadora de equivalencias
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3 w-3" />
               </Link>
             </div>
           </div>
         )}
 
         {loadingEquivalents && (
-          <div className="mt-12 bg-white rounded-lg border border-gray-200 p-8">
+          <div className="mt-8 bg-[#FFFFFF] rounded-lg border border-gray-200 p-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
             <div className="flex items-center gap-2 mb-4">
-              <Info className="h-5 w-5 text-blue-600" />
-              <h3 className="text-xl font-semibold text-gray-900">Neumáticos compatibles</h3>
+              <Info className="h-4 w-4 text-blue-600" />
+              <h3 className="text-base font-semibold text-gray-900">Neumáticos compatibles</h3>
             </div>
-            <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="flex justify-center items-center h-24">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
           </div>
         )}

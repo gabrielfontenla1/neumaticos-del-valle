@@ -4,6 +4,8 @@ import "./globals.css";
 import { CartProvider } from '@/providers/CartProvider';
 import { ConditionalLayout } from '@/components/ConditionalNav';
 import { ThemeManager } from '@/components/ThemeManager';
+import { SessionProvider } from '@/features/auth/components/SessionProvider';
+import { WhatsAppBubble } from '@/components/WhatsAppBubble';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -70,11 +72,14 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeManager />
-        <CartProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
-        </CartProvider>
+        <SessionProvider>
+          <CartProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+            <WhatsAppBubble />
+          </CartProvider>
+        </SessionProvider>
       </body>
     </html>
   );

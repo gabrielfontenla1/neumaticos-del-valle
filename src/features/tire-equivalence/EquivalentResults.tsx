@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { AlertTriangle, Package, Info, TrendingUp, CheckCircle, ChevronRight } from 'lucide-react'
+import { AlertTriangle, Package, Info, TrendingUp, CheckCircle, ChevronRight, ArrowRight } from 'lucide-react'
 import { EquivalenceResult } from './types'
 import { formatTireSize } from './api'
 
@@ -20,19 +20,22 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-[#FFC700]/10 border-l-4 border-[#FFC700] rounded-xl p-6 md:p-8"
       >
-        <div className="flex items-start gap-4">
-          <AlertTriangle className="w-7 h-7 text-[#FFC700] flex-shrink-0 mt-1" strokeWidth={2} />
-          <div>
-            <h3 className="font-black text-white text-lg mb-3">
-              Advertencia de Seguridad Importante
-            </h3>
-            <p className="text-sm text-gray-300 leading-relaxed">
-              Aunque estas medidas son técnicamente equivalentes según estándares de la industria,
-              <strong className="font-bold text-white"> recomendamos consultar el manual de tu vehículo</strong> y/o
-              a un profesional antes de realizar la compra. La seguridad de tu vehículo es nuestra prioridad.
-            </p>
+        <div className="bg-[#FEE004]/10 backdrop-blur-lg border-2 border-[#FEE004]/30 rounded-2xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-[#FEE004]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-6 w-6 text-[#FEE004]" strokeWidth={2.5} />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-lg mb-2">
+                Advertencia de Seguridad Importante
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Aunque estas medidas son técnicamente equivalentes según estándares de la industria,
+                <strong className="font-bold text-white"> recomendamos consultar el manual de tu vehículo</strong> y/o
+                a un profesional antes de realizar la compra. La seguridad de tu vehículo es nuestra prioridad.
+              </p>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -42,28 +45,30 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="bg-gray-900 border border-gray-800 rounded-2xl p-6 md:p-8"
+        className="bg-white/5 backdrop-blur-lg border-2 border-white/10 rounded-2xl p-6 md:p-8 hover:border-[#FEE004]/30 transition-all duration-300"
       >
-        <h3 className="font-black text-white text-xl mb-6 flex items-center gap-2">
-          <Info className="w-6 h-6 text-[#FFC700]" strokeWidth={2} />
+        <h3 className="font-bold text-white text-2xl mb-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#FEE004]/10 rounded-xl flex items-center justify-center">
+            <Info className="w-6 h-6 text-[#FEE004]" strokeWidth={2.5} />
+          </div>
           Resumen de Búsqueda
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl p-5 border-2 border-white/10">
             <p className="text-gray-400 font-medium text-sm mb-2">Medida Original:</p>
-            <p className="text-white font-black text-2xl font-mono">
+            <p className="text-white font-bold text-2xl font-mono">
               {formatTireSize(originalSize)}
             </p>
           </div>
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl p-5 border-2 border-white/10">
             <p className="text-gray-400 font-medium text-sm mb-2">Diámetro de Referencia:</p>
-            <p className="text-white font-black text-2xl font-mono">
+            <p className="text-white font-bold text-2xl font-mono">
               {referenceDiameter.toFixed(2)} mm
             </p>
           </div>
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl p-5 border-2 border-white/10">
             <p className="text-gray-400 font-medium text-sm mb-2">Rango de Tolerancia:</p>
-            <p className="text-[#FFC700] font-black text-2xl font-mono">
+            <p className="text-[#FEE004] font-bold text-2xl font-mono">
               ±{toleranceRange.tolerance}%
             </p>
             <p className="text-gray-500 text-xs mt-2 font-mono">
@@ -78,9 +83,9 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="bg-gray-900 rounded-2xl border border-gray-800 p-6 md:p-8"
+        className="bg-white/5 backdrop-blur-lg rounded-2xl border-2 border-white/10 p-6 md:p-8 hover:border-[#FEE004]/30 transition-all duration-300"
       >
-        <h3 className="text-3xl font-black text-white mb-2">
+        <h3 className="text-3xl font-bold text-white mb-2">
           {totalFound === 0 ? (
             'No se encontraron cubiertas equivalentes'
           ) : (
@@ -90,8 +95,8 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
 
         {totalFound === 0 && (
           <div className="mt-8 text-center py-16">
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Package className="w-10 h-10 text-gray-600" strokeWidth={2} />
+            <div className="w-20 h-20 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-white/10">
+              <Package className="w-10 h-10 text-gray-400" strokeWidth={2} />
             </div>
             <p className="text-gray-300 mb-3 text-lg">
               No hay productos en nuestro catálogo que sean equivalentes a la medida {formatTireSize(originalSize)}.
@@ -99,12 +104,11 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
             <p className="text-sm text-gray-500 mb-8">
               Te recomendamos buscar directamente por la medida original o contactarnos para más opciones.
             </p>
-            <Link
-              href="/productos"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#FFC700] hover:bg-[#FFD633] text-black font-bold rounded-xl transition-all shadow-lg"
-            >
-              Ver Catálogo Completo
-              <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+            <Link href="/productos">
+              <button className="bg-[#FEE004] hover:bg-[#FEE004]/90 text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-2xl shadow-[#FEE004]/20 inline-flex items-center gap-2">
+                Ver Catálogo Completo
+                <ArrowRight className="w-5 h-5" strokeWidth={2.5} />
+              </button>
             </Link>
           </div>
         )}
@@ -118,13 +122,16 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-start gap-3"
           >
-            <TrendingUp className="w-5 h-5 text-[#FFC700] flex-shrink-0 mt-0.5" strokeWidth={2} />
-            <p className="text-sm text-gray-300 leading-relaxed">
-              Las cubiertas están ordenadas por proximidad a tu medida original.
-              Las diferencias mostradas están dentro del rango de tolerancia seguro.
-            </p>
+            <div className="bg-white/5 backdrop-blur-md border-2 border-white/10 rounded-2xl p-5 flex items-start gap-4">
+              <div className="w-10 h-10 bg-[#FEE004]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="h-5 w-5 text-[#FEE004]" strokeWidth={2.5} />
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Las cubiertas están ordenadas por proximidad a tu medida original.
+                Las diferencias mostradas están dentro del rango de tolerancia seguro.
+              </p>
+            </div>
           </motion.div>
 
           {/* Product Cards */}
@@ -136,25 +143,18 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
               >
-                <Link
-                  href={`/productos/${tire.id}`}
-                  className="block group"
-                >
-                  <div className="bg-gray-900 rounded-2xl border-2 border-gray-800 overflow-hidden hover:border-[#FFC700] transition-all duration-300 hover:shadow-2xl hover:shadow-[#FFC700]/10">
+                <Link href={`/productos/${tire.id}`} className="block group">
+                  <div className="bg-white/5 backdrop-blur-lg border-2 border-white/10 overflow-hidden hover:border-[#FEE004] transition-all duration-300 hover:shadow-2xl hover:shadow-[#FEE004]/10 rounded-2xl">
                     <div className="flex flex-col sm:flex-row gap-6 p-6 md:p-8">
                       {/* Image */}
-                      <div className="w-full sm:w-64 h-64 bg-gray-800 relative flex-shrink-0 rounded-xl overflow-hidden border border-gray-700">
-                        {tire.image_url ? (
-                          <img
-                            src={tire.image_url}
-                            alt={tire.name}
-                            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-20 w-20 text-gray-600" strokeWidth={1.5} />
-                          </div>
-                        )}
+                      <div className="w-full sm:w-64 h-64 bg-white/5 relative flex-shrink-0 rounded-xl overflow-hidden border-2 border-white/10">
+                        {/* Using mock tire image for all products (temporary) */}
+                        <img
+                          src="/tire.webp"
+                          alt={tire.name}
+                          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                          loading="lazy"
+                        />
                       </div>
 
                       {/* Content */}
@@ -162,7 +162,7 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                         {/* Top Section */}
                         <div>
                           {/* Title */}
-                          <h3 className="text-2xl font-bold text-white mb-3 line-clamp-2 leading-tight group-hover:text-[#FFC700] transition-colors">
+                          <h3 className="text-2xl font-bold text-white mb-3 line-clamp-2 leading-tight group-hover:text-[#FEE004] transition-colors">
                             {tire.name}
                           </h3>
 
@@ -172,36 +172,36 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                           </p>
 
                           {/* Size Info */}
-                          <div className="bg-gray-800 rounded-xl p-5 mb-6 border border-gray-700">
+                          <div className="bg-white/5 backdrop-blur-md rounded-xl p-5 mb-6 border-2 border-white/10">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm">
                               <div>
                                 <p className="text-gray-400 mb-2 font-medium">Medida:</p>
-                                <p className="font-mono font-black text-white text-lg">
+                                <p className="font-mono font-bold text-white text-lg">
                                   {tire.width}/{tire.profile} R{tire.diameter}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-gray-400 mb-2 font-medium">Diámetro:</p>
-                                <p className="font-mono font-black text-white text-lg">
+                                <p className="font-mono font-bold text-white text-lg">
                                   {tire.calculatedDiameter.toFixed(2)} mm
                                 </p>
                               </div>
                               <div>
                                 <p className="text-gray-400 mb-2 font-medium">Diferencia:</p>
-                                <p className={`font-mono font-black text-lg ${
+                                <p className={`font-mono font-bold text-lg ${
                                   Math.abs(tire.differencePercent) < 1
                                     ? 'text-green-400'
-                                    : 'text-[#FFC700]'
+                                    : 'text-[#FEE004]'
                                 }`}>
                                   {tire.difference > 0 ? '+' : ''}{tire.difference.toFixed(2)} mm
                                 </p>
                               </div>
                               <div>
                                 <p className="text-gray-400 mb-2 font-medium">Variación:</p>
-                                <p className={`font-mono font-black text-lg ${
+                                <p className={`font-mono font-bold text-lg ${
                                   Math.abs(tire.differencePercent) < 1
                                     ? 'text-green-400'
-                                    : 'text-[#FFC700]'
+                                    : 'text-[#FEE004]'
                                 }`}>
                                   {tire.differencePercent > 0 ? '+' : ''}{tire.differencePercent.toFixed(2)}%
                                 </p>
@@ -214,7 +214,7 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                         <div>
                           {/* Price */}
                           <div className="flex items-baseline gap-3 mb-4">
-                            <span className="text-5xl font-black text-white">
+                            <span className="text-5xl font-bold text-white">
                               ${Number(tire.price).toLocaleString('es-AR')}
                             </span>
                           </div>
@@ -222,25 +222,25 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                           {/* Stock & Match */}
                           <div className="flex flex-wrap items-center gap-3">
                             {tire.stock > 0 ? (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-lg border border-green-500/30">
+                              <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 backdrop-blur-md border-2 border-green-500/30 text-green-400 rounded-lg">
                                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                <span className="text-sm text-green-400 font-bold">
+                                <span className="text-sm font-bold">
                                   En stock ({tire.stock} disponibles)
                                 </span>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 rounded-lg border border-red-500/30">
+                              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 backdrop-blur-md border-2 border-red-500/30 text-red-400 rounded-lg">
                                 <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                                <span className="text-sm text-red-400 font-bold">
+                                <span className="text-sm font-bold">
                                   Sin stock
                                 </span>
                               </div>
                             )}
 
                             {Math.abs(tire.differencePercent) < 1 && (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-[#FFC700]/10 rounded-lg border border-[#FFC700]/30">
-                                <CheckCircle className="w-4 h-4 text-[#FFC700]" strokeWidth={2.5} />
-                                <span className="text-sm font-bold text-[#FFC700]">
+                              <div className="flex items-center gap-2 px-4 py-2 bg-[#FEE004]/10 backdrop-blur-md border-2 border-[#FEE004]/30 text-[#FEE004] rounded-lg">
+                                <CheckCircle className="w-4 h-4" strokeWidth={2.5} />
+                                <span className="text-sm font-bold">
                                   Equivalencia Exacta
                                 </span>
                               </div>

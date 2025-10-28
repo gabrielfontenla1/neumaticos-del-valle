@@ -2,8 +2,6 @@
 
 import { usePathname } from 'next/navigation'
 import { Navbar } from './Navbar'
-import { CartButton, MobileCartBar } from './CartButton'
-import { QuickCheckout } from '@/features/checkout/components/QuickCheckout'
 import { ReactNode } from 'react'
 
 interface ConditionalLayoutProps {
@@ -26,9 +24,6 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       <main className="pt-16">
         {children}
       </main>
-      <QuickCheckout />
-      <CartButton />
-      <MobileCartBar />
     </>
   )
 }

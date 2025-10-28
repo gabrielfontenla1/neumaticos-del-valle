@@ -221,14 +221,13 @@ export function QuickCheckout() {
                           className="bg-gray-50 rounded-lg p-4"
                         >
                           <div className="flex gap-4">
-                            {/* Product image */}
-                            {item.image_url && (
-                              <img
-                                src={item.image_url}
-                                alt={item.name}
-                                className="w-20 h-20 object-cover rounded-lg"
-                              />
-                            )}
+                            {/* Product image - Using mock tire image for all products (temporary) */}
+                            <img
+                              src="/tire.webp"
+                              alt={item.name}
+                              className="w-20 h-20 object-contain rounded-lg"
+                              loading="lazy"
+                            />
 
                             {/* Product details */}
                             <div className="flex-1">
