@@ -168,34 +168,34 @@ export function TeslaHomePage() {
           <CarouselContent>
             {/* Slide 1 - Ofertas */}
             <CarouselItem key="ofertas">
-              <div className="relative bg-white h-[calc(100vh-4rem)]">
-                <div className="relative container mx-auto px-4 h-full">
-                  <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center h-full">
-                    {/* Left Column - Sales Copy */}
-                    <div className="text-left space-y-6 lg:space-y-8 max-w-xl flex flex-col justify-center">
-                      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-black leading-[1.1] font-helvetica">
+              <div className="relative bg-white h-[calc(100vh-4rem)] min-h-[600px] overflow-hidden">
+                <div className="relative lg:static lg:container lg:mx-auto lg:px-4 h-full">
+                  <div className="relative lg:grid lg:grid-cols-2 gap-6 lg:gap-12 items-center h-full py-8 lg:py-0">
+                    {/* Left Column - Sales Copy - Above background on mobile */}
+                    <div className="text-center lg:text-left space-y-4 sm:space-y-6 lg:space-y-8 max-w-xl mx-auto lg:mx-0 flex flex-col justify-center h-full lg:h-auto order-2 lg:order-1 relative z-30 px-4 lg:px-0">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white lg:text-black leading-[1.1] font-helvetica">
                         Seguridad y Performance
                         <br />
-                        <span className="inline-block bg-black text-white px-4 py-1 mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Instalados Hoy</span>
+                        <span className="inline-block bg-white lg:bg-black text-black lg:text-white px-2 sm:px-4 py-1 mt-2 text-3xl sm:text-4xl md:text-5xl lg:text-7xl">Instalados Hoy</span>
                       </h1>
 
-                      <p className="text-base sm:text-lg md:text-xl text-[#333333] max-w-lg leading-relaxed font-montserrat font-normal">
+                      <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 lg:text-[#333333] max-w-lg leading-relaxed font-montserrat font-normal">
                         Encontrá el neumático Pirelli exacto para tu vehículo. Te asesoramos en el acto y lo instalamos con precisión milimétrica.
                       </p>
 
                       {/* CTAs */}
-                      <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                         <Link
                           href="/productos"
-                          className="group px-10 py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                          className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
                         >
                           <span>Ver Catálogo Pirelli</span>
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
 
                         <Link
                           href="/turnos"
-                          className="group px-10 py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                          className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
                         >
                           <Calendar className="w-5 h-5" />
                           <span>Pedir Asesoramiento</span>
@@ -203,19 +203,22 @@ export function TeslaHomePage() {
                       </div>
                     </div>
 
-                    {/* Right Column - Infinite Scroll Image Grid */}
-                    <div className="hidden lg:flex relative overflow-hidden h-full">
-                      {/* Top fade gradient */}
-                      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none" />
+                    {/* Right Column - Infinite Scroll Image Grid - Full width and height background on mobile */}
+                    <div className="absolute lg:relative inset-0 lg:inset-auto overflow-hidden h-full order-1 lg:order-2 flex">
+                      {/* Dark overlay for mobile - Full width */}
+                      <div className="absolute left-0 right-0 top-0 bottom-0 bg-black/50 lg:hidden z-20 pointer-events-none" />
 
-                      {/* Bottom fade gradient */}
-                      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
+                      {/* Top fade gradient - Black on mobile, white on desktop */}
+                      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black lg:from-white to-transparent z-10 pointer-events-none" />
 
-                      <div className="grid grid-cols-2 gap-6 w-full h-full">
+                      {/* Bottom fade gradient - Black on mobile, white on desktop */}
+                      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black lg:from-white to-transparent z-10 pointer-events-none" />
+
+                      <div className="grid grid-cols-2 lg:grid-cols-2 gap-2 lg:gap-6 w-full h-full">
                         {/* First Column - Scrolls UP infinitely */}
                         <div className="relative overflow-hidden">
                           <motion.div
-                            className="flex flex-col gap-4"
+                            className="flex flex-col gap-2 lg:gap-4"
                             animate={{
                               y: [0, "-50%"]
                             }}
@@ -244,13 +247,13 @@ export function TeslaHomePage() {
                               '/Scorpion-Zero-1505470088294.webp',
                               '/Scorpion-Zero-All-Season-1505470086399.webp'
                             ].map((src, idx) => (
-                              <div key={`col1-${idx}`} className="relative h-80 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 p-4">
+                              <div key={`col1-${idx}`} className="relative aspect-square lg:aspect-auto lg:h-80 rounded-xl lg:rounded-2xl overflow-hidden lg:bg-gray-100 flex-shrink-0 p-2 lg:p-4">
                                 <Image
                                   src={src}
                                   alt="Neumático Pirelli"
                                   width={280}
-                                  height={320}
-                                  sizes="(max-width: 1024px) 0vw, 25vw"
+                                  height={280}
+                                  sizes="(max-width: 1024px) 45vw, 25vw"
                                   quality={75}
                                   priority={idx < 3}
                                   className="object-contain"
@@ -263,7 +266,7 @@ export function TeslaHomePage() {
                         {/* Second Column - Scrolls DOWN infinitely */}
                         <div className="relative overflow-hidden">
                           <motion.div
-                            className="flex flex-col gap-4"
+                            className="flex flex-col gap-2 lg:gap-4"
                             animate={{
                               y: ["-50%", 0]
                             }}
@@ -293,13 +296,13 @@ export function TeslaHomePage() {
                               '/Pzero-vecchio-1505470066413.webp',
                               '/Chrono-1505470062195.webp'
                             ].map((src, idx) => (
-                              <div key={`col2-${idx}`} className="relative h-80 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 p-4">
+                              <div key={`col2-${idx}`} className="relative aspect-square lg:aspect-auto lg:h-80 rounded-xl lg:rounded-2xl overflow-hidden lg:bg-gray-100 flex-shrink-0 p-2 lg:p-4">
                                 <Image
                                   src={src}
                                   alt="Neumático Pirelli"
                                   width={280}
-                                  height={320}
-                                  sizes="(max-width: 1024px) 0vw, 25vw"
+                                  height={280}
+                                  sizes="(max-width: 1024px) 45vw, 25vw"
                                   quality={75}
                                   priority={idx < 3}
                                   className="object-contain"
@@ -318,18 +321,109 @@ export function TeslaHomePage() {
 
             {/* Slide 2 - Cambio de Aceite y Filtros */}
             <CarouselItem key="aceite">
-              <div className="relative bg-white h-[calc(100vh-4rem)] overflow-hidden">
-                <div className="relative h-full">
+              <div className="relative bg-[#F7F7F7] h-[calc(100vh-4rem)] min-h-[600px] overflow-hidden">
+                <div className="relative lg:container lg:mx-auto lg:px-4 h-full">
 
-                  {/* Center Content - Text and CTAs - CENTRO ABSOLUTO */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center space-y-4 lg:space-y-6 w-full max-w-4xl px-4">
-                    <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-black leading-[1.1] font-helvetica">
+                  {/* Mobile Background Container - Full Width on Mobile */}
+                  <div className="absolute lg:relative inset-0 lg:inset-auto h-full">
+                    {/* Dark overlay for mobile */}
+                    <div className="absolute left-0 right-0 top-0 bottom-0 bg-black/50 lg:hidden z-20 pointer-events-none" />
+
+                    {/* Top gradient fade - BLACK - Mobile Only */}
+                    <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none lg:hidden" />
+
+                    {/* Bottom gradient fade - BLACK - Mobile Only */}
+                    <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none lg:hidden" />
+
+                    {/* 2-Column Grid for Mobile Oil Products */}
+                    <div className="grid grid-cols-2 lg:hidden gap-2 h-full p-4">
+                      {/* Column 1 - Scrolls UP on Mobile */}
+                      <div className="relative overflow-hidden h-full">
+                        <motion.div
+                          className="flex flex-col gap-2"
+                          animate={{ y: [0, "-50%"] }}
+                          transition={{
+                            duration: 30,
+                            repeat: Infinity,
+                            ease: "linear",
+                            repeatType: "loop"
+                          }}
+                        >
+                          {[
+                            '/helix-hx2-10w-30.jpeg',
+                            '/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg',
+                            '/4l-helix-hx3-15w-40-high.jpeg',
+                            '/4l-helix-hx5-10w-30.jpeg',
+                            '/helix-hx2-10w-30.jpeg',
+                            '/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg',
+                            '/4l-helix-hx3-15w-40-high.jpeg',
+                            '/4l-helix-hx5-10w-30.jpeg'
+                          ].map((src, idx) => (
+                            <div key={`mobile-oil-col1-${idx}`} className="relative aspect-square rounded-xl overflow-hidden flex-shrink-0 p-2">
+                              <Image
+                                src={src}
+                                alt="Shell Helix Oil"
+                                width={200}
+                                height={200}
+                                sizes="45vw"
+                                quality={75}
+                                priority={idx < 2}
+                                className="object-contain"
+                              />
+                            </div>
+                          ))}
+                        </motion.div>
+                      </div>
+
+                      {/* Column 2 - Scrolls DOWN on Mobile */}
+                      <div className="relative overflow-hidden h-full">
+                        <motion.div
+                          className="flex flex-col gap-2"
+                          animate={{ y: ["-50%", 0] }}
+                          transition={{
+                            duration: 35,
+                            repeat: Infinity,
+                            ease: "linear",
+                            repeatType: "loop"
+                          }}
+                        >
+                          {[
+                            '/4l-helix-hx5-10w-30.jpeg',
+                            '/4l-helix-hx3-15w-40-high.jpeg',
+                            '/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg',
+                            '/helix-hx2-10w-30.jpeg',
+                            '/4l-helix-hx5-10w-30.jpeg',
+                            '/4l-helix-hx3-15w-40-high.jpeg',
+                            '/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg',
+                            '/helix-hx2-10w-30.jpeg'
+                          ].map((src, idx) => (
+                            <div key={`mobile-oil-col2-${idx}`} className="relative aspect-square rounded-xl overflow-hidden flex-shrink-0 p-2">
+                              <Image
+                                src={src}
+                                alt="Shell Helix Oil"
+                                width={200}
+                                height={200}
+                                sizes="45vw"
+                                quality={75}
+                                priority={idx < 2}
+                                className="object-contain"
+                              />
+                            </div>
+                          ))}
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Center Content - Text and CTAs - Above Mobile Background */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 text-center space-y-3 sm:space-y-4 lg:space-y-6 w-full max-w-4xl px-4">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white lg:text-black leading-[1.1] font-helvetica">
                       Protegé tu Motor
                       <br />
-                      <span className="inline-block bg-black text-white px-4 py-1 mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Sin Perder Tiempo</span>
+                      <span className="inline-block bg-black lg:bg-black text-white px-2 sm:px-4 py-1 mt-2 text-3xl sm:text-4xl md:text-5xl lg:text-7xl">Sin Perder Tiempo</span>
                     </h2>
 
-                    <p className="text-base sm:text-lg md:text-xl text-[#333333] leading-relaxed max-w-2xl mx-auto font-montserrat font-normal">
+                    <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white lg:text-[#333333] leading-relaxed max-w-2xl mx-auto font-montserrat font-normal">
                       Maximizá la vida útil de tu auto con la línea premium Shell Helix. Servicio profesional en minutos.
                     </p>
 
@@ -337,16 +431,16 @@ export function TeslaHomePage() {
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Link
                         href="/turnos"
-                        className="group px-10 py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                        className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
                       >
-                        <Calendar className="w-5 h-5" />
+                        <Calendar className="w-4 sm:w-5 h-4 sm:h-5" />
                         <span>Reservar Turno Ahora</span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
                       </Link>
 
                       <Link
                         href="/aceites"
-                        className="group px-10 py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                        className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-white border-2 border-white lg:border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
                       >
                         <Droplet className="w-5 h-5" />
                         <span>Ver Aceites y Filtros</span>
@@ -354,16 +448,16 @@ export function TeslaHomePage() {
                     </div>
                   </div>
 
-                  {/* Top Carousel */}
-                  <div className="absolute top-[15%] md:top-[12%] lg:top-[10%] left-0 right-0 h-32 md:h-40 lg:h-48 w-full max-w-7xl mx-auto px-4 z-10">
+                  {/* Top Carousel - Desktop Only */}
+                  <div className="hidden lg:block absolute top-[10%] sm:top-[12%] md:top-[12%] lg:top-[10%] left-0 right-0 h-24 sm:h-32 md:h-40 lg:h-48 w-full max-w-7xl mx-auto px-2 sm:px-4 z-10">
                     {/* Left fade gradient */}
-                    <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-[#F7F7F7] to-transparent z-10 pointer-events-none" />
 
                     {/* Right fade gradient */}
-                    <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-[#F7F7F7] to-transparent z-10 pointer-events-none" />
 
                     {/* Top Row - Scrolls RIGHT infinitely */}
-                    <div className="relative overflow-hidden h-32 md:h-40 lg:h-48">
+                    <div className="relative overflow-hidden h-24 sm:h-32 md:h-40 lg:h-48">
                       <motion.div
                         className="flex gap-4"
                         initial={{ x: 0 }}
@@ -376,118 +470,118 @@ export function TeslaHomePage() {
                         }}
                       >
                         {/* Original set */}
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/helix-hx2-10w-30.jpeg"
                             alt="Shell Helix HX2 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
+                          <Image
+                            src="/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg"
+                            alt="Shell Helix Ultra Pro AML 5W-30"
+                            width={192}
+                            height={192}
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx3-15w-40-high.jpeg"
                             alt="Shell Helix HX3 15W-40"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx5-10w-30.jpeg"
                             alt="Shell Helix HX5 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
-                          />
-                        </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
-                          <Image
-                            src="/shell-helix-hx7-10w-40-5l.jpeg"
-                            alt="Shell Helix HX7 10W-40"
-                            width={150}
-                            height={150}
-                            sizes="20vw"
-                            quality={75}
-                            loading="lazy"
-                            className="object-contain scale-90"
                           />
                         </div>
 
                         {/* Duplicate set for seamless loop */}
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/helix-hx2-10w-30.jpeg"
                             alt="Shell Helix HX2 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
+                          <Image
+                            src="/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg"
+                            alt="Shell Helix Ultra Pro AML 5W-30"
+                            width={192}
+                            height={192}
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx3-15w-40-high.jpeg"
                             alt="Shell Helix HX3 15W-40"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx5-10w-30.jpeg"
                             alt="Shell Helix HX5 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
-                          />
-                        </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
-                          <Image
-                            src="/shell-helix-hx7-10w-40-5l.jpeg"
-                            alt="Shell Helix HX7 10W-40"
-                            width={150}
-                            height={150}
-                            sizes="20vw"
-                            quality={75}
-                            loading="lazy"
-                            className="object-contain scale-90"
                           />
                         </div>
                       </motion.div>
                     </div>
                   </div>
 
-                  {/* Bottom Carousel */}
-                  <div className="absolute bottom-[15%] md:bottom-[12%] lg:bottom-[10%] left-0 right-0 h-32 md:h-40 lg:h-48 w-full max-w-7xl mx-auto px-4 z-10">
+                  {/* Bottom Carousel - Desktop Only */}
+                  <div className="hidden lg:block absolute bottom-[10%] sm:bottom-[12%] md:bottom-[12%] lg:bottom-[10%] left-0 right-0 h-24 sm:h-32 md:h-40 lg:h-48 w-full max-w-7xl mx-auto px-2 sm:px-4 z-10">
                     {/* Left fade gradient */}
-                    <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-[#F7F7F7] to-transparent z-10 pointer-events-none" />
 
                     {/* Right fade gradient */}
-                    <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-[#F7F7F7] to-transparent z-10 pointer-events-none" />
 
                     {/* Bottom Row - Scrolls LEFT infinitely */}
-                    <div className="relative overflow-hidden h-32 md:h-40 lg:h-48">
+                    <div className="relative overflow-hidden h-24 sm:h-32 md:h-40 lg:h-48">
                       <motion.div
                         className="flex gap-4"
                         initial={{ x: "-50%" }}
@@ -500,49 +594,49 @@ export function TeslaHomePage() {
                         }}
                       >
                         {/* Original set */}
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx5-10w-30.jpeg"
                             alt="Shell Helix HX5 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
-                            src="/shell-helix-hx7-10w-40-5l.jpeg"
-                            alt="Shell Helix HX7 10W-40"
-                            width={150}
-                            height={150}
-                            sizes="20vw"
+                            src="/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg"
+                            alt="Shell Helix Ultra Pro AML 5W-30"
+                            width={192}
+                            height={192}
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
-                            className="object-contain scale-90"
+                            className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/helix-hx2-10w-30.jpeg"
                             alt="Shell Helix HX2 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx3-15w-40-high.jpeg"
                             alt="Shell Helix HX3 15W-40"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
@@ -550,49 +644,49 @@ export function TeslaHomePage() {
                         </div>
 
                         {/* Duplicate set for seamless loop */}
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx5-10w-30.jpeg"
                             alt="Shell Helix HX5 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
-                            src="/shell-helix-hx7-10w-40-5l.jpeg"
-                            alt="Shell Helix HX7 10W-40"
-                            width={150}
-                            height={150}
-                            sizes="20vw"
+                            src="/4l-helix-ultra-pro-aml-5w-30-high-version2.jpeg"
+                            alt="Shell Helix Ultra Pro AML 5W-30"
+                            width={192}
+                            height={192}
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
-                            className="object-contain scale-90"
+                            className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/helix-hx2-10w-30.jpeg"
                             alt="Shell Helix HX2 10W-30"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
                           />
                         </div>
-                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                        <div className="relative h-24 sm:h-32 md:h-40 lg:h-48 w-24 sm:w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-2 sm:p-3 md:p-4">
                           <Image
                             src="/4l-helix-hx3-15w-40-high.jpeg"
                             alt="Shell Helix HX3 15W-40"
                             width={192}
                             height={192}
-                            sizes="20vw"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                             quality={75}
                             loading="lazy"
                             className="object-contain"
@@ -607,10 +701,10 @@ export function TeslaHomePage() {
 
             {/* Slide 3 - Sucursales */}
             <CarouselItem key="sucursales">
-              <div className="relative bg-[#F9F9F9] min-h-[calc(100vh-4rem)]">
+              <div className="relative bg-[#F9F9F9] h-[calc(100vh-4rem)] min-h-[600px]">
                 {/* Clean Background - No Distracting Images */}
-                <div className="absolute inset-0 flex items-center justify-center gap-2">
-                  {/* Column 1 - Scrolls UP */}
+                <div className="absolute inset-0 flex items-center justify-center gap-1 sm:gap-2">
+                  {/* Column 1 - Scrolls UP - Mobile: Show */}
                   <div className="relative overflow-hidden flex-1 h-full">
                     <motion.div
                       className="flex flex-col gap-2"
@@ -641,7 +735,7 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 2 - Scrolls DOWN */}
+                  {/* Column 2 - Scrolls DOWN - Mobile: Show */}
                   <div className="relative overflow-hidden flex-1 h-full">
                     <motion.div
                       className="flex flex-col gap-2"
@@ -672,8 +766,8 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 3 - Scrolls UP */}
-                  <div className="relative overflow-hidden flex-1 h-full">
+                  {/* Column 3 - Scrolls UP - Mobile: Hide */}
+                  <div className="relative overflow-hidden flex-1 h-full hidden sm:block">
                     <motion.div
                       className="flex flex-col gap-2"
                       animate={{ y: [0, "-50%"] }}
@@ -703,8 +797,8 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 4 - Scrolls DOWN - Center */}
-                  <div className="relative overflow-hidden flex-1 h-full">
+                  {/* Column 4 - Scrolls DOWN - Center - Mobile: Hide */}
+                  <div className="relative overflow-hidden flex-1 h-full hidden sm:block">
                     <motion.div
                       className="flex flex-col gap-2"
                       animate={{ y: ["-50%", 0] }}
@@ -734,8 +828,8 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 5 - Scrolls UP - Center */}
-                  <div className="relative overflow-hidden flex-1 h-full">
+                  {/* Column 5 - Scrolls UP - Center - Mobile: Hide */}
+                  <div className="relative overflow-hidden flex-1 h-full hidden md:block">
                     <motion.div
                       className="flex flex-col gap-2"
                       animate={{ y: [0, "-50%"] }}
@@ -765,8 +859,8 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 6 - Scrolls DOWN */}
-                  <div className="relative overflow-hidden flex-1 h-full">
+                  {/* Column 6 - Scrolls DOWN - Mobile: Hide */}
+                  <div className="relative overflow-hidden flex-1 h-full hidden md:block">
                     <motion.div
                       className="flex flex-col gap-2"
                       animate={{ y: ["-50%", 0] }}
@@ -796,8 +890,8 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 7 - Scrolls UP */}
-                  <div className="relative overflow-hidden flex-1 h-full">
+                  {/* Column 7 - Scrolls UP - Mobile: Hide */}
+                  <div className="relative overflow-hidden flex-1 h-full hidden lg:block">
                     <motion.div
                       className="flex flex-col gap-2"
                       animate={{ y: [0, "-50%"] }}
@@ -827,8 +921,8 @@ export function TeslaHomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Column 8 - Scrolls DOWN */}
-                  <div className="relative overflow-hidden flex-1 h-full">
+                  {/* Column 8 - Scrolls DOWN - Mobile: Hide */}
+                  <div className="relative overflow-hidden flex-1 h-full hidden lg:block">
                     <motion.div
                       className="flex flex-col gap-2"
                       animate={{ y: ["-50%", 0] }}
@@ -870,33 +964,33 @@ export function TeslaHomePage() {
 
                 {/* Centered Content */}
                 <div className="absolute inset-0 flex items-center justify-center z-30">
-                  <div className="text-center space-y-6 lg:space-y-8 max-w-4xl mx-auto px-4">
-                    <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] font-helvetica">
+                  <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6 max-w-4xl mx-auto px-4">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] font-helvetica">
                       Servicio Experto
                       <br />
-                      <span className="inline-block bg-black text-white px-4 py-1 mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">A la Vuelta de tu Casa</span>
+                      <span className="inline-block bg-black text-white px-2 sm:px-4 py-1 mt-2 text-3xl sm:text-4xl md:text-5xl lg:text-7xl">A la Vuelta de tu Casa</span>
                     </h2>
 
-                    <p className="text-base sm:text-lg md:text-xl text-white leading-relaxed max-w-2xl mx-auto font-montserrat font-normal">
+                    <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white leading-relaxed max-w-2xl mx-auto font-montserrat font-normal">
                       Con 6 sucursales estratégicas en el NOA, siempre tenés un centro de servicio profesional a tu alcance.
                     </p>
 
                     {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2 sm:pt-4">
                       <Link
                         href="/sucursales"
-                        className="group px-10 py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl font-montserrat inline-flex items-center justify-center gap-2"
+                        className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
                       >
-                        <MapPin className="w-5 h-5" />
+                        <MapPin className="w-4 sm:w-5 h-4 sm:h-5" />
                         <span>Ver Mapa de Sucursales</span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
                       </Link>
 
                       <Link
                         href="/turnos"
-                        className="group px-10 py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                        className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
                       >
-                        <Calendar className="w-5 h-5" />
+                        <Calendar className="w-4 sm:w-5 h-4 sm:h-5" />
                         <span>Reservar Turno</span>
                       </Link>
                     </div>
@@ -907,20 +1001,20 @@ export function TeslaHomePage() {
           </CarouselContent>
 
           {/* Navigation Arrows */}
-          <CarouselPrevious className="left-4 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90" />
-          <CarouselNext className="right-4 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90" />
+          <CarouselPrevious className="left-2 sm:left-4 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90 scale-75 sm:scale-100" />
+          <CarouselNext className="right-2 sm:right-4 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90 scale-75 sm:scale-100" />
         </Carousel>
 
         {/* Play/Pause Button - Inside Hero Section */}
         <button
           onClick={toggleAutoplay}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-12 bg-[#FEE004] border-2 border-[#FEE004] text-black rounded-full hover:bg-[#FEE004]/90 transition-all flex items-center justify-center shadow-lg z-20"
+          className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 w-10 sm:w-12 h-10 sm:h-12 bg-[#FEE004] border-2 border-[#FEE004] text-black rounded-full hover:bg-[#FEE004]/90 transition-all flex items-center justify-center shadow-lg z-20"
           aria-label={isPlaying ? "Pausar carrusel" : "Reproducir carrusel"}
         >
           {isPlaying ? (
-            <Pause className="w-5 h-5" />
+            <Pause className="w-4 sm:w-5 h-4 sm:h-5" />
           ) : (
-            <Play className="w-5 h-5 ml-0.5" />
+            <Play className="w-4 sm:w-5 h-4 sm:h-5 ml-0.5" />
           )}
         </button>
       </section>
