@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Lora, IBM_Plex_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans, Lora, IBM_Plex_Mono, Montserrat } from 'next/font/google';
 import "./globals.css";
 import { CartProvider } from '@/providers/CartProvider';
 import { ConditionalLayout } from '@/components/ConditionalNav';
@@ -25,6 +25,13 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-mono',
+  weight: ['400', '500', '600', '700']
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-montserrat',
   weight: ['400', '500', '600', '700']
 });
 
@@ -68,7 +75,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#FFC700" />
       </head>
       <body
-        className={`${plusJakartaSans.variable} ${lora.variable} ${ibmPlexMono.variable} font-sans antialiased`}
+        className={`${plusJakartaSans.variable} ${lora.variable} ${ibmPlexMono.variable} ${montserrat.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ThemeManager />

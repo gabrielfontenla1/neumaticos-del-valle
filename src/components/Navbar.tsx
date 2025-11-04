@@ -6,7 +6,6 @@ import { Calendar, Search, Heart, User, Menu, X, Phone, MapPin, ShoppingCart } f
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { isAuthenticated } from '@/features/admin/api'
-import { UserButton } from '@/features/auth/components/UserButton'
 import { useCartContext } from '@/providers/CartProvider'
 
 export function Navbar() {
@@ -118,6 +117,19 @@ export function Navbar() {
               )}
             </Link>
             <Link
+              href="/aceites"
+              className={`text-sm font-medium transition-all duration-300 ease-out relative ${
+                isLinkActive('/aceites')
+                  ? 'text-[#FEE004]'
+                  : 'text-white hover:text-[#FEE004]'
+              }`}
+            >
+              Aceites
+              {isLinkActive('/aceites') && (
+                <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#FEE004] rounded-full" />
+              )}
+            </Link>
+            <Link
               href="/sucursales"
               className={`text-sm font-medium transition-all duration-300 ease-out relative ${
                 isLinkActive('/sucursales')
@@ -172,9 +184,6 @@ export function Navbar() {
                 </span>
               )}
             </Link>
-
-            {/* User authentication */}
-            <UserButton />
 
             {/* Admin panel link - only show if admin */}
             {isAdmin && (
@@ -263,6 +272,17 @@ export function Navbar() {
             Servicios
           </Link>
           <Link
+            href="/aceites"
+            className={`block px-4 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium ${
+              isLinkActive('/aceites')
+                ? 'text-[#FEE004] bg-white/10'
+                : 'text-white hover:text-[#FEE004] hover:bg-white/5'
+            }`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Aceites
+          </Link>
+          <Link
             href="/sucursales"
             className={`block px-4 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium ${
               isLinkActive('/sucursales')
@@ -307,7 +327,7 @@ export function Navbar() {
                 </span>
               )}
             </Link>
-            {isAdmin ? (
+            {isAdmin && (
               <Link
                 href="/admin"
                 className="flex items-center gap-2 px-4 py-3 bg-[#FEE004] text-black rounded-lg hover:bg-[#FEE004]/90 transition-all duration-300 ease-out text-sm font-semibold"
@@ -315,15 +335,6 @@ export function Navbar() {
               >
                 <User className="w-4 h-4" />
                 Panel Admin
-              </Link>
-            ) : (
-              <Link
-                href="/admin/login"
-                className="flex items-center gap-2 px-4 py-2 text-white hover:text-[#FEE004] hover:bg-white/5 rounded-lg transition-all duration-300 ease-out text-sm font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <User className="w-4 h-4" />
-                Ingresá
               </Link>
             )}
           </div>

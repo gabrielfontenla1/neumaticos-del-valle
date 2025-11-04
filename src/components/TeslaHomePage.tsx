@@ -2,10 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Calendar,
-  ChevronDown,
   MapPin,
   Phone,
   MessageCircle,
@@ -17,26 +16,62 @@ import {
   Zap,
   Clock,
   CheckCircle2,
-  Info
+  Info,
+  Pause,
+  Droplet,
+  Play
 } from 'lucide-react'
 import { Navbar } from './Navbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
+import Autoplay from 'embla-carousel-autoplay'
+import {
+  TestimonialsSection,
+  GuaranteesSection,
+  ProcessSection,
+  FAQSection
+} from './ImprovedHomeSections'
+import { useRef, useState, useEffect } from 'react'
 
 export function TeslaHomePage() {
-  const { scrollY } = useScroll()
+  const autoplayPlugin = useRef(Autoplay({ delay: 7000 }))
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [carouselApi, setCarouselApi] = useState<any>(null)
 
-  // Parallax effect for hero section
-  const heroY = useTransform(scrollY, [0, 500], [0, 150])
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0])
+  const toggleAutoplay = () => {
+    const plugin = autoplayPlugin.current
+    if (isPlaying) {
+      plugin.stop()
+    } else {
+      plugin.play()
+    }
+    setIsPlaying(!isPlaying)
+  }
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!carouselApi) return
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        carouselApi.scrollPrev()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        carouselApi.scrollNext()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [carouselApi])
 
   const tireModels = [
     {
       id: 1,
       name: 'Scorpion Verde',
       category: 'SUV & Camionetas',
-      image: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=800&h=600&fit=crop',
+      image: '/Scorpion-Verde-1505470074533 (1).webp',
       description: 'Máximo rendimiento para SUVs de alta gama',
       price: 'Consultar',
       features: ['Todo terreno', 'Bajo ruido', 'Eco-friendly']
@@ -45,7 +80,7 @@ export function TeslaHomePage() {
       id: 2,
       name: 'P Zero',
       category: 'Alta Performance',
-      image: 'https://images.unsplash.com/photo-1562113130-860bca0e8169?w=800&h=600&fit=crop',
+      image: '/Pzero-Nuovo-1505470072726.webp',
       description: 'El neumático elegido por los mejores autos deportivos',
       price: 'Consultar',
       features: ['Ultra High Performance', 'Máxima adherencia', 'Control preciso']
@@ -54,10 +89,19 @@ export function TeslaHomePage() {
       id: 3,
       name: 'Cinturato P7',
       category: 'Autos Premium',
-      image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&h=600&fit=crop',
+      image: '/Cinturato-P1-Verde-1505470090255.webp',
       description: 'Confort, seguridad y eficiencia para tu auto',
       price: 'Consultar',
       features: ['Bajo consumo', 'Gran durabilidad', 'Confort acústico']
+    },
+    {
+      id: 4,
+      name: 'Scorpion HT',
+      category: 'Pick-ups & Camionetas',
+      image: '/Scorpion-HT-4505525112686.webp',
+      description: 'Perfectos para camionetas y uso mixto on/off road',
+      price: 'Consultar',
+      features: ['Durabilidad extrema', 'Tracción superior', 'Bajo desgaste']
     }
   ]
 
@@ -110,133 +154,801 @@ export function TeslaHomePage() {
       {/* Professional Navbar */}
       <Navbar />
 
-      {/* Hero Section - Landing Page Style */}
-      <section className="relative h-screen overflow-hidden">
-        <motion.div
-          style={{ y: heroY, opacity: heroOpacity }}
-          className="absolute inset-0"
+      {/* Hero Section - Carousel */}
+      <section className="relative bg-white overflow-hidden">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          plugins={[autoplayPlugin.current]}
+          className="w-full"
+          setApi={setCarouselApi}
         >
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1606577924006-27d39b132ae2?w=1920&h=1080&fit=crop&q=80')`
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-          </div>
-        </motion.div>
+          <CarouselContent>
+            {/* Slide 1 - Ofertas */}
+            <CarouselItem key="ofertas">
+              <div className="relative bg-white h-[calc(100vh-4rem)]">
+                <div className="relative container mx-auto px-4 h-full">
+                  <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center h-full">
+                    {/* Left Column - Sales Copy */}
+                    <div className="text-left space-y-6 lg:space-y-8 max-w-xl flex flex-col justify-center">
+                      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-black leading-[1.1] font-helvetica">
+                        Seguridad y Performance
+                        <br />
+                        <span className="inline-block bg-black text-white px-4 py-1 mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Instalados Hoy</span>
+                      </h1>
 
-        <div className="relative h-full flex flex-col items-center justify-center px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="max-w-5xl mx-auto"
-          >
-            {/* Badge/Trust Signal */}
+                      <p className="text-base sm:text-lg md:text-xl text-[#333333] max-w-lg leading-relaxed font-montserrat font-normal">
+                        Encontrá el neumático Pirelli exacto para tu vehículo. Te asesoramos en el acto y lo instalamos con precisión milimétrica.
+                      </p>
+
+                      {/* CTAs */}
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Link
+                          href="/productos"
+                          className="group px-10 py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                        >
+                          <span>Ver Catálogo Pirelli</span>
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+
+                        <Link
+                          href="/turnos"
+                          className="group px-10 py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                        >
+                          <Calendar className="w-5 h-5" />
+                          <span>Pedir Asesoramiento</span>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Infinite Scroll Image Grid */}
+                    <div className="hidden lg:flex relative overflow-hidden h-full">
+                      {/* Top fade gradient */}
+                      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none" />
+
+                      {/* Bottom fade gradient */}
+                      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
+
+                      <div className="grid grid-cols-2 gap-6 w-full h-full">
+                        {/* First Column - Scrolls UP infinitely */}
+                        <div className="relative overflow-hidden">
+                          <motion.div
+                            className="flex flex-col gap-4"
+                            animate={{
+                              y: [0, "-50%"]
+                            }}
+                            transition={{
+                              duration: 60,
+                              repeat: Infinity,
+                              ease: "linear",
+                              repeatType: "loop"
+                            }}
+                          >
+                            {[
+                              '/Scorpion-Verde-1505470074533 (1).webp',
+                              '/Scorpion-HT-4505525112686.webp',
+                              '/Scorpion-4505525112390.webp',
+                              '/Scorpion-All-Terrain-Plus-4505483375619.webp',
+                              '/Scorpion-Atr-1505470067539.webp',
+                              '/Scorpion-MTR-1505470071047.webp',
+                              '/Scorpion-Zero-1505470088294.webp',
+                              '/Scorpion-Zero-All-Season-1505470086399.webp',
+                              '/Scorpion-Verde-1505470074533 (1).webp',
+                              '/Scorpion-HT-4505525112686.webp',
+                              '/Scorpion-4505525112390.webp',
+                              '/Scorpion-All-Terrain-Plus-4505483375619.webp',
+                              '/Scorpion-Atr-1505470067539.webp',
+                              '/Scorpion-MTR-1505470071047.webp',
+                              '/Scorpion-Zero-1505470088294.webp',
+                              '/Scorpion-Zero-All-Season-1505470086399.webp'
+                            ].map((src, idx) => (
+                              <div key={`col1-${idx}`} className="relative h-80 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 p-4">
+                                <Image
+                                  src={src}
+                                  alt="Neumático Pirelli"
+                                  width={280}
+                                  height={320}
+                                  sizes="(max-width: 1024px) 0vw, 25vw"
+                                  quality={75}
+                                  priority={idx < 3}
+                                  className="object-contain"
+                                />
+                              </div>
+                            ))}
+                          </motion.div>
+                        </div>
+
+                        {/* Second Column - Scrolls DOWN infinitely */}
+                        <div className="relative overflow-hidden">
+                          <motion.div
+                            className="flex flex-col gap-4"
+                            animate={{
+                              y: ["-50%", 0]
+                            }}
+                            transition={{
+                              duration: 65,
+                              repeat: Infinity,
+                              ease: "linear",
+                              repeatType: "loop"
+                            }}
+                          >
+                            {[
+                              '/Cinturato-P1-Verde-1505470090255.webp',
+                              '/Cinturato-P7-1505470083092.webp',
+                              '/cinturato-p7-4505517104514.webp',
+                              '/Pzero-Nuovo-1505470072726.webp',
+                              '/Pzero-Corsa-PZC4-1505470090635.webp',
+                              '/Pzero-Corsa-System-Direzionale-1505470088408.webp',
+                              '/Pzero-vecchio-1505470066413.webp',
+                              '/Chrono-1505470062195.webp',
+                              // Duplicate for seamless loop
+                              '/Cinturato-P1-Verde-1505470090255.webp',
+                              '/Cinturato-P7-1505470083092.webp',
+                              '/cinturato-p7-4505517104514.webp',
+                              '/Pzero-Nuovo-1505470072726.webp',
+                              '/Pzero-Corsa-PZC4-1505470090635.webp',
+                              '/Pzero-Corsa-System-Direzionale-1505470088408.webp',
+                              '/Pzero-vecchio-1505470066413.webp',
+                              '/Chrono-1505470062195.webp'
+                            ].map((src, idx) => (
+                              <div key={`col2-${idx}`} className="relative h-80 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 p-4">
+                                <Image
+                                  src={src}
+                                  alt="Neumático Pirelli"
+                                  width={280}
+                                  height={320}
+                                  sizes="(max-width: 1024px) 0vw, 25vw"
+                                  quality={75}
+                                  priority={idx < 3}
+                                  className="object-contain"
+                                />
+                              </div>
+                            ))}
+                          </motion.div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </CarouselItem>
+
+            {/* Slide 2 - Cambio de Aceite y Filtros */}
+            <CarouselItem key="aceite">
+              <div className="relative bg-white h-[calc(100vh-4rem)] overflow-hidden">
+                <div className="relative h-full">
+
+                  {/* Center Content - Text and CTAs - CENTRO ABSOLUTO */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center space-y-4 lg:space-y-6 w-full max-w-4xl px-4">
+                    <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-black leading-[1.1] font-helvetica">
+                      Protegé tu Motor
+                      <br />
+                      <span className="inline-block bg-black text-white px-4 py-1 mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Sin Perder Tiempo</span>
+                    </h2>
+
+                    <p className="text-base sm:text-lg md:text-xl text-[#333333] leading-relaxed max-w-2xl mx-auto font-montserrat font-normal">
+                      Maximizá la vida útil de tu auto con la línea premium Shell Helix. Servicio profesional en minutos.
+                    </p>
+
+                    {/* CTAs */}
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Link
+                        href="/turnos"
+                        className="group px-10 py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                      >
+                        <Calendar className="w-5 h-5" />
+                        <span>Reservar Turno Ahora</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+
+                      <Link
+                        href="/aceites"
+                        className="group px-10 py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                      >
+                        <Droplet className="w-5 h-5" />
+                        <span>Ver Aceites y Filtros</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Top Carousel */}
+                  <div className="absolute top-[15%] md:top-[12%] lg:top-[10%] left-0 right-0 h-32 md:h-40 lg:h-48 w-full max-w-7xl mx-auto px-4 z-10">
+                    {/* Left fade gradient */}
+                    <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+
+                    {/* Right fade gradient */}
+                    <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+                    {/* Top Row - Scrolls RIGHT infinitely */}
+                    <div className="relative overflow-hidden h-32 md:h-40 lg:h-48">
+                      <motion.div
+                        className="flex gap-4"
+                        initial={{ x: 0 }}
+                        animate={{ x: "-50%" }}
+                        transition={{
+                          duration: 35,
+                          repeat: Infinity,
+                          ease: "linear",
+                          repeatType: "loop"
+                        }}
+                      >
+                        {/* Original set */}
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/helix-hx2-10w-30.jpeg"
+                            alt="Shell Helix HX2 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx3-15w-40-high.jpeg"
+                            alt="Shell Helix HX3 15W-40"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx5-10w-30.jpeg"
+                            alt="Shell Helix HX5 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/shell-helix-hx7-10w-40-5l.jpeg"
+                            alt="Shell Helix HX7 10W-40"
+                            width={150}
+                            height={150}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain scale-90"
+                          />
+                        </div>
+
+                        {/* Duplicate set for seamless loop */}
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/helix-hx2-10w-30.jpeg"
+                            alt="Shell Helix HX2 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx3-15w-40-high.jpeg"
+                            alt="Shell Helix HX3 15W-40"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx5-10w-30.jpeg"
+                            alt="Shell Helix HX5 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/shell-helix-hx7-10w-40-5l.jpeg"
+                            alt="Shell Helix HX7 10W-40"
+                            width={150}
+                            height={150}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain scale-90"
+                          />
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Carousel */}
+                  <div className="absolute bottom-[15%] md:bottom-[12%] lg:bottom-[10%] left-0 right-0 h-32 md:h-40 lg:h-48 w-full max-w-7xl mx-auto px-4 z-10">
+                    {/* Left fade gradient */}
+                    <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+
+                    {/* Right fade gradient */}
+                    <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+                    {/* Bottom Row - Scrolls LEFT infinitely */}
+                    <div className="relative overflow-hidden h-32 md:h-40 lg:h-48">
+                      <motion.div
+                        className="flex gap-4"
+                        initial={{ x: "-50%" }}
+                        animate={{ x: 0 }}
+                        transition={{
+                          duration: 45,
+                          repeat: Infinity,
+                          ease: "linear",
+                          repeatType: "loop"
+                        }}
+                      >
+                        {/* Original set */}
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx5-10w-30.jpeg"
+                            alt="Shell Helix HX5 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/shell-helix-hx7-10w-40-5l.jpeg"
+                            alt="Shell Helix HX7 10W-40"
+                            width={150}
+                            height={150}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain scale-90"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/helix-hx2-10w-30.jpeg"
+                            alt="Shell Helix HX2 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx3-15w-40-high.jpeg"
+                            alt="Shell Helix HX3 15W-40"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+
+                        {/* Duplicate set for seamless loop */}
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx5-10w-30.jpeg"
+                            alt="Shell Helix HX5 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/shell-helix-hx7-10w-40-5l.jpeg"
+                            alt="Shell Helix HX7 10W-40"
+                            width={150}
+                            height={150}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain scale-90"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/helix-hx2-10w-30.jpeg"
+                            alt="Shell Helix HX2 10W-30"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="relative h-32 md:h-40 lg:h-48 w-32 md:w-40 lg:w-48 rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                          <Image
+                            src="/4l-helix-hx3-15w-40-high.jpeg"
+                            alt="Shell Helix HX3 15W-40"
+                            width={192}
+                            height={192}
+                            sizes="20vw"
+                            quality={75}
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+
+            {/* Slide 3 - Sucursales */}
+            <CarouselItem key="sucursales">
+              <div className="relative bg-[#F9F9F9] min-h-[calc(100vh-4rem)]">
+                {/* Clean Background - No Distracting Images */}
+                <div className="absolute inset-0 flex items-center justify-center gap-2">
+                  {/* Column 1 - Scrolls UP */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: [0, "-50%"] }}
+                      transition={{
+                        duration: 60,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l1.jpg', '/l9.jpg', '/l17.jpg', '/l5.jpg', '/l13.jpg', '/l21.jpg',
+                        '/l1.jpg', '/l9.jpg', '/l17.jpg', '/l5.jpg', '/l13.jpg', '/l21.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col1-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 2 - Scrolls DOWN */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: ["-50%", 0] }}
+                      transition={{
+                        duration: 65,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l2.jpg', '/l10.jpg', '/l18.jpg', '/l6.jpg', '/l14.jpg', '/l1.jpg',
+                        '/l2.jpg', '/l10.jpg', '/l18.jpg', '/l6.jpg', '/l14.jpg', '/l1.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col2-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 3 - Scrolls UP */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: [0, "-50%"] }}
+                      transition={{
+                        duration: 55,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l3.jpg', '/l11.jpg', '/l19.jpg', '/l7.jpg', '/l15.jpg', '/l2.jpg',
+                        '/l3.jpg', '/l11.jpg', '/l19.jpg', '/l7.jpg', '/l15.jpg', '/l2.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col3-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 4 - Scrolls DOWN - Center */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: ["-50%", 0] }}
+                      transition={{
+                        duration: 70,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l4.jpg', '/l12.jpg', '/l20.jpg', '/l8.jpg', '/l16.jpg', '/l3.jpg',
+                        '/l4.jpg', '/l12.jpg', '/l20.jpg', '/l8.jpg', '/l16.jpg', '/l3.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col4-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 5 - Scrolls UP - Center */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: [0, "-50%"] }}
+                      transition={{
+                        duration: 62,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l5.jpg', '/l13.jpg', '/l21.jpg', '/l9.jpg', '/l17.jpg', '/l4.jpg',
+                        '/l5.jpg', '/l13.jpg', '/l21.jpg', '/l9.jpg', '/l17.jpg', '/l4.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col5-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 6 - Scrolls DOWN */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: ["-50%", 0] }}
+                      transition={{
+                        duration: 58,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l6.jpg', '/l14.jpg', '/l1.jpg', '/l10.jpg', '/l18.jpg', '/l5.jpg',
+                        '/l6.jpg', '/l14.jpg', '/l1.jpg', '/l10.jpg', '/l18.jpg', '/l5.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col6-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 7 - Scrolls UP */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: [0, "-50%"] }}
+                      transition={{
+                        duration: 66,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l7.jpg', '/l15.jpg', '/l2.jpg', '/l11.jpg', '/l19.jpg', '/l6.jpg',
+                        '/l7.jpg', '/l15.jpg', '/l2.jpg', '/l11.jpg', '/l19.jpg', '/l6.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col7-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Column 8 - Scrolls DOWN */}
+                  <div className="relative overflow-hidden flex-1 h-full">
+                    <motion.div
+                      className="flex flex-col gap-2"
+                      animate={{ y: ["-50%", 0] }}
+                      transition={{
+                        duration: 63,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "loop"
+                      }}
+                    >
+                      {[
+                        '/l8.jpg', '/l16.jpg', '/l3.jpg', '/l12.jpg', '/l20.jpg', '/l7.jpg',
+                        '/l8.jpg', '/l16.jpg', '/l3.jpg', '/l12.jpg', '/l20.jpg', '/l7.jpg'
+                      ].map((img, idx) => (
+                        <div key={`col8-${idx}`} className="flex-shrink-0 w-full aspect-[9/16] bg-gray-100 relative rounded-xl overflow-hidden">
+                          <Image
+                            src={img}
+                            alt={`Local Neumáticos del Valle`}
+                            fill
+                            sizes="12.5vw"
+                            quality={70}
+                            className="object-cover"
+                            priority={idx < 4}
+                          />
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Top gradient fade - BLACK */}
+                <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+
+                {/* Bottom gradient fade - BLACK */}
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
+
+                {/* Dark overlay with transparency */}
+                <div className="absolute inset-0 bg-black/70 z-20 pointer-events-none" />
+
+                {/* Centered Content */}
+                <div className="absolute inset-0 flex items-center justify-center z-30">
+                  <div className="text-center space-y-6 lg:space-y-8 max-w-4xl mx-auto px-4">
+                    <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] font-helvetica">
+                      Servicio Experto
+                      <br />
+                      <span className="inline-block bg-black text-white px-4 py-1 mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">A la Vuelta de tu Casa</span>
+                    </h2>
+
+                    <p className="text-base sm:text-lg md:text-xl text-white leading-relaxed max-w-2xl mx-auto font-montserrat font-normal">
+                      Con 6 sucursales estratégicas en el NOA, siempre tenés un centro de servicio profesional a tu alcance.
+                    </p>
+
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                      <Link
+                        href="/sucursales"
+                        className="group px-10 py-5 bg-[#FEE004] text-black rounded-xl font-medium hover:bg-[#FDD000] transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl font-montserrat inline-flex items-center justify-center gap-2"
+                      >
+                        <MapPin className="w-5 h-5" />
+                        <span>Ver Mapa de Sucursales</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+
+                      <Link
+                        href="/turnos"
+                        className="group px-10 py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2"
+                      >
+                        <Calendar className="w-5 h-5" />
+                        <span>Reservar Turno</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+
+          {/* Navigation Arrows */}
+          <CarouselPrevious className="left-4 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90" />
+          <CarouselNext className="right-4 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90" />
+        </Carousel>
+
+        {/* Play/Pause Button - Inside Hero Section */}
+        <button
+          onClick={toggleAutoplay}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-12 bg-[#FEE004] border-2 border-[#FEE004] text-black rounded-full hover:bg-[#FEE004]/90 transition-all flex items-center justify-center shadow-lg z-20"
+          aria-label={isPlaying ? "Pausar carrusel" : "Reproducir carrusel"}
+        >
+          {isPlaying ? (
+            <Pause className="w-5 h-5" />
+          ) : (
+            <Play className="w-5 h-5 ml-0.5" />
+          )}
+        </button>
+      </section>
+
+      {/* Stats Bar */}
+      <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#FEE004]/20 backdrop-blur-sm rounded-full mb-8 border border-[#FEE004]/30"
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#FEE004]/10 backdrop-blur-sm rounded-full mb-6 border border-[#FEE004]/20"
             >
               <Award className="w-5 h-5 text-[#FEE004]" />
-              <span className="text-white font-medium text-sm">
+              <span className="text-sm font-semibold text-gray-900">
                 Distribuidor Oficial Pirelli desde 1984
               </span>
             </motion.div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight leading-tight">
-              Neumáticos Premium
-              <br />
-              <span className="text-[#FEE004]">Con Garantía Total</span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-white/90 mb-10 font-light max-w-3xl mx-auto">
-              La mayor red de distribución Pirelli en el NOA. Más de 40 años garantizando tu seguridad en cada viaje.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link
-                href="/turnos"
-                className="group px-8 py-4 bg-[#FEE004] text-black rounded-lg font-semibold text-lg hover:bg-[#FEE004]/90 transition-all hover:shadow-xl hover:shadow-[#FEE004]/30 inline-flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Reservar Turno
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/productos"
-                className="px-8 py-4 bg-white/10 text-white border-2 border-white/30 backdrop-blur-sm rounded-lg font-semibold text-lg hover:bg-white/20 transition-all inline-flex items-center justify-center gap-2"
-              >
-                Ver Catálogo
-              </Link>
-            </div>
-
-            {/* Trust Indicators with Tooltips */}
-            <div className="flex flex-wrap items-center justify-center gap-8 text-white/80">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 cursor-help">
-                    <Star className="w-5 h-5 text-[#FEE004] fill-[#FEE004]" />
-                    <span className="text-sm font-medium">4.9/5 Estrellas</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-black text-white border-[#FEE004]">
-                  <p>Basado en más de 5,000 reseñas de Google</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 cursor-help">
-                    <Users className="w-5 h-5 text-[#FEE004]" />
-                    <span className="text-sm font-medium">+100K Clientes</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-black text-white border-[#FEE004]">
-                  <p>Atendidos en los últimos 5 años</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 cursor-help">
-                    <Shield className="w-5 h-5 text-[#FEE004]" />
-                    <span className="text-sm font-medium">Garantía Total</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-black text-white border-[#FEE004]">
-                  <p>Productos originales con garantía del fabricante</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </motion.div>
-
-          {/* Scroll Indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
-          >
-            <ChevronDown className="w-8 h-8 text-white animate-bounce" />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Benefits Section - Above the Fold Alternative */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
             >
-              ¿Por qué elegirnos?
+              Números que hablan
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -245,44 +957,46 @@ export function TeslaHomePage() {
               transition={{ delay: 0.1 }}
               className="text-xl text-gray-600 max-w-2xl mx-auto"
             >
-              La confianza de miles de conductores respaldada por décadas de excelencia
+              Más de cuatro décadas priorizando tu seguridad en cada kilómetro
             </motion.p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            {[
+              { number: '40+', label: 'Años de trayectoria', icon: Award },
+              { number: '100%', label: 'Productos originales', icon: Shield },
+              { number: '100K+', label: 'Clientes satisfechos', icon: Users },
+              { number: '6', label: 'Sucursales en NOA', icon: MapPin }
+            ].map((stat, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+                className="group"
               >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="w-14 h-14 bg-black rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform cursor-help">
-                      <benefit.icon className="w-7 h-7 text-[#FEE004]" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-black text-white border-[#FEE004]">
-                    <p className="font-semibold">{benefit.title}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  {benefit.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {benefit.description}
-                </p>
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FEE004]/10 rounded-2xl mb-4 group-hover:bg-[#FEE004] transition-colors duration-300 shadow-lg">
+                  <stat.icon className="w-8 h-8 text-black" />
+                </div>
+                <div className="text-4xl lg:text-5xl font-bold text-black mb-2 group-hover:text-[#FEE004] transition-colors">
+                  {stat.number}
+                </div>
+                <div className="text-sm text-gray-600 font-medium">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Tire Models Section with Carousel */}
-      <section id="modelos" className="py-20 bg-white">
+      {/* Testimonials Section - NEW: Social Proof */}
+      <TestimonialsSection />
+
+      {/* Tire Models Section with Automatic Carousel */}
+      <section id="modelos" className="py-20 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.h2
@@ -304,154 +1018,87 @@ export function TeslaHomePage() {
             </motion.p>
           </div>
 
-          {/* Desktop: Grid */}
-          <div className="hidden md:grid md:grid-cols-3 gap-8">
-            {tireModels.map((model, index) => (
-              <motion.div
-                key={model.id}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <div className="group cursor-pointer">
-                      <div className="relative h-[450px] overflow-hidden rounded-2xl bg-gray-100 shadow-lg hover:shadow-2xl transition-all duration-500">
-                        <Image
-                          src={model.image}
-                          alt={model.name}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+          {/* Automatic Carousel */}
+          <Carousel
+            opts={{
+              align: "center",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 4000,
+                stopOnInteraction: false,
+                stopOnMouseEnter: true,
+              }),
+            ]}
+            className="w-full max-w-6xl mx-auto"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {tireModels.map((model) => (
+                <CarouselItem key={model.id} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="h-full px-2"
+                  >
+                    <div className="group h-full select-none">
+                      <div className="relative h-[480px] overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 mx-auto max-w-[400px] pointer-events-none">
+                        {/* Image */}
+                        <div className="relative h-[300px] bg-gradient-to-b from-gray-50 to-white p-4">
+                          <Image
+                            src={model.image}
+                            alt={model.name}
+                            fill
+                            className="object-contain group-hover:scale-105 transition-transform duration-700"
+                          />
+                        </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                          <p className="text-sm font-semibold text-[#FEE004] mb-2 uppercase tracking-wide">
+                        {/* Content - Fixed Heights */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/95 to-black/80 p-6">
+                          {/* Category - Fixed Height */}
+                          <p className="text-xs font-semibold text-[#FEE004] mb-2 uppercase tracking-wide h-4">
                             {model.category}
                           </p>
-                          <h3 className="text-3xl font-bold mb-3">{model.name}</h3>
-                          <p className="text-white/90 text-sm mb-4 line-clamp-2">
+
+                          {/* Title - Fixed Height */}
+                          <h3 className="text-2xl font-bold text-white mb-2 h-8 line-clamp-1">
+                            {model.name}
+                          </h3>
+
+                          {/* Description - Fixed Height */}
+                          <p className="text-white/80 text-sm mb-4 h-10 line-clamp-2">
                             {model.description}
                           </p>
 
-                          <div className="flex flex-wrap gap-2 mb-6">
+                          {/* Features - Fixed Height */}
+                          <div className="flex flex-wrap gap-2 h-16">
                             {model.features.map((feature, idx) => (
                               <span
                                 key={idx}
-                                className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium"
+                                className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium text-white"
                               >
                                 {feature}
                               </span>
                             ))}
                           </div>
-
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href="/productos"
-                              className="flex-1 px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors text-center"
-                            >
-                              Ver Detalles
-                            </Link>
-                            <Link
-                              href="/turnos"
-                              className="px-4 py-2.5 bg-[#FEE004] text-black rounded-lg text-sm font-semibold hover:bg-[#FEE004]/90 transition-colors"
-                            >
-                              Cotizar
-                            </Link>
-                          </div>
                         </div>
                       </div>
                     </div>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80 bg-black text-white border-[#FEE004]">
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-[#FEE004]">{model.name}</h4>
-                      <p className="text-sm text-gray-300">{model.description}</p>
-                      <div className="pt-2 space-y-1">
-                        <p className="text-xs text-gray-400 font-semibold">Características:</p>
-                        {model.features.map((feature, idx) => (
-                          <p key={idx} className="text-xs text-gray-300">• {feature}</p>
-                        ))}
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </motion.div>
-            ))}
-          </div>
+                  </motion.div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex -left-12 bg-[#FEE004] hover:bg-[#FEE004]/90 border-[#FEE004] text-black" />
+            <CarouselNext className="hidden md:flex -right-12 bg-[#FEE004] hover:bg-[#FEE004]/90 border-[#FEE004] text-black" />
+          </Carousel>
 
-          {/* Mobile: Carousel */}
-          <div className="md:hidden">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent>
-                {tireModels.map((model) => (
-                  <CarouselItem key={model.id}>
-                    <div className="p-1">
-                      <div className="relative h-[450px] overflow-hidden rounded-2xl bg-gray-100 shadow-lg">
-                        <Image
-                          src={model.image}
-                          alt={model.name}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                          <p className="text-sm font-semibold text-[#FEE004] mb-2 uppercase tracking-wide">
-                            {model.category}
-                          </p>
-                          <h3 className="text-3xl font-bold mb-3">{model.name}</h3>
-                          <p className="text-white/90 text-sm mb-4 line-clamp-2">
-                            {model.description}
-                          </p>
-
-                          <div className="flex flex-wrap gap-2 mb-6">
-                            {model.features.map((feature, idx) => (
-                              <span
-                                key={idx}
-                                className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium"
-                              >
-                                {feature}
-                              </span>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href="/productos"
-                              className="flex-1 px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors text-center"
-                            >
-                              Ver Detalles
-                            </Link>
-                            <Link
-                              href="/turnos"
-                              className="px-4 py-2.5 bg-[#FEE004] text-black rounded-lg text-sm font-semibold hover:bg-[#FEE004]/90 transition-colors"
-                            >
-                              Cotizar
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-2 bg-black/50 text-white border-[#FEE004] hover:bg-black/70" />
-              <CarouselNext className="right-2 bg-black/50 text-white border-[#FEE004] hover:bg-black/70" />
-            </Carousel>
-          </div>
-
-          <div className="text-center mt-12">
+          {/* CTA Button */}
+          <div className="text-center mt-8">
             <Link
               href="/productos"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-lg hover:shadow-xl"
             >
               Ver Catálogo Completo
               <ArrowRight className="w-5 h-5" />
@@ -460,76 +1107,11 @@ export function TeslaHomePage() {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="servicios" className="py-20 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-bold mb-4"
-            >
-              Servicios Premium
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-xl text-gray-400 max-w-2xl mx-auto"
-            >
-              Tecnología de última generación y profesionales certificados
-            </motion.p>
-          </div>
+      {/* Process Section - NEW: Transparent Process */}
+      <ProcessSection />
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {services.map((service, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group"
-              >
-                <div className="relative h-[350px] rounded-2xl overflow-hidden mb-6">
-                  <Image
-                    src={service.image}
-                    alt={service.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-
-                  <div className="absolute top-6 left-6">
-                    <div className="w-12 h-12 bg-[#FEE004] rounded-xl flex items-center justify-center">
-                      <service.icon className="w-6 h-6 text-black" />
-                    </div>
-                  </div>
-
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <h3 className="text-2xl font-bold text-white mb-2">
-                      {service.title}
-                    </h3>
-                    <p className="text-white/90 text-sm">
-                      {service.description}
-                    </p>
-                  </div>
-                </div>
-
-                <Link
-                  href="/turnos"
-                  className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-                >
-                  Reservar Turno
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Guarantees Section - NEW: Trust Building */}
+      <GuaranteesSection />
 
       {/* Stats Section */}
       <section className="py-20 bg-[#FEE004]">
@@ -582,36 +1164,133 @@ export function TeslaHomePage() {
             </motion.p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Mobile Carousel */}
+          <div className="md:hidden">
+            <Carousel
+              opts={{
+                align: 'start',
+                loop: true,
+              }}
+              plugins={[
+                Autoplay({
+                  delay: 4000,
+                  stopOnInteraction: true,
+                  stopOnMouseEnter: true,
+                }),
+              ]}
+              className="w-full"
+            >
+              <CarouselContent>
+                {[
+                  {
+                    name: 'Catamarca Centro',
+                    address: 'Av. Belgrano 938, Catamarca',
+                    phone: '(0383) 443-0000',
+                    image: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=600&h=400&fit=crop'
+                  },
+                  {
+                    name: 'La Banda',
+                    address: 'República del Líbano Sur 866, Santiago del Estero',
+                    phone: '(0385) 427-0000',
+                    image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&h=400&fit=crop'
+                  },
+                  {
+                    name: 'San Fernando del Valle',
+                    address: 'Alem 1118, Catamarca',
+                    phone: '(0383) 443-1111',
+                    image: 'https://images.unsplash.com/photo-1632823469850-2f77dd9c7f93?w=600&h=400&fit=crop'
+                  },
+                  {
+                    name: 'Salta',
+                    address: 'Jujuy 330, Salta',
+                    phone: '(0387) 431-0000',
+                    image: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=600&h=400&fit=crop&flip=h'
+                  },
+                  {
+                    name: 'Santiago del Estero',
+                    address: 'Av. Belgrano Sur 2834, Santiago del Estero',
+                    phone: '(0385) 422-0000',
+                    image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&h=400&fit=crop&flip=h'
+                  },
+                  {
+                    name: 'Tucumán',
+                    address: 'Av. Gobernador del Campo 436, San Miguel de Tucumán',
+                    phone: '(0381) 424-0000',
+                    image: 'https://images.unsplash.com/photo-1632823469850-2f77dd9c7f93?w=600&h=400&fit=crop&flip=h'
+                  }
+                ].map((branch, index) => (
+                  <CarouselItem key={index}>
+                    <div className="px-2">
+                      <div className="relative h-[300px] overflow-hidden rounded-2xl shadow-2xl border-2 border-[#FEE004]/20 select-none">
+                        <Image
+                          src={branch.image}
+                          alt={branch.name}
+                          fill
+                          className="object-cover pointer-events-none"
+                        />
+
+                        {/* Subtle gradient overlay */}
+                        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 to-transparent" />
+
+                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white pointer-events-none">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-5 h-5 text-[#FEE004] flex-shrink-0 mt-1" />
+                            <div>
+                              <h3 className="text-2xl font-bold mb-1">{branch.name}</h3>
+                              <p className="text-white/90 text-sm">{branch.address}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Glow effect around border */}
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FEE004]/20 via-transparent to-[#FEE004]/20 rounded-2xl -z-10 blur-xl" />
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-2 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90" />
+              <CarouselNext className="right-2 bg-[#FEE004] border-[#FEE004] text-black hover:bg-[#FEE004]/90" />
+            </Carousel>
+          </div>
+
+          {/* Desktop Grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                name: 'Catamarca',
-                address: 'Av. Virgen del Valle 1234',
+                name: 'Catamarca Centro',
+                address: 'Av. Belgrano 938, Catamarca',
+                phone: '(0383) 443-0000',
                 image: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=600&h=400&fit=crop'
               },
               {
                 name: 'La Banda',
-                address: 'Ruta Nacional 34 Km 752',
+                address: 'República del Líbano Sur 866, Santiago del Estero',
+                phone: '(0385) 427-0000',
                 image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&h=400&fit=crop'
               },
               {
                 name: 'San Fernando del Valle',
-                address: 'Av. Belgrano 567',
+                address: 'Alem 1118, Catamarca',
+                phone: '(0383) 443-1111',
                 image: 'https://images.unsplash.com/photo-1632823469850-2f77dd9c7f93?w=600&h=400&fit=crop'
               },
               {
                 name: 'Salta',
-                address: 'Av. Bolivia 2345',
+                address: 'Jujuy 330, Salta',
+                phone: '(0387) 431-0000',
                 image: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=600&h=400&fit=crop&flip=h'
               },
               {
                 name: 'Santiago del Estero',
-                address: 'Av. Libertad 890',
+                address: 'Av. Belgrano Sur 2834, Santiago del Estero',
+                phone: '(0385) 422-0000',
                 image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&h=400&fit=crop&flip=h'
               },
               {
                 name: 'Tucumán',
-                address: 'Av. Mate de Luna 1567',
+                address: 'Av. Gobernador del Campo 436, San Miguel de Tucumán',
+                phone: '(0381) 424-0000',
                 image: 'https://images.unsplash.com/photo-1632823469850-2f77dd9c7f93?w=600&h=400&fit=crop&flip=h'
               }
             ].map((branch, index) => (
@@ -623,38 +1302,38 @@ export function TeslaHomePage() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group cursor-pointer"
               >
-                <div className="relative h-[300px] overflow-hidden rounded-2xl bg-gray-100 shadow-lg hover:shadow-2xl transition-all duration-500">
+                <div className="relative h-[300px] overflow-hidden rounded-2xl shadow-2xl border-2 border-[#FEE004]/20 hover:border-[#FEE004]/40 transition-all duration-500">
                   <Image
                     src={branch.image}
                     alt={branch.name}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                  {/* Subtle gradient overlay */}
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 to-transparent" />
 
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div className="flex items-start gap-2 mb-3">
+                    <div className="flex items-start gap-2">
                       <MapPin className="w-5 h-5 text-[#FEE004] flex-shrink-0 mt-1" />
                       <div>
                         <h3 className="text-2xl font-bold mb-1">{branch.name}</h3>
                         <p className="text-white/90 text-sm">{branch.address}</p>
                       </div>
                     </div>
-
-                    <Link
-                      href="/turnos"
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FEE004] text-black rounded-lg text-sm font-semibold hover:bg-[#FEE004]/90 transition-colors"
-                    >
-                      Reservar Turno
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
                   </div>
+
+                  {/* Glow effect around border */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FEE004]/20 via-transparent to-[#FEE004]/20 rounded-2xl -z-10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* FAQ Section - NEW: Answer Objections */}
+      <FAQSection />
 
       {/* CTA Section */}
       <section className="relative py-24 overflow-hidden bg-black">
@@ -705,87 +1384,91 @@ export function TeslaHomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            <div>
-              <h3 className="font-bold text-lg mb-4">Neumáticos del Valle</h3>
-              <p className="text-gray-400 text-sm mb-4">
+      <footer className="bg-black border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          {/* Main Content */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-6 md:mb-8">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <h3 className="text-base md:text-lg font-bold text-white mb-2">
+                Neumáticos del Valle
+              </h3>
+              <p className="text-xs md:text-sm text-gray-400 mb-2">
                 Distribuidor Oficial Pirelli
               </p>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-[#FEE004] fill-[#FEE004]" />
+                  <Star key={i} className="w-3 h-3 md:w-3.5 md:h-3.5 text-[#FEE004] fill-[#FEE004]" />
                 ))}
               </div>
             </div>
 
+            {/* Links - Compacto en móvil */}
             <div>
-              <h4 className="font-semibold mb-4">Enlaces Rápidos</h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/productos" className="text-gray-400 hover:text-white transition-colors text-sm">
-                    Catálogo
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/turnos" className="text-gray-400 hover:text-white transition-colors text-sm">
-                    Turnos
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/servicios" className="text-gray-400 hover:text-white transition-colors text-sm">
-                    Servicios
-                  </Link>
-                </li>
+              <h4 className="text-xs md:text-sm font-semibold text-white mb-3 md:mb-4">Enlaces</h4>
+              <ul className="space-y-2 md:space-y-2.5">
+                {[
+                  { name: 'Productos', href: '/productos' },
+                  { name: 'Servicios', href: '/servicios' },
+                  { name: 'Turnos', href: '/turnos' },
+                  { name: 'Equivalencias', href: '/equivalencias' },
+                ].map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-xs md:text-sm text-gray-400 hover:text-[#FEE004] transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
+            {/* Contact - Compacto en móvil */}
             <div>
-              <h4 className="font-semibold mb-4">Servicios</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>Alineación y Balanceo</li>
-                <li>Service Express</li>
-                <li>Diagnóstico Digital</li>
-                <li>Rotación de Neumáticos</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Contacto</h4>
-              <div className="space-y-3">
+              <h4 className="text-xs md:text-sm font-semibold text-white mb-3 md:mb-4">Contacto</h4>
+              <div className="space-y-2 md:space-y-2.5">
                 <a
                   href="tel:+5492995044430"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+                  className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-white transition-colors"
                 >
-                  <Phone className="w-4 h-4" />
-                  (299) 504-4430
+                  <Phone className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span className="truncate">(299) 504-4430</span>
                 </a>
                 <a
                   href="https://wa.me/5492995044430"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+                  className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-green-400 transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  WhatsApp
+                  <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span>WhatsApp</span>
+                </a>
+                <a
+                  href="#sucursales"
+                  className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span>6 Sucursales</span>
                 </a>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col lg:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm">
-              © 2024 Neumáticos del Valle. Todos los derechos reservados.
+          {/* Bottom - Más compacto en móvil */}
+          <div className="pt-4 md:pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-4">
+            <p className="text-xs text-gray-500 text-center sm:text-left">
+              © 2024 Neumáticos del Valle
             </p>
-            <div className="flex gap-6 text-sm text-gray-400">
-              <Link href="/admin" className="hover:text-white transition-colors">
+            <div className="flex gap-4 md:gap-6 text-xs">
+              <Link href="/admin" className="text-gray-500 hover:text-[#FEE004] transition-colors">
                 Admin
               </Link>
-              <Link href="#" className="hover:text-white transition-colors">
+              <Link href="#" className="text-gray-500 hover:text-white transition-colors">
                 Términos
               </Link>
-              <Link href="#" className="hover:text-white transition-colors">
+              <Link href="#" className="text-gray-500 hover:text-white transition-colors">
                 Privacidad
               </Link>
             </div>
