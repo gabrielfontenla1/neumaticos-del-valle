@@ -34,8 +34,8 @@ const colors = {
 }
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('admin@neumaticosdelvalleocr.cl')
-  const [password, setPassword] = useState('admin2024')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)

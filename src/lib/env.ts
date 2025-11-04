@@ -1,6 +1,5 @@
 /**
  * Environment Configuration
- * Controls which version of the site to show based on environment
  */
 
 export type Environment = 'development' | 'staging' | 'production'
@@ -20,17 +19,8 @@ export function getEnvironment(): Environment {
     return 'development'
   }
 
-  // In production, check if we should show under construction
-  const showUnderConstruction = process.env.NEXT_PUBLIC_SHOW_UNDER_CONSTRUCTION === 'true'
-  return showUnderConstruction ? 'production' : 'staging'
-}
-
-/**
- * Check if we should show the Under Construction page
- */
-export function shouldShowUnderConstruction(): boolean {
-  const env = getEnvironment()
-  return env === 'production'
+  // Default to staging in production build
+  return 'staging'
 }
 
 /**
@@ -41,7 +31,6 @@ export const ENV_CONFIG = {
   isProduction: getEnvironment() === 'production',
   isStaging: getEnvironment() === 'staging',
   isDevelopment: getEnvironment() === 'development',
-  showUnderConstruction: shouldShowUnderConstruction(),
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
 } as const
 
@@ -50,5 +39,4 @@ export const ENV_CONFIG = {
  */
 if (typeof window !== 'undefined' && ENV_CONFIG.isDevelopment) {
   console.log('🌍 Environment:', ENV_CONFIG.environment)
-  console.log('🏗️ Show Under Construction:', ENV_CONFIG.showUnderConstruction)
 }
