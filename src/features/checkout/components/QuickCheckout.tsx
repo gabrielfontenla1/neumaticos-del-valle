@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, ShoppingCart, Minus, Plus, Trash2, MessageCircle, MapPin } from 'lucide-react'
 import { useCart } from '@/features/cart/hooks/useCart'
 import { CustomerData } from '@/features/cart/types'
-import { createVoucher } from '@/features/checkout/api/voucher'
+import { createVoucher, createOrderFromVoucher } from '@/features/checkout/api/voucher'
 import { openWhatsApp, formatPrice, generateTireDescription } from '@/lib/whatsapp'
 import { supabase } from '@/lib/supabase'
 
@@ -108,17 +108,40 @@ export function QuickCheckout() {
       const voucher = await createVoucher(formData, items, totals)
 
       if (voucher) {
+        let orderNumber: string | null = null
+
+        // Try to create order
+        console.log('Creating order from voucher...')
+        const orderResult = await createOrderFromVoucher(
+          voucher.code,
+          formData.name,
+          formData.email,
+          formData.phone,
+          items,
+          totals,
+          formData.store_id,
+          formData.notes
+        )
+
+        if (orderResult) {
+          orderNumber = orderResult.order_number
+          console.log('Order created successfully:', orderNumber)
+        } else {
+          console.log('Order creation failed, continuing with voucher only')
+        }
+
         // Get store WhatsApp number
         const store = stores.find(s => s.id === formData.store_id)
         const whatsappNumber = store?.whatsapp || store?.phone
 
-        // Open WhatsApp with message
-        openWhatsApp(voucher, whatsappNumber)
+        // Open WhatsApp with message (including order number if available)
+        openWhatsApp(voucher, whatsappNumber, orderNumber || undefined)
 
         // Store purchase data for post-purchase flow
         sessionStorage.setItem('purchase_completed', 'true')
         sessionStorage.setItem('last_purchase', JSON.stringify({
           voucher_code: voucher.code,
+          order_number: orderNumber,
           customer_name: formData.name,
           customer_email: formData.email,
           customer_phone: formData.phone,
@@ -134,7 +157,7 @@ export function QuickCheckout() {
         closeCart()
 
         // Redirect to success page
-        window.location.href = `/checkout/success?code=${voucher.code}`
+        window.location.href = `/checkout/success?code=${voucher.code}${orderNumber ? `&order=${orderNumber}` : ''}`
       } else {
         alert('Error al crear el presupuesto. Por favor intenta nuevamente.')
       }

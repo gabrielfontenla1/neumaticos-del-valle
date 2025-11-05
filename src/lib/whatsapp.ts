@@ -2,9 +2,9 @@ import { CartItem, CartTotals, CustomerData, VoucherData } from '@/features/cart
 
 // WhatsApp numbers for each store
 export const WHATSAPP_NUMBERS = {
-  main: '56912345678', // Replace with real number
-  santiago: '56987654321', // Replace with real number
-  default: '56912345678' // Default number
+  main: '5493855870760', // Número principal
+  santiago: '5493855870760', // Mismo número para todas las sucursales
+  default: '5493855870760' // Número por defecto
 }
 
 // Detect if user is on mobile
@@ -33,10 +33,18 @@ export function generateTireDescription(item: CartItem): string {
 }
 
 // Generate WhatsApp message
-export function generateWhatsAppMessage(voucher: VoucherData): string {
+export function generateWhatsAppMessage(voucher: VoucherData, orderNumber?: string): string {
   const lines = [
     `🚗 *SOLICITUD DE PRESUPUESTO*`,
-    `📋 Código: *${voucher.code}*`,
+    `📋 Código de Presupuesto: *${voucher.code}*`,
+  ]
+
+  // Add order number if provided
+  if (orderNumber) {
+    lines.push(`📌 Número de Orden: *${orderNumber}*`)
+  }
+
+  lines.push(
     ``,
     `👤 *DATOS DEL CLIENTE*`,
     `Nombre: ${voucher.customer_name}`,
@@ -44,7 +52,7 @@ export function generateWhatsAppMessage(voucher: VoucherData): string {
     `Email: ${voucher.customer_email}`,
     ``,
     `🛞 *PRODUCTOS SOLICITADOS*`,
-  ]
+  )
 
   // Add items
   voucher.items.forEach((item, index) => {
@@ -94,8 +102,12 @@ export function buildWhatsAppUrl(
   // Remove all non-numeric characters from phone
   const cleanPhone = phoneNumber.replace(/\D/g, '')
 
-  // Ensure it starts with country code
-  const finalPhone = cleanPhone.startsWith('56') ? cleanPhone : `56${cleanPhone}`
+  // Check if it already has a country code (starts with 54 for Argentina or 56 for Chile)
+  // If it already starts with 54 or 56, use as is
+  // Otherwise, assume it's an Argentine number and add 54
+  const finalPhone = (cleanPhone.startsWith('54') || cleanPhone.startsWith('56'))
+    ? cleanPhone
+    : `54${cleanPhone}`
 
   // Encode message for URL
   const encodedMessage = encodeURIComponent(message)
@@ -111,9 +123,9 @@ export function buildWhatsAppUrl(
 }
 
 // Open WhatsApp with message
-export function openWhatsApp(voucher: VoucherData, storePhone?: string): void {
+export function openWhatsApp(voucher: VoucherData, storePhone?: string, orderNumber?: string): void {
   const phone = storePhone || WHATSAPP_NUMBERS.default
-  const message = generateWhatsAppMessage(voucher)
+  const message = generateWhatsAppMessage(voucher, orderNumber)
   const url = buildWhatsAppUrl(phone, message)
 
   // Open in new tab/window

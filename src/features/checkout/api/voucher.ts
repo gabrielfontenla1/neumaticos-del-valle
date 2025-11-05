@@ -189,3 +189,65 @@ export async function isVoucherValid(code: string): Promise<boolean> {
     return false
   }
 }
+
+// Create order from voucher
+export async function createOrderFromVoucher(
+  voucherCode: string,
+  customerName: string,
+  customerEmail: string,
+  customerPhone: string,
+  items: CartItem[],
+  totals: { subtotal: number; tax: number; total: number },
+  storeId?: string,
+  notes?: string
+): Promise<{ order_number: string } | null> {
+  try {
+    // Prepare order items
+    const orderItems = items.map(item => ({
+      product_id: item.product_id,
+      product_name: `${item.brand} ${item.name}`,
+      sku: item.sku,
+      quantity: item.quantity,
+      unit_price: item.sale_price || item.price,
+      total_price: (item.sale_price || item.price) * item.quantity,
+      image_url: item.image_url,
+      brand: item.brand,
+      model: item.name
+    }))
+
+    // Create order via API
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        voucher_code: voucherCode,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        items: orderItems,
+        subtotal: totals.subtotal,
+        tax: totals.tax,
+        payment_method: 'pending', // Will be paid via store
+        source: 'whatsapp',
+        store_id: storeId || null,
+        notes: notes || null
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      console.error('Error creating order from voucher:', data.error)
+      return null
+    }
+
+    return {
+      order_number: data.order.order_number
+    }
+  } catch (error) {
+    console.error('Error in createOrderFromVoucher:', error)
+    return null
+  }
+}
