@@ -2,11 +2,32 @@ import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 import { Product, ProductFilters, ImportRow } from './types'
 
-// Obtener productos con filtros y paginación
+/**
+ * Applies sorting to the query based on sort option
+ */
+function applySorting(query: any, sortBy: string = 'name') {
+  switch (sortBy) {
+    case 'name':
+      return query.order('name', { ascending: true })
+    case 'price-asc':
+      return query.order('price', { ascending: true })
+    case 'price-desc':
+      return query.order('price', { ascending: false })
+    case 'stock':
+      return query.order('stock', { ascending: false })
+    default:
+      return query.order('name', { ascending: true })
+  }
+}
+
+/**
+ * Obtener productos con filtros, paginación y ordenamiento
+ */
 export async function getProducts(
   filters: ProductFilters = {},
   page = 1,
-  limit = 20
+  limit = 20,
+  sortBy = 'name'
 ) {
   try {
     let query = supabase
@@ -15,13 +36,17 @@ export async function getProducts(
 
     // Aplicar filtros
     if (filters.search) {
-      query = query.ilike('name', `%${filters.search}%`)
+      // Search in name, brand, and model fields
+      query = query.or(`name.ilike.%${filters.search}%,brand.ilike.%${filters.search}%,model.ilike.%${filters.search}%`)
     }
     if (filters.brand) {
       query = query.eq('brand', filters.brand)
     }
     if (filters.category) {
       query = query.eq('category', filters.category)
+    }
+    if (filters.model) {
+      query = query.eq('model', filters.model)
     }
     if (filters.width) {
       query = query.eq('width', filters.width)
@@ -32,24 +57,24 @@ export async function getProducts(
     if (filters.diameter) {
       query = query.eq('diameter', filters.diameter)
     }
-    if (filters.minPrice) {
+    if (filters.minPrice !== undefined) {
       query = query.gte('price', filters.minPrice)
     }
-    if (filters.maxPrice) {
+    if (filters.maxPrice !== undefined) {
       query = query.lte('price', filters.maxPrice)
     }
     if (filters.inStock) {
-      // Try with 'stock' field (it might be 'stock' instead of 'stock_quantity' in the DB)
       query = query.gt('stock', 0)
     }
+
+    // Apply sorting
+    query = applySorting(query, sortBy)
 
     // Paginación
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    query = query
-      .range(from, to)
-      .order('created_at', { ascending: false })
+    query = query.range(from, to)
 
     const { data, error, count } = await query
 
@@ -84,13 +109,21 @@ export async function getProducts(
 // Obtener producto por ID
 export async function getProductById(id: string) {
   try {
+    console.log('🔍 [getProductById] INICIO - id:', id)
+
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
       .single()
 
-    if (error) throw error
+    console.log('🔍 [getProductById] Response - data:', data ? 'OBTENIDO' : 'NULL')
+    console.log('🔍 [getProductById] Response - error:', error?.message || 'NINGUNO')
+
+    if (error) {
+      console.error('🔍 [getProductById] Error de BD:', error)
+      throw error
+    }
 
     // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
     if (data) {
@@ -98,11 +131,24 @@ export async function getProductById(id: string) {
         ...data,
         stock: data.stock || data.stock_quantity || 0
       }
+      console.log('🔍 [getProductById] Producto mapeado:', {
+        id: mappedProduct.id,
+        name: mappedProduct.name,
+        price: mappedProduct.price,
+        stock: mappedProduct.stock,
+        width: mappedProduct.width,
+        profile: mappedProduct.profile,
+        diameter: mappedProduct.diameter
+      })
+      console.log('🔍 [getProductById] FIN - SUCCESS')
       return mappedProduct as Product
     }
+
+    console.warn('🔍 [getProductById] No data returned pero tampoco error')
     return null
   } catch (error) {
-    console.error('Error fetching product:', error)
+    console.error('❌ [getProductById] Error fetching product:', error)
+    console.error('❌ [getProductById] Stack trace:', error instanceof Error ? error.stack : 'No stack')
     return null
   }
 }
@@ -141,6 +187,25 @@ export async function getCategories() {
     return uniqueCategories.filter(Boolean)
   } catch (error) {
     console.error('Error fetching categories:', error)
+    return []
+  }
+}
+
+// Obtener modelos únicos
+export async function getModels() {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('model')
+      .order('model')
+
+    if (error) throw error
+
+    const modelsData = data as any[]
+    const uniqueModels = [...new Set(modelsData?.map(p => p.model) || [])]
+    return uniqueModels.filter(Boolean)
+  } catch (error) {
+    console.error('Error fetching models:', error)
     return []
   }
 }
