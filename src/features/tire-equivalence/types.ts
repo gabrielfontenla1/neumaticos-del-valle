@@ -31,7 +31,7 @@ export interface EquivalentTire {
   calculatedDiameter: number  // Diámetro calculado del producto
   difference: number          // Diferencia con el diámetro de referencia en mm
   differencePercent: number   // Diferencia en porcentaje
-  equivalenceLevel: string    // Nivel: 'exacta' | 'muy buena' | 'buena' | 'aceptable'
+  equivalenceLevel: string    // Nivel: 'perfecta' | 'excelente' | 'muy buena' | 'buena'
 }
 
 export interface EquivalenceResult {

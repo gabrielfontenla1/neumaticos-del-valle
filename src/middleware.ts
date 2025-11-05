@@ -4,9 +4,14 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
   const isLoggedIn = !!req.auth
   const isAuthPage = req.nextUrl.pathname.startsWith("/auth")
+  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin")
   const isProtectedRoute = req.nextUrl.pathname.startsWith("/dashboard") ||
-                          req.nextUrl.pathname.startsWith("/admin") ||
                           req.nextUrl.pathname.startsWith("/profile")
+
+  // Skip middleware for admin routes - they have their own auth
+  if (isAdminRoute) {
+    return NextResponse.next()
+  }
 
   // If on auth page and logged in, redirect to home
   if (isAuthPage && isLoggedIn) {

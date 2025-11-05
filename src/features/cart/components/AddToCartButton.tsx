@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Check, AlertCircle } from 'lucide-react'
 import { useCartContext } from '@/providers/CartProvider'
+import { useNotifications } from '@/components/CartNotifications'
 
 interface AddToCartButtonProps {
   productId: string
@@ -23,22 +24,46 @@ export function AddToCartButton({
   variant = 'default'
 }: AddToCartButtonProps) {
   const { addItem } = useCartContext()
+  const { showNotification } = useNotifications()
   const [isAdding, setIsAdding] = useState(false)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
   const handleAddToCart = async () => {
-    if (disabled || isAdding) return
+    console.log('🟣 [AddToCartButton] handleAddToCart INICIO')
+    console.log('🟣 [AddToCartButton] disabled:', disabled)
+    console.log('🟣 [AddToCartButton] isAdding:', isAdding)
+
+    if (disabled || isAdding) {
+      console.warn('⚠️ [AddToCartButton] Botón deshabilitado o ya agregando')
+      return
+    }
 
     setIsAdding(true)
     setStatus('loading')
+    console.log('🟣 [AddToCartButton] Estado cambiado a loading')
 
     try {
+      console.log('🟣 [AddToCartButton] Llamando a addItem con:', {
+        productId,
+        quantity
+      })
+
       const success = await addItem(productId, quantity)
+      console.log('🟣 [AddToCartButton] Resultado de addItem:', success)
 
       if (success) {
         setStatus('success')
         setMessage(`${productName} agregado al carrito`)
+        console.log('✅ [AddToCartButton] Producto agregado exitosamente')
+
+        // Show notification toast
+        showNotification({
+          type: 'success',
+          title: '¡Agregado al carrito!',
+          message: `${productName} fue añadido exitosamente`,
+          duration: 3000
+        })
 
         // Reset status after 2 seconds
         setTimeout(() => {
@@ -48,6 +73,15 @@ export function AddToCartButton({
       } else {
         setStatus('error')
         setMessage('Error al agregar el producto')
+        console.error('❌ [AddToCartButton] addItem retornó false')
+
+        // Show error notification
+        showNotification({
+          type: 'error',
+          title: 'Error al agregar',
+          message: 'No se pudo agregar el producto al carrito',
+          duration: 4000
+        })
 
         setTimeout(() => {
           setStatus('idle')
@@ -55,9 +89,18 @@ export function AddToCartButton({
         }, 3000)
       }
     } catch (error) {
-      console.error('Error adding to cart:', error)
+      console.error('❌ [AddToCartButton] Error en addToCart:', error)
+      console.error('❌ [AddToCartButton] Stack:', error instanceof Error ? error.stack : 'No stack')
       setStatus('error')
       setMessage('Error al agregar el producto')
+
+      // Show error notification
+      showNotification({
+        type: 'error',
+        title: 'Error inesperado',
+        message: error instanceof Error ? error.message : 'Algo salió mal',
+        duration: 4000
+      })
 
       setTimeout(() => {
         setStatus('idle')
@@ -65,6 +108,7 @@ export function AddToCartButton({
       }, 3000)
     } finally {
       setIsAdding(false)
+      console.log('🟣 [AddToCartButton] handleAddToCart FIN')
     }
   }
 
@@ -176,6 +220,7 @@ export function QuickAddButton({
   disabled?: boolean
 }) {
   const { addItem } = useCartContext()
+  const { showNotification } = useNotifications()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
@@ -191,14 +236,31 @@ export function QuickAddButton({
 
       if (success) {
         setStatus('success')
+        // Show success notification
+        showNotification({
+          type: 'success',
+          title: '¡Producto agregado!',
+          duration: 3000
+        })
         // Show success state for 1 second, then return to idle
         setTimeout(() => setStatus('idle'), 1000)
       } else {
         setStatus('idle')
+        showNotification({
+          type: 'error',
+          title: 'No se pudo agregar el producto',
+          duration: 3000
+        })
       }
     } catch (error) {
       console.error('Error adding to cart:', error)
       setStatus('idle')
+      showNotification({
+        type: 'error',
+        title: 'Error inesperado',
+        message: error instanceof Error ? error.message : 'Algo salió mal',
+        duration: 3000
+      })
     }
   }
 

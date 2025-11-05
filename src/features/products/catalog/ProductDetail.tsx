@@ -6,12 +6,13 @@ import { ArrowLeft, Package, Truck, ShieldCheck, Star, Minus, Plus, Info, Chevro
 import { motion, AnimatePresence } from 'framer-motion'
 import { Product } from '../types'
 import { getProductById } from '../api'
-import { useCart } from '@/features/cart/hooks/useCart'
+import { useCartContext } from '@/providers/CartProvider'
 import { Navbar } from '@/components/Navbar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { findEquivalentTires } from '@/features/tire-equivalence/api'
 import { EquivalentTire } from '@/features/tire-equivalence/types'
+import { toast } from 'sonner'
 
 interface ProductDetailProps {
   productId: string
@@ -24,7 +25,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const [equivalentTires, setEquivalentTires] = useState<EquivalentTire[]>([])
   const [loadingEquivalents, setLoadingEquivalents] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const { addItem } = useCart()
+  const { addItem, items, totals, isLoading: cartLoading } = useCartContext()
 
   // Function to get clean product name without dimension duplication
   const getCleanProductName = (item: Product | EquivalentTire) => {
@@ -93,9 +94,38 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     loadEquivalents()
   }, [product, productId])
 
-  const handleAddToCart = () => {
-    if (!product) return
-    addItem(product.id, quantity)
+  const handleAddToCart = async () => {
+    console.log('🔵 [ProductDetail] handleAddToCart INICIO')
+    console.log('🔵 [ProductDetail] Producto:', product)
+    console.log('🔵 [ProductDetail] Product ID:', product?.id)
+    console.log('🔵 [ProductDetail] Quantity:', quantity)
+
+    if (!product) {
+      console.error('❌ [ProductDetail] No hay producto disponible')
+      toast.error('No se pudo agregar el producto')
+      return
+    }
+
+    console.log('🔵 [ProductDetail] Llamando a addItem con:', {
+      productId: product.id,
+      quantity: quantity
+    })
+
+    try {
+      const result = await addItem(product.id, quantity)
+      console.log('✅ [ProductDetail] Resultado de addItem:', result)
+
+      if (result) {
+        toast.success(`${quantity} ${quantity === 1 ? 'producto agregado' : 'productos agregados'} al carrito`)
+      } else {
+        toast.error('No se pudo agregar el producto al carrito')
+      }
+    } catch (error) {
+      console.error('❌ [ProductDetail] Error en addItem:', error)
+      toast.error('Error al agregar el producto')
+    }
+
+    console.log('🔵 [ProductDetail] handleAddToCart FIN')
   }
 
   if (loading) {
@@ -340,7 +370,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                         `📦 Cantidad: ${quantity} unidad${quantity > 1 ? 'es' : ''}\n\n` +
                         `¿Está disponible?`
                       )
-                      const whatsappUrl = `https://wa.me/5492615555555?text=${message}`
+                      const whatsappUrl = `https://wa.me/5493855870760?text=${message}`
                       window.open(whatsappUrl, '_blank')
                     }}
                     className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 mt-2"
@@ -362,19 +392,50 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             )}
 
             {/* Features Card */}
-            {product.features && Object.keys(product.features).length > 0 && (
-              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-                <h3 className="text-xs font-semibold text-gray-900 mb-2">Características técnicas</h3>
-                <dl className="space-y-2">
-                  {Object.entries(product.features).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
-                      <dt className="text-[11px] text-gray-600 capitalize">{key.replace(/_/g, ' ')}</dt>
-                      <dd className="text-[11px] font-medium text-gray-900">{String(value)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            )}
+            {product.features && Object.keys(product.features).length > 0 && (() => {
+              // Fields to exclude from display
+              const excludedFields = ['price_list', 'updated_from', 'created_from', 'codigo_propio', 'proveedor', 'supplier'];
+
+              // Spanish translations for field names
+              const fieldTranslations: { [key: string]: string } = {
+                'width': 'Ancho',
+                'profile': 'Perfil',
+                'diameter': 'Diámetro',
+                'load_index': 'Índice de carga',
+                'speed_rating': 'Índice de velocidad',
+                'season': 'Temporada',
+                'runflat': 'Run Flat',
+                'manufacturer': 'Fabricante',
+                'model': 'Modelo',
+                'year': 'Año',
+                'dot': 'DOT',
+                'origin': 'Origen',
+              };
+
+              // Filter and prepare features
+              const filteredFeatures = Object.entries(product.features)
+                .filter(([key]) => !excludedFields.includes(key))
+                .filter(([, value]) => value !== null && value !== undefined && value !== '')
+                .filter(([key]) => !key.includes('stock') && !key.includes('sucursal'));
+
+              if (filteredFeatures.length === 0) return null;
+
+              return (
+                <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+                  <h3 className="text-xs font-semibold text-gray-900 mb-2">Características técnicas</h3>
+                  <dl className="space-y-2">
+                    {filteredFeatures.map(([key, value]) => (
+                      <div key={key} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
+                        <dt className="text-[11px] text-gray-600">
+                          {fieldTranslations[key] || key.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                        </dt>
+                        <dd className="text-[11px] font-medium text-gray-900">{String(value)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              );
+            })()}
 
             {/* Category Card */}
             <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
@@ -479,13 +540,13 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                               <Badge
                                 variant="secondary"
                                 className={`text-[10px] w-fit h-5 px-2 ${
-                                  tire.equivalenceLevel === 'exacta'
+                                  tire.equivalenceLevel === 'perfecta'
                                     ? 'bg-green-50 text-green-600'
-                                    : tire.equivalenceLevel === 'muy buena'
+                                    : tire.equivalenceLevel === 'excelente'
                                     ? 'bg-blue-50 text-blue-600'
-                                    : tire.equivalenceLevel === 'buena'
-                                    ? 'bg-sky-50 text-sky-600'
-                                    : 'bg-gray-50 text-gray-600'
+                                    : tire.equivalenceLevel === 'muy buena'
+                                    ? 'bg-cyan-50 text-cyan-600'
+                                    : 'bg-emerald-50 text-emerald-600'
                                 }`}
                               >
                                 Equivalencia {tire.equivalenceLevel}

@@ -30,6 +30,7 @@ export interface ProductFilters {
   search?: string
   brand?: string
   category?: string
+  model?: string
   width?: number
   profile?: number
   diameter?: number

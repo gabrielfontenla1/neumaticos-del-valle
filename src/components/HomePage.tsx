@@ -86,7 +86,7 @@ export function HomePage() {
                 Ingresar
               </Link>
               <a
-                href="https://wa.me/5492995044430"
+                href="https://wa.me/5493855870760"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#FFC700] hover:bg-[#FFD633] text-black px-6 py-2.5 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
@@ -562,7 +562,7 @@ export function HomePage() {
               <ul className="space-y-3">
                 <li>
                   <a
-                    href="https://wa.me/5492995044430"
+                    href="https://wa.me/5493855870760"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-2 font-medium"
@@ -573,7 +573,7 @@ export function HomePage() {
                 </li>
                 <li>
                   <a
-                    href="tel:+5492995044430"
+                    href="tel:+5493855870760"
                     className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-2 font-medium"
                   >
                     <Phone className="w-4 h-4 text-[#FFC700]" strokeWidth={2} />

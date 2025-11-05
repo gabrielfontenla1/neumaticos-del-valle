@@ -66,7 +66,7 @@
     ]
   },
   "FORMULA EVO": {
-    "filename": "formula-evo.jpg",
+    "filename": "evo.jpg",
     "count": 8,
     "categories": [
       "auto"
@@ -80,8 +80,29 @@
     ]
   },
   "FORMULA ENERGY": {
-    "filename": "formula-energy.jpg",
+    "filename": "energy.jpg",
     "count": 6,
+    "categories": [
+      "auto"
+    ]
+  },
+  "FORMULA S/T": {
+    "filename": "formulaST",
+    "count": 4,
+    "categories": [
+      "camioneta"
+    ]
+  },
+  "FORMULA SPIDER": {
+    "filename": "spider.jpg",
+    "count": 2,
+    "categories": [
+      "auto"
+    ]
+  },
+  "FORMULA DRAGON": {
+    "filename": "dragon.jpg",
+    "count": 1,
     "categories": [
       "auto"
     ]

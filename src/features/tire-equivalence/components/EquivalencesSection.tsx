@@ -11,6 +11,7 @@ import { QuickAddButton } from '@/features/cart/components/AddToCartButton'
 interface EquivalencesSectionProps {
   equivalentTires: EquivalentTire[]
   hasExactMatch: boolean
+  hasExactMatchWithoutStock?: boolean
   loading: boolean
   originalSize: TireSize
   className?: string
@@ -19,6 +20,7 @@ interface EquivalencesSectionProps {
 export function EquivalencesSection({
   equivalentTires,
   hasExactMatch,
+  hasExactMatchWithoutStock = false,
   loading,
   originalSize,
   className = ''
@@ -64,8 +66,8 @@ export function EquivalencesSection({
       className={`mt-12 ${className}`}
     >
       {/* Alert Banner */}
-      {!hasExactMatch ? (
-        // Caso 1: NO hay stock - Warning
+      {hasExactMatchWithoutStock ? (
+        // Caso 1: Hay productos pero SIN STOCK - Orange Warning
         <div className="bg-orange-50 border-l-4 border-orange-500 p-6 rounded-lg mb-8">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
@@ -73,18 +75,38 @@ export function EquivalencesSection({
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-orange-900 mb-2">
-                No hay stock disponible en {formatTireSize(originalSize)}
+                Sin stock temporal en {formatTireSize(originalSize)}
               </h3>
               <p className="text-sm text-orange-800">
-                Encontramos <strong>{equivalentTires.length} cubiertas equivalentes compatibles</strong> con
+                Actualmente no tenemos stock de la medida exacta, pero encontramos{' '}
+                <strong>{equivalentTires.length} cubiertas equivalentes compatibles</strong> con
                 tolerancia ±3% según estándares de la industria. Estas opciones son técnicamente válidas
                 para tu vehículo.
               </p>
             </div>
           </div>
         </div>
+      ) : !hasExactMatch ? (
+        // Caso 2: NO existe esa medida en el catálogo - Red Alert
+        <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg mb-8">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-6 w-6 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-900 mb-2">
+                Medida {formatTireSize(originalSize)} no disponible en catálogo
+              </h3>
+              <p className="text-sm text-red-800">
+                Esta medida no está en nuestro catálogo actual, pero encontramos{' '}
+                <strong>{equivalentTires.length} cubiertas equivalentes compatibles</strong> con
+                tolerancia ±3% que son perfectamente seguras para tu vehículo.
+              </p>
+            </div>
+          </div>
+        </div>
       ) : (
-        // Caso 2: SÍ hay stock - Info
+        // Caso 3: SÍ hay stock - Blue Info
         <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-8">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
@@ -95,7 +117,7 @@ export function EquivalencesSection({
                 Equivalencias compatibles disponibles
               </h3>
               <p className="text-sm text-blue-800">
-                Además de los productos en {formatTireSize(originalSize)}, también podés considerar estas{' '}
+                Además de los productos en stock en {formatTireSize(originalSize)}, también podés considerar estas{' '}
                 <strong>{equivalentTires.length} equivalencias compatibles</strong> con tolerancia ±3%.
                 Mayor variedad de opciones para tu vehículo.
               </p>
@@ -135,17 +157,17 @@ export function EquivalencesSection({
                     <div className="absolute top-2 left-2 z-10">
                       <Badge
                         className={`text-[9px] font-semibold px-1.5 py-0.5 ${
-                          tire.equivalenceLevel === 'exacta'
+                          tire.equivalenceLevel === 'perfecta'
                             ? 'bg-green-100 text-green-800 border-green-300'
-                            : tire.equivalenceLevel === 'muy buena'
+                            : tire.equivalenceLevel === 'excelente'
                             ? 'bg-blue-100 text-blue-800 border-blue-300'
-                            : tire.equivalenceLevel === 'buena'
+                            : tire.equivalenceLevel === 'muy buena'
                             ? 'bg-cyan-100 text-cyan-800 border-cyan-300'
-                            : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
                         }`}
                       >
-                        {tire.equivalenceLevel === 'exacta' && '✓ '}
-                        {tire.equivalenceLevel}
+                        {tire.equivalenceLevel === 'perfecta' && '✓ '}
+                        Equivalencia {tire.equivalenceLevel}
                       </Badge>
                     </div>
 

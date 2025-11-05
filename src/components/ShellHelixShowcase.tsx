@@ -54,7 +54,7 @@ export function ShellHelixShowcase() {
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <a
-                href="https://wa.me/5492995044430?text=Hola!%20Quiero%20consultar%20por%20aceites%20Shell%20Helix"
+                href="https://wa.me/5493855870760?text=Hola!%20Quiero%20consultar%20por%20aceites%20Shell%20Helix"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group px-8 py-4 bg-green-500 text-white rounded-xl font-bold text-lg hover:bg-green-600 transition-all hover:scale-105 shadow-xl inline-flex items-center justify-center gap-2"
@@ -232,7 +232,7 @@ export function ShellHelixShowcase() {
                         </div>
 
                         <a
-                          href={`https://wa.me/5492995044430?text=Hola!%20Quiero%20consultar%20por%20${encodeURIComponent(oil.name)}%20${oil.viscosity}`}
+                          href={`https://wa.me/5493855870760?text=Hola!%20Quiero%20consultar%20por%20${encodeURIComponent(oil.name)}%20${oil.viscosity}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all inline-flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
@@ -267,7 +267,7 @@ export function ShellHelixShowcase() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://wa.me/5492995044430"
+                href="https://wa.me/5493855870760"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group px-8 py-4 bg-white text-red-600 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all inline-flex items-center justify-center gap-2 shadow-xl"

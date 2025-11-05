@@ -53,12 +53,22 @@ export function CartItem({ item }: CartItemProps) {
   const subtotal = price * item.quantity
 
   return (
-    <div className="relative bg-white rounded-lg border border-gray-200 p-4 transition-all hover:shadow-sm">
-      <div className="flex gap-4">
+    <div className="relative">
+      <div className="flex gap-3 sm:gap-4 p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+        {/* Checkbox */}
+        <div className="pt-4">
+          <input
+            type="checkbox"
+            checked={true}
+            onChange={() => {}}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+        </div>
+
         {/* Image */}
-        <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-white rounded overflow-hidden border border-gray-200">
           <Image
-            src={item.image_url || '/placeholder-tire.png'}
+            src={item.image_url || '/tire.webp'}
             alt={item.name}
             fill
             className="object-contain p-1"
@@ -66,56 +76,76 @@ export function CartItem({ item }: CartItemProps) {
           />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Title and Brand */}
-          <div className="pr-8">
-            <h4 className="text-sm font-medium text-gray-900 truncate">
-              {item.brand} {item.name}
-            </h4>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {getTireSize()}
-              {item.season && ` • ${item.season}`}
+        {/* Mobile Layout */}
+        <div className="flex-1 min-w-0 sm:hidden">
+          {/* Brand */}
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            {item.brand}
+          </div>
+
+          {/* Title */}
+          <h4 className="text-base font-bold text-gray-900 hover:text-blue-600 cursor-pointer line-clamp-2 mt-1">
+            {getTireSize()}
+            {item.season && ` - ${item.season}`}
+          </h4>
+
+          {/* Model/Name */}
+          <p className="text-sm text-gray-600 mt-1">
+            {item.name}
+          </p>
+
+          {/* Stock info */}
+          {item.stock_quantity > 5 ? (
+            <p className="text-xs text-gray-500 mt-1 font-medium">
+              +{item.stock_quantity} disponibles
             </p>
-          </div>
+          ) : item.stock_quantity <= 5 && item.stock_quantity > 0 ? (
+            <p className="text-xs text-orange-600 mt-1 font-medium">
+              Últimos {item.stock_quantity} disponibles
+            </p>
+          ) : null}
 
-          {/* Price */}
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-sm font-medium text-gray-900">
+          {/* Price Mobile */}
+          <div className="mt-2">
+            <div className="text-xl font-bold text-gray-900">
               {formatPrice(price)}
-            </span>
+            </div>
             {item.sale_price && (
-              <span className="text-xs text-gray-400 line-through">
-                {formatPrice(item.price)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400 line-through">
+                  {formatPrice(item.price)}
+                </span>
+                <span className="text-sm font-semibold text-green-600">
+                  -{Math.round(((item.price - item.sale_price) / item.price) * 100)}% OFF
+                </span>
+              </div>
             )}
-            <span className="text-xs text-gray-500">
-              / unidad
-            </span>
           </div>
 
-          {/* Quantity controls and subtotal */}
-          <div className="mt-3 flex items-center justify-between">
-            {/* Quantity controls */}
-            <div className="flex items-center gap-1">
+          {/* Quantity controls mobile */}
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center">
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 rounded-r-none border-gray-300"
                 onClick={() => handleQuantityChange(item.quantity - 1)}
                 disabled={isUpdating || item.quantity <= 1}
               >
                 <Minus className="h-3 w-3" />
               </Button>
 
-              <div className="w-12 text-center">
-                <span className="text-sm font-medium">{item.quantity}</span>
-              </div>
+              <input
+                type="text"
+                value={item.quantity}
+                readOnly
+                className="w-10 h-7 text-center border-y border-gray-300 text-sm"
+              />
 
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 rounded-l-none border-gray-300"
                 onClick={() => handleQuantityChange(item.quantity + 1)}
                 disabled={isUpdating || item.quantity >= item.stock_quantity}
               >
@@ -123,33 +153,108 @@ export function CartItem({ item }: CartItemProps) {
               </Button>
             </div>
 
-            {/* Subtotal */}
-            <div className="text-right">
-              <p className="text-xs text-gray-500">Subtotal</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {formatPrice(subtotal)}
-              </p>
-            </div>
+            {/* Eliminar link mobile */}
+            <button
+              onClick={handleRemove}
+              disabled={isUpdating}
+              className="text-blue-600 hover:text-blue-700 text-sm"
+            >
+              Eliminar
+            </button>
           </div>
-
-          {/* Stock warning */}
-          {item.stock_quantity <= 5 && (
-            <p className="mt-2 text-xs text-orange-600">
-              ⚠️ Solo {item.stock_quantity} disponibles
-            </p>
-          )}
         </div>
 
-        {/* Remove button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
-          onClick={handleRemove}
-          disabled={isUpdating}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex sm:flex-1 sm:gap-8">
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Brand */}
+            <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">
+              {item.brand}
+            </div>
+
+            {/* Title */}
+            <h4 className="text-lg font-bold text-gray-900 hover:text-blue-600 cursor-pointer line-clamp-2 mt-1">
+              {getTireSize()}
+              {item.season && ` - ${item.season}`}
+            </h4>
+
+            {/* Model/Name */}
+            <p className="text-sm text-gray-600 mt-1">
+              {item.name}
+            </p>
+
+            {/* Stock info */}
+            {item.stock_quantity > 5 ? (
+              <p className="text-xs text-gray-500 mt-2 font-medium">
+                +{item.stock_quantity} disponibles
+              </p>
+            ) : item.stock_quantity <= 5 && item.stock_quantity > 0 ? (
+              <p className="text-xs text-orange-600 mt-2 font-medium">
+                Últimos {item.stock_quantity} disponibles
+              </p>
+            ) : null}
+
+            {/* Eliminar link */}
+            <button
+              onClick={handleRemove}
+              disabled={isUpdating}
+              className="text-blue-600 hover:text-blue-700 text-sm mt-2"
+            >
+              Eliminar
+            </button>
+          </div>
+
+          {/* Quantity and Price */}
+          <div className="flex items-start gap-8">
+            {/* Quantity controls */}
+            <div className="flex items-center">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-r-none border-gray-300"
+                onClick={() => handleQuantityChange(item.quantity - 1)}
+                disabled={isUpdating || item.quantity <= 1}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+
+              <input
+                type="text"
+                value={item.quantity}
+                readOnly
+                className="w-12 h-8 text-center border-y border-gray-300 text-sm"
+              />
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-l-none border-gray-300"
+                onClick={() => handleQuantityChange(item.quantity + 1)}
+                disabled={isUpdating || item.quantity >= item.stock_quantity}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+
+            {/* Price */}
+            <div className="text-right min-w-[120px]">
+              {item.sale_price && (
+                <div className="flex items-center gap-2 mb-1 justify-end">
+                  <span className="text-base text-gray-400 line-through">
+                    {formatPrice(item.price)}
+                  </span>
+                  <span className="text-sm font-semibold text-green-600">
+                    -{Math.round(((item.price - item.sale_price) / item.price) * 100)}% OFF
+                  </span>
+                </div>
+              )}
+              <div className="text-2xl font-bold text-gray-900">
+                {formatPrice(price)}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Loading overlay */}
@@ -157,7 +262,7 @@ export function CartItem({ item }: CartItemProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute inset-0 bg-white/60 rounded-lg flex items-center justify-center"
+          className="absolute inset-0 bg-white/80 flex items-center justify-center"
         >
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent" />
         </motion.div>

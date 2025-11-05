@@ -12,7 +12,7 @@ import {
   calculateCartTotals
 } from '../api-local' // Using local storage implementation
 
-interface UseCartReturn {
+export interface UseCartReturn {
   items: CartItem[]
   totals: CartTotals
   isLoading: boolean
@@ -52,45 +52,80 @@ export function useCart(): UseCartReturn {
 
   // Load cart from Supabase
   const loadCart = useCallback(async () => {
+    console.log('🔄 [useCart] loadCart INICIO')
     try {
       setIsLoading(true)
       const sessionId = getSessionId()
-      if (!sessionId) return
+      console.log('🔄 [useCart] sessionId:', sessionId)
 
+      if (!sessionId) {
+        console.warn('⚠️ [useCart] No sessionId en loadCart')
+        return
+      }
+
+      console.log('🔄 [useCart] Obteniendo o creando sesión de carrito...')
       const cartSession = await getOrCreateCartSession(sessionId)
+      console.log('🔄 [useCart] Sesión obtenida:', cartSession)
+
       if (cartSession) {
         setSession(cartSession)
         setItems(cartSession.items)
+        console.log('🔄 [useCart] Items cargados:', cartSession.items.length)
 
         // Calculate totals
+        console.log('🔄 [useCart] Calculando totales...')
         const cartTotals = await calculateCartTotals(sessionId)
+        console.log('🔄 [useCart] Totales calculados:', cartTotals)
         setTotals(cartTotals)
       }
+      console.log('🔄 [useCart] loadCart ÉXITO')
     } catch (error) {
-      console.error('Error loading cart:', error)
+      console.error('❌ [useCart] Error en loadCart:', error)
+      console.error('❌ [useCart] Stack:', error instanceof Error ? error.stack : 'No stack')
     } finally {
       setIsLoading(false)
+      console.log('🔄 [useCart] loadCart FIN')
     }
   }, [getSessionId])
 
   // Initialize cart on mount
   useEffect(() => {
+    console.log('⚡ [useCart] useEffect - Inicializando carrito')
     loadCart()
   }, [loadCart])
 
   // Add item to cart
   const addItem = useCallback(async (productId: string, quantity: number = 1): Promise<boolean> => {
+    console.log('🟢 [useCart] addItem INICIO')
+    console.log('🟢 [useCart] productId:', productId)
+    console.log('🟢 [useCart] quantity:', quantity)
+
     try {
       const sessionId = getSessionId()
-      if (!sessionId) return false
+      console.log('🟢 [useCart] sessionId obtenido:', sessionId)
 
-      const success = await addToCart(sessionId, productId, quantity)
-      if (success) {
-        await loadCart()
+      if (!sessionId) {
+        console.error('❌ [useCart] No hay sessionId disponible')
+        return false
       }
+
+      console.log('🟢 [useCart] Llamando a addToCart API...')
+      const success = await addToCart(sessionId, productId, quantity)
+      console.log('🟢 [useCart] Resultado de addToCart API:', success)
+
+      if (success) {
+        console.log('🟢 [useCart] Recargando carrito...')
+        await loadCart()
+        console.log('🟢 [useCart] Carrito recargado exitosamente')
+      } else {
+        console.warn('⚠️ [useCart] addToCart retornó false')
+      }
+
+      console.log('🟢 [useCart] addItem FIN - retornando:', success)
       return success
     } catch (error) {
-      console.error('Error adding item:', error)
+      console.error('❌ [useCart] Error en addItem:', error)
+      console.error('❌ [useCart] Stack trace:', error instanceof Error ? error.stack : 'No stack')
       return false
     }
   }, [getSessionId, loadCart])

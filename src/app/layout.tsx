@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Lora, IBM_Plex_Mono, Montserrat } from 'next/font/google';
 import "./globals.css";
 import { CartProvider } from '@/providers/CartProvider';
+import { NotificationProvider } from '@/components/CartNotifications';
 import { ConditionalLayout } from '@/components/ConditionalNav';
 import { ThemeManager } from '@/components/ThemeManager';
 import { SessionProvider } from '@/features/auth/components/SessionProvider';
 import { WhatsAppBubble } from '@/components/WhatsAppBubble';
+import { Toaster } from '@/components/ui/sonner';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -80,12 +82,15 @@ export default function RootLayout({
       >
         <ThemeManager />
         <SessionProvider>
-          <CartProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-            <WhatsAppBubble />
-          </CartProvider>
+          <NotificationProvider>
+            <CartProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+              <WhatsAppBubble />
+              <Toaster />
+            </CartProvider>
+          </NotificationProvider>
         </SessionProvider>
       </body>
     </html>

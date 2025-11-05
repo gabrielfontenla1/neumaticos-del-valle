@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Search, X, Package, RotateCcw, Filter, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, X, Package, RotateCcw, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, Share2, Copy } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -20,6 +20,9 @@ import { QuickAddButton } from "@/features/cart/components/AddToCartButton"
 import ProductsSkeleton from "./ProductsSkeleton"
 import { useEquivalentTires } from "@/features/tire-equivalence/hooks/useEquivalentTires"
 import { EquivalencesSection } from "@/features/tire-equivalence/components/EquivalencesSection"
+import { useURLFilters } from "@/hooks/useURLFilters"
+import { useFilterPersistence } from "@/hooks/useFilterPersistence"
+import { generateShareableURL } from "@/lib/products/url-filters"
 
 interface ProductsClientProps {
   products: Product[]
@@ -45,11 +48,36 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  // Use URL filters hook for state management
+  const {
+    filters,
+    updateFilter,
+    updateFilters,
+    clearFilters,
+    isLoading: isURLLoading
+  } = useURLFilters({
+    debounceDelay: 300,
+    scroll: false
+  })
+
+  // Use filter persistence for saving presets and localStorage
+  const {
+    savePreset,
+    loadPreset,
+    deletePreset,
+    presets,
+    saveToSession,
+    loadFromSession,
+    saveFallback,
+    loadFallback
+  } = useFilterPersistence()
+
   // State for fetched products
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [stats, setStats] = useState(initialStats)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isRestoringFilters, setIsRestoringFilters] = useState(true)
 
   // Debug logging
   console.log('ProductsClientImproved state:', {
@@ -57,24 +85,29 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     firstProduct: products[0],
     stats,
     isLoading,
-    error
+    error,
+    filters
   })
 
-  // State
-  const [searchTerm, setSearchTerm] = useState("")
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
-  const [selectedBrand, setSelectedBrand] = useState("all")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [selectedModel, setSelectedModel] = useState("all")
-  const [selectedWidth, setSelectedWidth] = useState("all")
-  const [selectedProfile, setSelectedProfile] = useState("all")
-  const [selectedDiameter, setSelectedDiameter] = useState("all")
-  const [sortBy, setSortBy] = useState("name")
+  // UI State
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [sizeSearchTerm, setSizeSearchTerm] = useState("")
   const [showSizeSuggestions, setShowSizeSuggestions] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(50)
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(filters.searchTerm || "")
+
+  // Extract filter values from URL filters
+  const {
+    searchTerm = "",
+    selectedBrand = "all",
+    selectedCategory = "all",
+    selectedModel = "all",
+    selectedWidth = "all",
+    selectedProfile = "all",
+    selectedDiameter = "all",
+    sortBy = "name",
+    sizeSearchTerm = "",
+    currentPage = 1,
+    itemsPerPage = 50
+  } = filters
 
   // Fetch products from API on mount
   useEffect(() => {
@@ -84,8 +117,8 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
       try {
         console.log('Fetching products from API...')
-        // Fetch solo productos con stock disponible
-        const response = await fetch('/api/products?inStock=true&limit=1000')
+        // Fetch TODOS los productos (con y sin stock) para poder mostrar equivalencias
+        const response = await fetch('/api/products?limit=1000')
         const data = await response.json()
 
         if (response.ok) {
@@ -124,6 +157,33 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     fetchProducts()
   }, []) // Run once on mount
 
+  // Load filters from localStorage on mount
+  useEffect(() => {
+    // Try to restore filters from localStorage
+    const storedFilters = loadFallback()
+
+    // Check if we have stored filters and no filters in URL
+    const hasStoredFilters = storedFilters && Object.keys(storedFilters).length > 0
+    const hasURLFilters = searchParams.toString().length > 0
+
+    if (hasStoredFilters && !hasURLFilters) {
+      // Restore all saved filters when returning to the page without URL params
+      // This happens when user navigates back from product detail
+      updateFilters(storedFilters)
+    }
+
+    setIsRestoringFilters(false)
+  }, []) // Run once on mount
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    // Don't save during initial restoration
+    if (isRestoringFilters) return
+
+    // Save current filters to localStorage
+    saveFallback(filters)
+  }, [filters, isRestoringFilters, saveFallback])
+
   // Parse búsqueda inteligente de medidas (205/55R16 o 205/55/16)
   const parseSizeSearch = useCallback((value: string) => {
     const cleanValue = value.replace(/\s/g, "").toUpperCase()
@@ -146,12 +206,14 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     if (sizeSearchTerm) {
       const parsed = parseSizeSearch(sizeSearchTerm)
       if (parsed) {
-        setSelectedWidth(parsed.width)
-        setSelectedProfile(parsed.profile)
-        setSelectedDiameter(parsed.diameter)
+        updateFilters({
+          selectedWidth: parsed.width,
+          selectedProfile: parsed.profile,
+          selectedDiameter: parsed.diameter
+        })
       }
     }
-  }, [sizeSearchTerm, parseSizeSearch])
+  }, [sizeSearchTerm, parseSizeSearch, updateFilters])
 
   // Extraer valores únicos con contador dinámico
   const extractUniqueValues = useMemo(() => {
@@ -362,6 +424,21 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     let filtered = [...products]
     console.log('Starting filter with products:', filtered.length)
 
+    // Check if searching by specific size (all 3 size filters selected)
+    const isSearchingBySize =
+      (selectedWidth !== "all" && selectedWidth !== "") &&
+      (selectedProfile !== "all" && selectedProfile !== "") &&
+      (selectedDiameter !== "all" && selectedDiameter !== "")
+
+    // Stock filter - ONLY apply if NOT searching by specific size
+    // This allows showing out-of-stock tires for equivalence suggestions
+    if (!isSearchingBySize) {
+      filtered = filtered.filter(p => p.stock > 0)
+      console.log('Applied stock filter, remaining products:', filtered.length)
+    } else {
+      console.log('Searching by specific size - including out-of-stock items for equivalences')
+    }
+
     // Search filter
     if (debouncedSearchTerm) {
       const search = debouncedSearchTerm.toLowerCase()
@@ -454,11 +531,21 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
   // Determine if there are exact matches with stock
   const hasExactMatch = filteredProducts.length > 0
+  const hasExactMatchWithStock = filteredProducts.some(p => p.stock > 0)
+  const hasExactMatchWithoutStock = hasExactMatch && !hasExactMatchWithStock
 
   // Reset page when filters change
   useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy])
+    updateFilter('currentPage', 1)
+  }, [debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy, updateFilter])
+
+  // Scroll to top when page changes in URL
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  }, [currentPage])
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -473,37 +560,43 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   const endResult = Math.min(currentPage * itemsPerPage, filteredProducts.length)
 
   // Clear all filters
-  const clearFilters = useCallback(() => {
-    setSearchTerm("")
+  const handleClearFilters = useCallback(() => {
     setDebouncedSearchTerm("")
-    setSelectedBrand("all")
-    setSelectedCategory("all")
-    setSelectedModel("all")
-    setSelectedWidth("all")
-    setSelectedProfile("all")
-    setSelectedDiameter("all")
-    setSortBy("name")
-    setSizeSearchTerm("")
-    setCurrentPage(1)
-  }, [])
+    clearFilters()
+  }, [clearFilters])
 
   // Scroll to top when page changes
   const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Usar setTimeout para asegurar que el scroll ocurre después del renderizado
+    setTimeout(() => {
+      // Primero intentar scroll al contenedor principal de productos
+      const productsContainer = document.querySelector('.products-container')
+      if (productsContainer) {
+        productsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        // Si no existe el contenedor, hacer scroll considerando el navbar (aproximadamente 80px)
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        })
+      }
+    }, 100)
   }, [])
 
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
+    updateFilter('currentPage', page)
     scrollToTop()
-  }, [scrollToTop])
+  }, [scrollToTop, updateFilter])
 
   // Apply quick size filter
   const applyQuickSize = useCallback((width: string, profile: string, diameter: string) => {
-    setSelectedWidth(width)
-    setSelectedProfile(profile)
-    setSelectedDiameter(diameter)
-    setSizeSearchTerm(`${width}/${profile}R${diameter}`)
-  }, [])
+    updateFilters({
+      selectedWidth: width,
+      selectedProfile: profile,
+      selectedDiameter: diameter,
+      sizeSearchTerm: `${width}/${profile}R${diameter}`
+    })
+  }, [updateFilters])
 
   // Check if any filters are active
   const hasActiveFilters = searchTerm || (selectedBrand !== "all") || (selectedCategory !== "all") || (selectedModel !== "all") || (selectedWidth !== "all") || (selectedProfile !== "all") || (selectedDiameter !== "all")
@@ -532,7 +625,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
             placeholder="Ej: 205/55R16"
             value={sizeSearchTerm}
             onChange={(e) => {
-              setSizeSearchTerm(e.target.value)
+              updateFilter('sizeSearchTerm', e.target.value)
               setShowSizeSuggestions(true)
             }}
             onFocus={() => setShowSizeSuggestions(true)}
@@ -542,10 +635,12 @@ export default function ProductsClientImproved({ products: initialProducts, stat
           {sizeSearchTerm && (
             <Button
               onClick={() => {
-                setSizeSearchTerm("")
-                setSelectedWidth("all")
-                setSelectedProfile("all")
-                setSelectedDiameter("all")
+                updateFilters({
+                  sizeSearchTerm: "",
+                  selectedWidth: "all",
+                  selectedProfile: "all",
+                  selectedDiameter: "all"
+                })
               }}
               size="sm"
               variant="ghost"
@@ -563,7 +658,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
               <Button
                 key={size}
                 onClick={() => {
-                  setSizeSearchTerm(size)
+                  updateFilter('sizeSearchTerm', size)
                   setShowSizeSuggestions(false)
                 }}
                 variant="ghost"
@@ -613,12 +708,12 @@ export default function ProductsClientImproved({ products: initialProducts, stat
             type="text"
             placeholder="Marca, modelo..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => updateFilter('searchTerm', e.target.value)}
             className="w-full pl-9 pr-9 h-8 text-[11px]"
           />
           {searchTerm && (
             <Button
-              onClick={() => setSearchTerm("")}
+              onClick={() => updateFilter('searchTerm', "")}
               size="sm"
               variant="ghost"
               className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
@@ -632,7 +727,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
       {/* Brand Filter */}
       <div className="mb-4">
         <label className="text-[11px] font-medium text-gray-700 mb-2 block">Marca</label>
-        <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+        <Select value={selectedBrand} onValueChange={(value) => updateFilter('selectedBrand', value)}>
           <SelectTrigger className="w-full text-[11px] h-8">
             <SelectValue placeholder="Todas las marcas" />
           </SelectTrigger>
@@ -653,7 +748,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
       {/* Category Filter */}
       <div className="mb-4">
         <label className="text-[11px] font-medium text-gray-700 mb-2 block">Categoría</label>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <Select value={selectedCategory} onValueChange={(value) => updateFilter('selectedCategory', value)}>
           <SelectTrigger className="w-full text-[11px] h-8">
             <SelectValue placeholder="Todas las categorías" />
           </SelectTrigger>
@@ -674,7 +769,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
       {/* Model Filter */}
       <div className="mb-4">
         <label className="text-[11px] font-medium text-gray-700 mb-2 block">Modelo</label>
-        <Select value={selectedModel} onValueChange={setSelectedModel}>
+        <Select value={selectedModel} onValueChange={(value) => updateFilter('selectedModel', value)}>
           <SelectTrigger className="w-full text-[11px] h-8">
             <SelectValue placeholder="Todos los modelos" />
           </SelectTrigger>
@@ -699,7 +794,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
         {/* Width */}
         <div className="mb-2.5">
           <label className="text-[10px] font-normal text-gray-600 mb-1 block">Ancho (mm)</label>
-          <Select value={selectedWidth} onValueChange={setSelectedWidth}>
+          <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
             <SelectTrigger className="w-full text-[11px] h-8">
               <SelectValue placeholder="Ej: 185, 195, 205..." />
             </SelectTrigger>
@@ -720,7 +815,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
         {/* Profile */}
         <div className="mb-2.5">
           <label className="text-[10px] font-normal text-gray-600 mb-1 block">Perfil (%)</label>
-          <Select value={selectedProfile} onValueChange={setSelectedProfile}>
+          <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
             <SelectTrigger className="w-full text-[11px] h-8">
               <SelectValue placeholder="Ej: 55, 60, 65..." />
             </SelectTrigger>
@@ -741,7 +836,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
         {/* Diameter */}
         <div>
           <label className="text-[10px] font-normal text-gray-600 mb-1 block">Rodado (pulgadas)</label>
-          <Select value={selectedDiameter} onValueChange={setSelectedDiameter}>
+          <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
             <SelectTrigger className="w-full text-[11px] h-8">
               <SelectValue placeholder="Ej: R15, R16, R17..." />
             </SelectTrigger>
@@ -816,17 +911,36 @@ export default function ProductsClientImproved({ products: initialProducts, stat
             <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
                 <h2 className="text-sm font-medium text-gray-800">Filtros</h2>
-                {hasActiveFilters && (
-                  <Button
-                    onClick={clearFilters}
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto py-1 px-2 text-[11px] text-gray-500 hover:text-gray-700"
-                  >
-                    <RotateCcw className="h-3 w-3 mr-1" />
-                    <span className="text-[11px]">Limpiar</span>
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {hasActiveFilters && (
+                    <>
+                      <Button
+                        onClick={() => {
+                          const url = generateShareableURL(filters)
+                          navigator.clipboard.writeText(url)
+                            .then(() => alert('¡Enlace copiado al portapapeles!'))
+                            .catch(() => alert('No se pudo copiar el enlace'))
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto py-1 px-2 text-[11px] text-gray-500 hover:text-gray-700"
+                        title="Compartir filtros actuales"
+                      >
+                        <Share2 className="h-3 w-3 mr-1" />
+                        <span className="text-[11px]">Compartir</span>
+                      </Button>
+                      <Button
+                        onClick={handleClearFilters}
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto py-1 px-2 text-[11px] text-gray-500 hover:text-gray-700"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        <span className="text-[11px]">Limpiar</span>
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
               <div>
                 <FiltersContent />
@@ -855,15 +969,31 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                     <SheetTitle className="flex items-center justify-between">
                       <span>Filtros</span>
                       {hasActiveFilters && (
-                        <Button
-                          onClick={clearFilters}
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto py-1 px-2 text-sm text-gray-500 hover:text-gray-700"
-                        >
-                          <RotateCcw className="h-3 w-3 mr-1" />
-                          Limpiar
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => {
+                              const url = generateShareableURL(filters)
+                              navigator.clipboard.writeText(url)
+                                .then(() => alert('¡Enlace copiado al portapapeles!'))
+                                .catch(() => alert('No se pudo copiar el enlace'))
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto py-1 px-2 text-sm text-gray-500 hover:text-gray-700"
+                            title="Compartir filtros actuales"
+                          >
+                            <Share2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={handleClearFilters}
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto py-1 px-2 text-sm text-gray-500 hover:text-gray-700"
+                          >
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Limpiar
+                          </Button>
+                        </div>
                       )}
                     </SheetTitle>
                   </SheetHeader>
@@ -892,7 +1022,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                 {/* Ancho */}
                 <div>
                   <label className="text-xs font-semibold text-gray-800 mb-1 block">Ancho (mm)</label>
-                  <Select value={selectedWidth} onValueChange={setSelectedWidth}>
+                  <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
                     <SelectTrigger className="w-full h-9 text-xs font-medium bg-white border border-gray-300 rounded">
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
@@ -910,7 +1040,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                 {/* Perfil */}
                 <div>
                   <label className="text-xs font-semibold text-gray-800 mb-1 block">Perfil (%)</label>
-                  <Select value={selectedProfile} onValueChange={setSelectedProfile}>
+                  <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
                     <SelectTrigger className="w-full h-9 text-xs font-medium bg-white border border-gray-300 rounded">
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
@@ -928,7 +1058,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                 {/* Rodado */}
                 <div>
                   <label className="text-xs font-semibold text-gray-800 mb-1 block">Rodado (")</label>
-                  <Select value={selectedDiameter} onValueChange={setSelectedDiameter}>
+                  <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
                     <SelectTrigger className="w-full h-9 text-xs font-medium bg-white border border-gray-300 rounded">
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
@@ -948,7 +1078,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
               <div className="hidden sm:grid grid-cols-3 gap-4">
                 {/* Ancho */}
                 <div>
-                  <Select value={selectedWidth} onValueChange={setSelectedWidth}>
+                  <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
                     <SelectTrigger className="w-full h-12 text-base font-medium bg-[#FFFFFF] border-2 border-gray-300 hover:border-gray-400 focus:border-black">
                       <SelectValue placeholder="Seleccioná el ancho" />
                     </SelectTrigger>
@@ -968,7 +1098,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
                 {/* Perfil */}
                 <div>
-                  <Select value={selectedProfile} onValueChange={setSelectedProfile}>
+                  <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
                     <SelectTrigger className="w-full h-12 text-base font-medium bg-[#FFFFFF] border-2 border-gray-300 hover:border-gray-400 focus:border-black">
                       <SelectValue placeholder="Seleccioná el perfil" />
                     </SelectTrigger>
@@ -988,7 +1118,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
                 {/* Rodado */}
                 <div>
-                  <Select value={selectedDiameter} onValueChange={setSelectedDiameter}>
+                  <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
                     <SelectTrigger className="w-full h-12 text-base font-medium bg-[#FFFFFF] border-2 border-gray-300 hover:border-gray-400 focus:border-black">
                       <SelectValue placeholder="Seleccioná el rodado" />
                     </SelectTrigger>
@@ -1021,9 +1151,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                     </div>
                     <Button
                       onClick={() => {
-                        setSelectedWidth('all')
-                        setSelectedProfile('all')
-                        setSelectedDiameter('all')
+                        updateFilters({
+                          selectedWidth: 'all',
+                          selectedProfile: 'all',
+                          selectedDiameter: 'all'
+                        })
                       }}
                       variant="link"
                       size="sm"
@@ -1045,7 +1177,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                 <p className="text-gray-600 mb-6">No hay neumáticos que coincidan con tus criterios de búsqueda.</p>
                 {hasActiveFilters && (
                   <Button
-                    onClick={clearFilters}
+                    onClick={handleClearFilters}
                     className="bg-black text-white hover:bg-gray-800"
                   >
                     Limpiar filtros
@@ -1072,18 +1204,31 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                               <img
                                 src={product.image_url || "/tire.webp"}
                                 alt={product.name}
-                                className="w-full h-full object-contain p-3 lg:p-4 group-hover:scale-105 transition-transform duration-500 ease-out"
+                                className={`w-full h-full object-contain p-3 lg:p-4 transition-transform duration-500 ease-out ${
+                                  product.stock === 0 ? 'opacity-50' : 'group-hover:scale-105'
+                                }`}
                                 loading="lazy"
                               />
                             </Link>
 
+                            {/* Sin Stock Badge - Overlay in center */}
+                            {product.stock === 0 && (
+                              <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                                <div className="bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg transform rotate-[-5deg]">
+                                  <span className="text-base lg:text-lg font-bold uppercase tracking-wider">Sin Stock</span>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Add to Cart Button - Positioned at bottom-right of image */}
-                            <div className="absolute bottom-2 right-2 z-10">
-                              <QuickAddButton
-                                productId={product.id}
-                                disabled={product.stock === 0}
-                              />
-                            </div>
+                            {product.stock > 0 && (
+                              <div className="absolute bottom-2 right-2 z-10">
+                                <QuickAddButton
+                                  productId={product.id}
+                                  disabled={product.stock === 0}
+                                />
+                              </div>
+                            )}
                           </div>
 
                           {/* Content */}
@@ -1122,28 +1267,60 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                               )}
                             </div>
 
-                            {/* Price Section */}
-                            <div className="mt-auto pt-2 border-t border-gray-200">
-                              {/* Price tachado y descuento */}
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-gray-500 line-through">
-                                  ${previousPrice.toLocaleString('es-AR')}
-                                </span>
-                                <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded transition-all duration-200 group-hover:bg-green-100">
-                                  {discountPercentage}% OFF
-                                </span>
-                              </div>
+                            {/* Price Section - Only show if in stock */}
+                            {product.stock > 0 ? (
+                              <div className="mt-auto pt-2 border-t border-gray-200">
+                                {/* Price tachado y descuento */}
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs text-gray-500 line-through">
+                                    ${previousPrice.toLocaleString('es-AR')}
+                                  </span>
+                                  <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded transition-all duration-200 group-hover:bg-green-100">
+                                    {discountPercentage}% OFF
+                                  </span>
+                                </div>
 
-                              <div className="mb-1">
-                                <span className="text-xl font-bold text-gray-900">
-                                  ${Number(product.price).toLocaleString('es-AR')}
-                                </span>
-                              </div>
+                                <div className="mb-1">
+                                  <span className="text-xl font-bold text-gray-900">
+                                    ${Number(product.price).toLocaleString('es-AR')}
+                                  </span>
+                                </div>
 
-                              <div className="text-[10px] text-gray-600">
-                                6 cuotas de ${Math.floor(product.price / 6).toLocaleString('es-AR')}
+                                <div className="text-[10px] text-gray-600">
+                                  6 cuotas de ${Math.floor(product.price / 6).toLocaleString('es-AR')}
+                                </div>
                               </div>
-                            </div>
+                            ) : (
+                              /* WhatsApp consultation for out of stock products */
+                              <div className="mt-auto pt-2 border-t border-gray-200">
+                                <div className="py-3 flex flex-col items-center justify-center space-y-2">
+                                  {/* WhatsApp Icon and Text */}
+                                  <div className="flex items-center gap-2 text-gray-500">
+                                    <svg
+                                      className="w-5 h-5 text-green-600"
+                                      fill="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.123-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                    </svg>
+                                    <span className="text-sm font-medium">Consultá disponibilidad</span>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const message = `Hola! Me interesa el neumático ${product.brand} ${product.name} ${product.model || ''} (${product.width}/${product.profile}R${product.diameter}). En la web figura sin stock. ¿Cuándo tendrán disponible?`;
+                                      const whatsappUrl = `https://wa.me/5493855870760?text=${encodeURIComponent(message)}`;
+                                      window.open(whatsappUrl, '_blank');
+                                    }}
+                                    className="text-xs text-green-600 hover:text-green-700 underline transition-colors"
+                                  >
+                                    Escribinos por WhatsApp
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1158,7 +1335,8 @@ export default function ProductsClientImproved({ products: initialProducts, stat
             {shouldShowEquivalences && (
               <EquivalencesSection
                 equivalentTires={equivalents}
-                hasExactMatch={hasExactMatch}
+                hasExactMatch={hasExactMatchWithStock}
+                hasExactMatchWithoutStock={hasExactMatchWithoutStock}
                 loading={loadingEquivalents}
                 originalSize={{
                   width: Number(selectedWidth),
@@ -1181,8 +1359,10 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-600">Por página:</span>
                       <Select value={String(itemsPerPage)} onValueChange={(val) => {
-                        setItemsPerPage(Number(val))
-                        setCurrentPage(1)
+                        updateFilters({
+                          itemsPerPage: Number(val),
+                          currentPage: 1
+                        })
                       }}>
                         <SelectTrigger className="w-16 text-xs">
                           <SelectValue />
@@ -1196,7 +1376,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                     </div>
 
                     {/* Sort */}
-                    <Select value={sortBy} onValueChange={setSortBy}>
+                    <Select value={sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
                       <SelectTrigger className="w-40 text-xs">
                         <SelectValue placeholder="Ordenar por" />
                       </SelectTrigger>
@@ -1214,106 +1394,50 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
             {/* Pagination */}
             {filteredProducts.length > 0 && totalPages > 1 && (
-              <div className="mt-4 bg-[#FFFFFF] p-4 rounded-lg border border-gray-200">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  {/* Info */}
-                  <div className="text-sm text-gray-600">
-                    Página <span className="font-medium text-black">{currentPage}</span> de <span className="font-medium text-black">{totalPages}</span>
+              <div className="mt-8 mb-8">
+                <div className="flex items-center justify-center gap-2">
+                  {/* Previous */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Anterior</span>
+                  </button>
+
+                  {/* Page numbers */}
+                  <div className="flex items-center gap-1">
+                    {/* All page numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`min-w-[40px] h-[40px] flex items-center justify-center text-sm rounded-lg transition-all ${
+                          page === currentPage
+                            ? 'text-blue-600 border-2 border-blue-600 font-medium'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
                   </div>
 
-                  {/* Controls */}
-                  <div className="flex items-center gap-2">
-                    {/* Previous */}
-                    <Button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      variant="outline"
-                      size="sm"
-                      className="text-sm font-medium"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Anterior
-                    </Button>
+                  {/* Next */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <span className="hidden sm:inline">Siguiente</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
 
-                    {/* Page numbers */}
-                    <div className="hidden sm:flex items-center gap-1">
-                      {/* First page */}
-                      {currentPage > 3 && (
-                        <>
-                          <Button
-                            onClick={() => handlePageChange(1)}
-                            variant="outline"
-                            size="sm"
-                            className="h-9 w-9 p-0"
-                          >
-                            1
-                          </Button>
-                          {currentPage > 4 && (
-                            <span className="px-2 text-gray-400">...</span>
-                          )}
-                        </>
-                      )}
-
-                      {/* Page range */}
-                      {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter(page => {
-                          return page === currentPage ||
-                                 page === currentPage - 1 ||
-                                 page === currentPage + 1 ||
-                                 (currentPage <= 2 && page <= 3) ||
-                                 (currentPage >= totalPages - 1 && page >= totalPages - 2)
-                        })
-                        .map(page => (
-                          <Button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            variant={page === currentPage ? "default" : "outline"}
-                            size="sm"
-                            className={`h-9 w-9 p-0 ${
-                              page === currentPage
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : ''
-                            }`}
-                          >
-                            {page}
-                          </Button>
-                        ))}
-
-                      {/* Last page */}
-                      {currentPage < totalPages - 2 && (
-                        <>
-                          {currentPage < totalPages - 3 && (
-                            <span className="px-2 text-gray-400">...</span>
-                          )}
-                          <Button
-                            onClick={() => handlePageChange(totalPages)}
-                            variant="outline"
-                            size="sm"
-                            className="h-9 w-9 p-0"
-                          >
-                            {totalPages}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Next */}
-                    <Button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      variant="outline"
-                      size="sm"
-                      className="text-sm font-medium"
-                    >
-                      Siguiente
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-
-                  {/* Mobile page indicator */}
-                  <div className="sm:hidden text-sm text-gray-600">
-                    Página {currentPage} de {totalPages}
-                  </div>
+                {/* Mobile page indicator */}
+                <div className="sm:hidden text-center mt-4 text-sm text-gray-600">
+                  Página {currentPage} de {totalPages}
                 </div>
               </div>
             )}

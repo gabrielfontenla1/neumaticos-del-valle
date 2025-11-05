@@ -52,15 +52,15 @@ export function isWithinTolerance(
 /**
  * Clasifica el nivel de equivalencia según el porcentaje de diferencia
  * @param differencePercent Porcentaje de diferencia absoluto
- * @returns Nivel de equivalencia: 'exacta', 'muy buena', 'buena', 'aceptable'
+ * @returns Nivel de equivalencia: 'perfecta', 'excelente', 'muy buena', 'buena'
  */
 export function getEquivalenceLevel(differencePercent: number): string {
   const absDiff = Math.abs(differencePercent)
 
-  if (absDiff <= 0.5) return 'exacta'
-  if (absDiff <= 1.0) return 'muy buena'
-  if (absDiff <= 2.0) return 'buena'
-  return 'aceptable' // 2.0 - 3.0%
+  if (absDiff <= 0.5) return 'perfecta'
+  if (absDiff <= 1.0) return 'excelente'
+  if (absDiff <= 2.0) return 'muy buena'
+  return 'buena' // 2.0 - 3.0%
 }
 
 /**

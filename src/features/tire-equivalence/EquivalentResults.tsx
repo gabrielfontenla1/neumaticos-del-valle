@@ -73,14 +73,16 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
                     {tire.equivalenceLevel && (
                       <span
                         className={`text-xs px-2 py-0.5 rounded ${
-                          tire.equivalenceLevel === 'exacta'
+                          tire.equivalenceLevel === 'perfecta'
                             ? 'bg-green-500/20 text-green-400'
-                            : tire.equivalenceLevel === 'muy buena'
+                            : tire.equivalenceLevel === 'excelente'
                             ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-[#FEE004]/20 text-[#FEE004]'
+                            : tire.equivalenceLevel === 'muy buena'
+                            ? 'bg-cyan-500/20 text-cyan-400'
+                            : 'bg-emerald-500/20 text-emerald-400'
                         }`}
                       >
-                        {tire.equivalenceLevel}
+                        Equivalencia {tire.equivalenceLevel}
                       </span>
                     )}
                   </div>
