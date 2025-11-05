@@ -2,9 +2,9 @@ import { CartItem, CartTotals, CustomerData, VoucherData } from '@/features/cart
 
 // WhatsApp numbers for each store
 export const WHATSAPP_NUMBERS = {
-  main: '5493855870760', // Número principal
-  santiago: '5493855870760', // Mismo número para todas las sucursales
-  default: '5493855870760' // Número por defecto
+  main: '5493855946462', // Número principal
+  santiago: '5493855946462', // Mismo número para todas las sucursales
+  default: '5493855946462' // Número por defecto
 }
 
 // Detect if user is on mobile

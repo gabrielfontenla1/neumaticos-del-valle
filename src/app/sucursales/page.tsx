@@ -24,7 +24,7 @@ const branches: Branch[] = [
     address: 'Av Belgrano 938, San Fernando del Valle de Catamarca',
     province: 'Catamarca',
     phone: '0383-443-5555',
-    whatsapp: '5493855870760',
+    whatsapp: '5493855946462',
     hours: {
       weekdays: '08:30 - 19:00',
       saturday: '08:30 - 13:00'
@@ -36,7 +36,7 @@ const branches: Branch[] = [
     address: 'Alem 1118, San Fernando del Valle de Catamarca',
     province: 'Catamarca',
     phone: '0383-443-6666',
-    whatsapp: '5493855870760',
+    whatsapp: '5493855946462',
     hours: {
       weekdays: '08:30 - 19:00',
       saturday: '08:30 - 13:00'
@@ -48,7 +48,7 @@ const branches: Branch[] = [
     address: 'República del Líbano Sur 866, La Banda',
     province: 'Santiago del Estero',
     phone: '0385-427-7777',
-    whatsapp: '5493855870760',
+    whatsapp: '5493855946462',
     hours: {
       weekdays: '08:30 - 19:00',
       saturday: '08:30 - 13:00'
@@ -60,7 +60,7 @@ const branches: Branch[] = [
     address: 'Avenida Belgrano Sur 2834, Santiago del Estero',
     province: 'Santiago del Estero',
     phone: '0385-421-9999',
-    whatsapp: '5493855870760',
+    whatsapp: '5493855946462',
     hours: {
       weekdays: '08:30 - 19:00',
       saturday: '08:30 - 13:00'
@@ -72,7 +72,7 @@ const branches: Branch[] = [
     address: 'Jujuy 330, Salta',
     province: 'Salta',
     phone: '0387-431-8888',
-    whatsapp: '5493855870760',
+    whatsapp: '5493855946462',
     hours: {
       weekdays: '08:30 - 19:00',
       saturday: '08:30 - 13:00'
@@ -84,7 +84,7 @@ const branches: Branch[] = [
     address: 'Avenida Gobernador del Campo 436, San Miguel de Tucumán',
     province: 'Tucumán',
     phone: '0381-422-5555',
-    whatsapp: '5493855870760',
+    whatsapp: '5493855946462',
     hours: {
       weekdays: '08:30 - 19:00',
       saturday: '08:30 - 13:00'

@@ -139,7 +139,7 @@ function SuccessContent() {
             <p className="text-sm text-gray-600 mb-2">Si tienes alguna consulta, contáctanos:</p>
             <div className="flex justify-center gap-4">
               <a
-                href="https://wa.me/5493855870760"
+                href="https://wa.me/5493855946462"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
@@ -148,7 +148,7 @@ function SuccessContent() {
                 WhatsApp
               </a>
               <a
-                href="tel:+5493855870760"
+                href="tel:+5493855946462"
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
               >
                 <Phone className="h-5 w-5" />

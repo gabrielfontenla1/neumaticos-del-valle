@@ -1464,7 +1464,7 @@ export function TeslaHomePage() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a
-                href="https://wa.me/5493855870760"
+                href="https://wa.me/5493855946462"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-4 bg-green-500 text-white rounded-lg font-semibold text-lg hover:bg-green-600 transition-all inline-flex items-center justify-center gap-2"
@@ -1524,14 +1524,14 @@ export function TeslaHomePage() {
               <h4 className="text-xs md:text-sm font-semibold text-white mb-3 md:mb-4">Contacto</h4>
               <div className="space-y-2 md:space-y-2.5">
                 <a
-                  href="tel:+5493855870760"
+                  href="tel:+5493855946462"
                   className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   <Phone className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
                   <span className="truncate">(299) 504-4430</span>
                 </a>
                 <a
-                  href="https://wa.me/5493855870760"
+                  href="https://wa.me/5493855946462"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-green-400 transition-colors"

@@ -370,7 +370,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                         `📦 Cantidad: ${quantity} unidad${quantity > 1 ? 'es' : ''}\n\n` +
                         `¿Está disponible?`
                       )
-                      const whatsappUrl = `https://wa.me/5493855870760?text=${message}`
+                      const whatsappUrl = `https://wa.me/5493855946462?text=${message}`
                       window.open(whatsappUrl, '_blank')
                     }}
                     className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 mt-2"

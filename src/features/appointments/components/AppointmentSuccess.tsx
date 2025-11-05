@@ -108,7 +108,7 @@ export function AppointmentSuccess({ appointmentId, appointmentDetails }: Appoin
       `• ID de Reserva: #${appointmentId.slice(0, 8).toUpperCase()}\n\n` +
       `Muchas gracias!`
     )
-    const whatsappUrl = `https://wa.me/5493855870760?text=${message}`
+    const whatsappUrl = `https://wa.me/5493855946462?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
 
