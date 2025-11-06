@@ -144,15 +144,24 @@ export async function findEquivalentTires(
       }
     }
 
-    // 5. Ordenar por diferencia absoluta (los más cercanos primero)
-    // En caso de empate, ordenar por marca y luego por nombre
+    // 5. Ordenar por precio (menor a mayor)
+    // En caso de empate en precio, ordenar por diferencia de tamaño
     equivalentTires.sort((a, b) => {
+      // Primero ordenar por precio ascendente
+      const priceA = a.price || Number.MAX_VALUE // Si no tiene precio, va al final
+      const priceB = b.price || Number.MAX_VALUE
+
+      if (Math.abs(priceA - priceB) > 0.01) {
+        // Si hay diferencia de precio significativa, ordenar por precio
+        return priceA - priceB
+      }
+
+      // Si los precios son iguales o muy similares, ordenar por diferencia de tamaño
       const diffA = Math.abs(a.difference)
       const diffB = Math.abs(b.difference)
 
       if (Math.abs(diffA - diffB) < 0.01) {
-        // Si la diferencia es prácticamente igual (< 0.01mm)
-        // Ordenar por marca y luego por nombre
+        // Si la diferencia de tamaño también es igual, ordenar por marca y nombre
         const brandCompare = a.brand.localeCompare(b.brand)
         return brandCompare !== 0 ? brandCompare : a.name.localeCompare(b.name)
       }

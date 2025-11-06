@@ -61,7 +61,7 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   selectedProfile: 'all',
   selectedDiameter: 'all',
   sizeSearchTerm: '',
-  sortBy: 'name',
+  sortBy: 'price-asc',
   currentPage: 1,
   itemsPerPage: 50,
 }

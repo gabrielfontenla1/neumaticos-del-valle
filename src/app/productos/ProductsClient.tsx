@@ -103,7 +103,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     selectedWidth = "all",
     selectedProfile = "all",
     selectedDiameter = "all",
-    sortBy = "name",
+    sortBy = "price-asc",
     sizeSearchTerm = "",
     currentPage = 1,
     itemsPerPage = 50
@@ -534,6 +534,26 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   const hasExactMatchWithStock = filteredProducts.some(p => p.stock > 0)
   const hasExactMatchWithoutStock = hasExactMatch && !hasExactMatchWithStock
 
+  // Scroll to top when page changes
+  const scrollToTop = useCallback(() => {
+    // Usar setTimeout para asegurar que el scroll ocurre después del renderizado
+    setTimeout(() => {
+      // Hacer scroll al inicio de la página de manera más directa y confiable
+      // Primero hacer un scroll instantáneo para asegurar que llegamos arriba
+      window.scrollTo(0, 0)
+
+      // Luego aplicar el scroll suave para una mejor experiencia visual
+      // Esto asegura que siempre lleguemos al top incluso si hay algún problema con smooth scrolling
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        })
+      })
+    }, 50)
+  }, [])
+
   // Reset page when filters change
   useEffect(() => {
     updateFilter('currentPage', 1)
@@ -541,11 +561,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
   // Scroll to top when page changes in URL
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
-  }, [currentPage])
+    // Solo hacer scroll si estamos cambiando de página y no es la carga inicial
+    if (currentPage && !isLoading) {
+      scrollToTop()
+    }
+  }, [currentPage, isLoading, scrollToTop])
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -564,24 +584,6 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     setDebouncedSearchTerm("")
     clearFilters()
   }, [clearFilters])
-
-  // Scroll to top when page changes
-  const scrollToTop = useCallback(() => {
-    // Usar setTimeout para asegurar que el scroll ocurre después del renderizado
-    setTimeout(() => {
-      // Primero intentar scroll al contenedor principal de productos
-      const productsContainer = document.querySelector('.products-container')
-      if (productsContainer) {
-        productsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      } else {
-        // Si no existe el contenedor, hacer scroll considerando el navbar (aproximadamente 80px)
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        })
-      }
-    }, 100)
-  }, [])
 
   const handlePageChange = useCallback((page: number) => {
     updateFilter('currentPage', page)
