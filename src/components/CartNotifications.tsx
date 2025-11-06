@@ -74,7 +74,7 @@ interface NotificationContainerProps {
 
 function NotificationContainer({ notifications, onRemove }: NotificationContainerProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-3 max-w-md">
+    <div className="fixed top-20 right-4 z-50 space-y-3 min-w-[350px] max-w-md">
       <AnimatePresence>
         {notifications.map((notification) => (
           <NotificationItem
@@ -97,26 +97,26 @@ function NotificationItem({ notification, onRemove }: NotificationItemProps) {
   const getIcon = () => {
     switch (notification.type) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-600" />
+        return <CheckCircle className="h-7 w-7 text-green-600" />
       case 'error':
-        return <XCircle className="h-5 w-5 text-red-600" />
+        return <XCircle className="h-7 w-7 text-red-600" />
       case 'warning':
-        return <AlertCircle className="h-5 w-5 text-amber-600" />
+        return <AlertCircle className="h-7 w-7 text-amber-600" />
       case 'info':
-        return <Info className="h-5 w-5 text-blue-600" />
+        return <Info className="h-7 w-7 text-blue-600" />
     }
   }
 
   const getColors = () => {
     switch (notification.type) {
       case 'success':
-        return 'bg-green-50 border-green-200'
+        return 'bg-gradient-to-r from-green-50 to-green-100 border-green-400'
       case 'error':
-        return 'bg-red-50 border-red-200'
+        return 'bg-gradient-to-r from-red-50 to-red-100 border-red-400'
       case 'warning':
-        return 'bg-amber-50 border-amber-200'
+        return 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-400'
       case 'info':
-        return 'bg-blue-50 border-blue-200'
+        return 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-400'
     }
   }
 
@@ -149,22 +149,22 @@ function NotificationItem({ notification, onRemove }: NotificationItemProps) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className={`${getColors()} border rounded-lg p-4 shadow-lg flex gap-4 items-start`}
+      initial={{ opacity: 0, x: 100, scale: 0.9 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 100, scale: 0.9 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      className={`${getColors()} border-2 rounded-xl p-5 shadow-2xl flex gap-4 items-start backdrop-blur-sm`}
     >
       <div className="flex-shrink-0 mt-0.5">
         {getIcon()}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className={`font-medium ${getTitleColor()}`}>
+        <h3 className={`font-semibold text-base ${getTitleColor()}`}>
           {notification.title}
         </h3>
         {notification.message && (
-          <p className={`text-sm mt-1 ${getMessageColor()}`}>
+          <p className={`text-sm mt-1 font-medium ${getMessageColor()}`}>
             {notification.message}
           </p>
         )}

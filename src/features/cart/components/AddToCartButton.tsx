@@ -57,12 +57,12 @@ export function AddToCartButton({
         setMessage(`${productName} agregado al carrito`)
         console.log('✅ [AddToCartButton] Producto agregado exitosamente')
 
-        // Show notification toast
+        // Show notification toast with enhanced visibility
         showNotification({
           type: 'success',
-          title: '¡Agregado al carrito!',
-          message: `${productName} fue añadido exitosamente`,
-          duration: 3000
+          title: '🛒 ¡Producto Agregado al Carrito!',
+          message: `${productName} x${quantity} - Ver carrito para finalizar compra`,
+          duration: 5000
         })
 
         // Reset status after 2 seconds
@@ -236,11 +236,12 @@ export function QuickAddButton({
 
       if (success) {
         setStatus('success')
-        // Show success notification
+        // Show success notification with enhanced visibility
         showNotification({
           type: 'success',
-          title: '¡Producto agregado!',
-          duration: 3000
+          title: '🛒 ¡Agregado al Carrito!',
+          message: 'Producto añadido exitosamente',
+          duration: 4000
         })
         // Show success state for 1 second, then return to idle
         setTimeout(() => setStatus('idle'), 1000)

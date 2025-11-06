@@ -11,10 +11,12 @@ import { CartSkeleton } from '@/features/cart/components/CartSkeleton'
 import { formatPrice, generateSimpleCartMessage, buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function CarritoPage() {
   const { items, totals, clearAll } = useCartContext()
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     // Simulate loading time
@@ -49,16 +51,15 @@ export default function CarritoPage() {
       <div className="bg-white border-b sticky top-16 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="py-4">
-            <Link href="/productos">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 -ml-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Volver a productos
-              </Button>
-            </Link>
+            <Button
+              onClick={() => router.back()}
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 -ml-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
           </div>
         </div>
       </div>
