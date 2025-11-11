@@ -63,12 +63,12 @@ export default function InstallmentTable({ priceList, quantity: initialQuantity 
 
   return (
     <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-blue-600" />
             <h3 className="text-xs font-semibold text-gray-900">
-              Financiación con tarjetas
+              Simulador de cuotas
             </h3>
           </div>
 
@@ -114,14 +114,14 @@ export default function InstallmentTable({ priceList, quantity: initialQuantity 
             <div className="flex flex-col h-full">
               {/* Cuota Mensual - Lo más importante */}
               <div className="mb-3">
+                <p className="text-[11px] text-gray-500 mb-1">
+                  {option.installments} cuotas de
+                </p>
                 <p className="text-2xl font-bold text-gray-900 leading-tight">
                   ${option.monthlyPayment.toLocaleString('es-AR', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                   })}
-                </p>
-                <p className="text-[11px] text-gray-500 mt-0.5">
-                  {option.installments} cuotas mensuales
                 </p>
               </div>
 

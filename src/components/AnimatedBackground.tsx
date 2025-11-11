@@ -32,6 +32,8 @@ function AnimatedBackground() {
         backgroundAlpha: 0,
         antialias: true,
         resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+        powerPreference: 'high-performance',
       })
 
       canvasRef.current?.appendChild(app.canvas as HTMLCanvasElement)
@@ -49,13 +51,13 @@ function AnimatedBackground() {
       for (let x = 0; x < app.screen.width; x += gridSize) {
         gridGraphics.moveTo(x, 0)
         gridGraphics.lineTo(x, app.screen.height)
-        gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.08 }) // More visible
+        gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.06 }) // More subtle
       }
 
       for (let y = 0; y < app.screen.height; y += gridSize) {
         gridGraphics.moveTo(0, y)
         gridGraphics.lineTo(app.screen.width, y)
-        gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.08 })
+        gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.06 })
       }
 
       app.stage.addChild(gridGraphics)
@@ -63,9 +65,9 @@ function AnimatedBackground() {
       // Create geometric shapes - Only outlines, no fill
       // FIXED SEED for consistent positions across navigation
       const shapes: PIXI.Graphics[] = []
-      const numShapes = 8
+      const numShapes = 15
 
-      // Fixed shape configurations (seed-based)
+      // Fixed shape configurations (seed-based) - More shapes with varied types
       const shapeConfigs = [
         { type: 0, size: 80, color: 0xD97757, x: 0.15, y: 0.25, rotation: 0.5, vx: 0.2, vy: 0.15, rotSpeed: 0.008 },
         { type: 1, size: 100, color: 0xE58A6B, x: 0.75, y: 0.35, rotation: 1.2, vx: -0.25, vy: 0.18, rotSpeed: -0.01 },
@@ -74,7 +76,14 @@ function AnimatedBackground() {
         { type: 0, size: 70, color: 0xE58A6B, x: 0.25, y: 0.65, rotation: 1.5, vx: 0.28, vy: 0.25, rotSpeed: 0.011 },
         { type: 1, size: 85, color: 0xC66645, x: 0.55, y: 0.45, rotation: 0.3, vx: -0.18, vy: 0.28, rotSpeed: -0.009 },
         { type: 0, size: 95, color: 0xD97757, x: 0.12, y: 0.85, rotation: 2.8, vx: 0.32, vy: -0.25, rotSpeed: 0.01 },
-        { type: 1, size: 75, color: 0xE58A6B, x: 0.68, y: 0.12, rotation: 1.9, vx: -0.2, vy: 0.3, rotSpeed: -0.008 }
+        { type: 1, size: 75, color: 0xE58A6B, x: 0.68, y: 0.12, rotation: 1.9, vx: -0.2, vy: 0.3, rotSpeed: -0.008 },
+        { type: 2, size: 65, color: 0xD97757, x: 0.92, y: 0.48, rotation: 0.7, vx: -0.15, vy: 0.12, rotSpeed: 0.007 }, // Triangle
+        { type: 0, size: 55, color: 0xC66645, x: 0.08, y: 0.55, rotation: 1.8, vx: 0.22, vy: -0.18, rotSpeed: -0.006 },
+        { type: 1, size: 110, color: 0xE58A6B, x: 0.32, y: 0.92, rotation: 2.3, vx: 0.18, vy: -0.28, rotSpeed: 0.013 },
+        { type: 2, size: 72, color: 0xD97757, x: 0.62, y: 0.28, rotation: 0.4, vx: -0.24, vy: 0.16, rotSpeed: -0.008 }, // Triangle
+        { type: 0, size: 88, color: 0xC66645, x: 0.38, y: 0.72, rotation: 1.6, vx: 0.26, vy: 0.14, rotSpeed: 0.009 },
+        { type: 1, size: 68, color: 0xE58A6B, x: 0.78, y: 0.58, rotation: 2.9, vx: -0.19, vy: -0.24, rotSpeed: -0.011 },
+        { type: 2, size: 78, color: 0xD97757, x: 0.18, y: 0.38, rotation: 1.1, vx: 0.21, vy: 0.19, rotSpeed: 0.006 } // Triangle
       ]
 
       for (let i = 0; i < numShapes; i++) {
@@ -85,9 +94,17 @@ function AnimatedBackground() {
           // Circle - no fill, only stroke
           shape.circle(0, 0, config.size)
           shape.stroke({ width: 2, color: config.color, alpha: 0.15 })
-        } else {
+        } else if (config.type === 1) {
           // Square - no fill, only stroke
           shape.rect(-config.size / 2, -config.size / 2, config.size, config.size)
+          shape.stroke({ width: 2, color: config.color, alpha: 0.15 })
+        } else if (config.type === 2) {
+          // Triangle - no fill, only stroke
+          const height = config.size * Math.sqrt(3) / 2
+          shape.moveTo(0, -height / 2)
+          shape.lineTo(-config.size / 2, height / 2)
+          shape.lineTo(config.size / 2, height / 2)
+          shape.closePath()
           shape.stroke({ width: 2, color: config.color, alpha: 0.15 })
         }
 
@@ -191,32 +208,36 @@ function AnimatedBackground() {
         })
       })
 
-      // Handle resize
+      // Handle resize with debounce
+      let resizeTimeout: NodeJS.Timeout
       const handleResize = () => {
-        app.renderer.resize(window.innerWidth, window.innerHeight)
+        clearTimeout(resizeTimeout)
+        resizeTimeout = setTimeout(() => {
+          app.renderer.resize(window.innerWidth, window.innerHeight)
 
-        // Redraw grid
-        gridGraphics.clear()
-        for (let x = 0; x < app.screen.width; x += gridSize) {
-          gridGraphics.moveTo(x, 0)
-          gridGraphics.lineTo(x, app.screen.height)
-          gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.08 })
-        }
-        for (let y = 0; y < app.screen.height; y += gridSize) {
-          gridGraphics.moveTo(0, y)
-          gridGraphics.lineTo(app.screen.width, y)
-          gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.08 })
-        }
-
-        // Reposition shapes based on initial percentage positions
-        shapes.forEach((shape) => {
-          const initialX = (shape as any).initialX
-          const initialY = (shape as any).initialY
-          if (initialX !== undefined && initialY !== undefined) {
-            shape.x = initialX * app.screen.width
-            shape.y = initialY * app.screen.height
+          // Redraw grid
+          gridGraphics.clear()
+          for (let x = 0; x < app.screen.width; x += gridSize) {
+            gridGraphics.moveTo(x, 0)
+            gridGraphics.lineTo(x, app.screen.height)
+            gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.06 })
           }
-        })
+          for (let y = 0; y < app.screen.height; y += gridSize) {
+            gridGraphics.moveTo(0, y)
+            gridGraphics.lineTo(app.screen.width, y)
+            gridGraphics.stroke({ width: 1, color: gridColor, alpha: 0.06 })
+          }
+
+          // Reposition shapes based on initial percentage positions
+          shapes.forEach((shape) => {
+            const initialX = (shape as any).initialX
+            const initialY = (shape as any).initialY
+            if (initialX !== undefined && initialY !== undefined) {
+              shape.x = initialX * app.screen.width
+              shape.y = initialY * app.screen.height
+            }
+          })
+        }, 300) // Debounce 300ms
       }
 
       window.addEventListener('resize', handleResize)

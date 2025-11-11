@@ -23,6 +23,7 @@ import { EquivalencesSection } from "@/features/tire-equivalence/components/Equi
 import { useURLFilters } from "@/hooks/useURLFilters"
 import { useFilterPersistence } from "@/hooks/useFilterPersistence"
 import { generateShareableURL } from "@/lib/products/url-filters"
+import { StockInfoPopup } from "@/components/ui/stock-info-popup"
 
 interface ProductsClientProps {
   products: Product[]
@@ -887,6 +888,22 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   // Show main content
   return (
     <div className="min-h-screen bg-[#EDEDED]">
+      {/* Popup informativo de stock */}
+      <StockInfoPopup delayMs={2000} />
+
+      {/* Botón de debug para resetear el popup (solo en desarrollo) */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={() => {
+            sessionStorage.removeItem('stockInfoPopupShown')
+            window.location.reload()
+          }}
+          className="fixed bottom-4 left-4 z-50 bg-gray-800 text-white text-xs px-3 py-1.5 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
+        >
+          Reset Popup
+        </button>
+      )}
+
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -1013,26 +1030,30 @@ export default function ProductsClientImproved({ products: initialProducts, stat
             </div>
 
             {/* Main Filter Section - Medidas */}
-            <div className="bg-[#FFFFFF] rounded-lg border border-gray-300 shadow-md p-3 sm:p-6 mb-6">
-              <div className="mb-2 sm:mb-4">
-                <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">Buscar por medida de neumático</h3>
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-300 shadow-md p-3 sm:p-5 mb-6">
+              <div className="mb-3 sm:mb-4">
+                <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1">Buscar por medida de neumático</h3>
                 <p className="text-xs sm:text-sm text-gray-600">Seleccioná las medidas exactas que necesitás para tu vehículo</p>
               </div>
 
-              {/* Mobile: Compact vertical layout with labels */}
-              <div className="space-y-2 sm:hidden">
+              {/* Horizontal layout for all screen sizes */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 {/* Ancho */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-800 mb-1 block">Ancho (mm)</label>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 block">Ancho</label>
                   <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
-                    <SelectTrigger className="w-full h-9 text-xs font-medium bg-white border border-gray-300 rounded">
-                      <SelectValue placeholder="Seleccionar" />
+                    <SelectTrigger className="w-full h-9 sm:h-11 text-xs sm:text-sm font-medium bg-[#FFFFFF] border border-gray-300 sm:border-2 hover:border-gray-400 focus:border-black rounded-md">
+                      <SelectValue>
+                        <span className={selectedWidth === 'all' ? 'text-gray-400' : ''}>
+                          {selectedWidth === 'all' ? 'ej: 185 mm' : `${selectedWidth} mm`}
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="text-xs">Todos</SelectItem>
+                      <SelectItem value="all" className="text-xs sm:text-sm text-gray-400">ej: 185 mm</SelectItem>
                       {extractUniqueValues.widths.filter(({ count }) => count > 0).map(({ value, count }) => (
-                        <SelectItem key={value} value={value} className="text-xs">
-                          {value} mm ({count})
+                        <SelectItem key={value} value={value} className="text-xs sm:text-sm">
+                          <span className="font-medium">{value} mm</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1041,16 +1062,20 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
                 {/* Perfil */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-800 mb-1 block">Perfil (%)</label>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 block">Perfil</label>
                   <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
-                    <SelectTrigger className="w-full h-9 text-xs font-medium bg-white border border-gray-300 rounded">
-                      <SelectValue placeholder="Seleccionar" />
+                    <SelectTrigger className="w-full h-9 sm:h-11 text-xs sm:text-sm font-medium bg-[#FFFFFF] border border-gray-300 sm:border-2 hover:border-gray-400 focus:border-black rounded-md">
+                      <SelectValue>
+                        <span className={selectedProfile === 'all' ? 'text-gray-400' : ''}>
+                          {selectedProfile === 'all' ? 'ej: 60%' : `${selectedProfile}%`}
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="text-xs">Todos</SelectItem>
+                      <SelectItem value="all" className="text-xs sm:text-sm text-gray-400">ej: 60%</SelectItem>
                       {extractUniqueValues.profiles.filter(({ count }) => count > 0).map(({ value, count }) => (
-                        <SelectItem key={value} value={value} className="text-xs">
-                          {value}% ({count})
+                        <SelectItem key={value} value={value} className="text-xs sm:text-sm">
+                          <span className="font-medium">{value}%</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1059,79 +1084,20 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
                 {/* Rodado */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-800 mb-1 block">Rodado (")</label>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 block">Rodado</label>
                   <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
-                    <SelectTrigger className="w-full h-9 text-xs font-medium bg-white border border-gray-300 rounded">
-                      <SelectValue placeholder="Seleccionar" />
+                    <SelectTrigger className="w-full h-9 sm:h-11 text-xs sm:text-sm font-medium bg-[#FFFFFF] border border-gray-300 sm:border-2 hover:border-gray-400 focus:border-black rounded-md">
+                      <SelectValue>
+                        <span className={selectedDiameter === 'all' ? 'text-gray-400' : ''}>
+                          {selectedDiameter === 'all' ? 'ej: R15"' : `R${selectedDiameter}"`}
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="text-xs">Todos</SelectItem>
+                      <SelectItem value="all" className="text-xs sm:text-sm text-gray-400">ej: R15"</SelectItem>
                       {extractUniqueValues.diameters.filter(({ count }) => count > 0).map(({ value, count }) => (
-                        <SelectItem key={value} value={value} className="text-xs">
-                          R{value}" ({count})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Desktop: Original 3-column grid */}
-              <div className="hidden sm:grid grid-cols-3 gap-4">
-                {/* Ancho */}
-                <div>
-                  <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
-                    <SelectTrigger className="w-full h-12 text-base font-medium bg-[#FFFFFF] border-2 border-gray-300 hover:border-gray-400 focus:border-black">
-                      <SelectValue placeholder="Seleccioná el ancho" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all" className="text-base">Ver todos los anchos</SelectItem>
-                      {extractUniqueValues.widths.filter(({ count }) => count > 0).map(({ value, count }) => (
-                        <SelectItem key={value} value={value} className="text-base">
-                          <div className="flex justify-between items-center w-full">
-                            <span className="font-medium">{value} mm</span>
-                            <span className="text-sm text-gray-500 ml-3">({count})</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Perfil */}
-                <div>
-                  <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
-                    <SelectTrigger className="w-full h-12 text-base font-medium bg-[#FFFFFF] border-2 border-gray-300 hover:border-gray-400 focus:border-black">
-                      <SelectValue placeholder="Seleccioná el perfil" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all" className="text-base">Ver todos los perfiles</SelectItem>
-                      {extractUniqueValues.profiles.filter(({ count }) => count > 0).map(({ value, count }) => (
-                        <SelectItem key={value} value={value} className="text-base">
-                          <div className="flex justify-between items-center w-full">
-                            <span className="font-medium">{value}%</span>
-                            <span className="text-sm text-gray-500 ml-3">({count})</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Rodado */}
-                <div>
-                  <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
-                    <SelectTrigger className="w-full h-12 text-base font-medium bg-[#FFFFFF] border-2 border-gray-300 hover:border-gray-400 focus:border-black">
-                      <SelectValue placeholder="Seleccioná el rodado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all" className="text-base">Ver todos los rodados</SelectItem>
-                      {extractUniqueValues.diameters.filter(({ count }) => count > 0).map(({ value, count }) => (
-                        <SelectItem key={value} value={value} className="text-base">
-                          <div className="flex justify-between items-center w-full">
-                            <span className="font-medium">R{value}"</span>
-                            <span className="text-sm text-gray-500 ml-3">({count})</span>
-                          </div>
+                        <SelectItem key={value} value={value} className="text-xs sm:text-sm">
+                          <span className="font-medium">R{value}"</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1190,8 +1156,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                   {paginatedProducts.map((product, index) => {
-                  const discountPercentage = Math.floor(20 + (index % 4) * 10)
-                  const previousPrice = Math.floor(product.price * (1 + discountPercentage / 100))
+                  // Usar el precio de lista real de la base de datos
+                  // Si no hay precio de lista, calcularlo con un 25% más
+                  const listPrice = product.price_list || Math.floor(product.price * 1.25)
+                  // Calcular el descuento
+                  const discountPercentage = Math.round(((listPrice - product.price) / listPrice) * 100)
 
                   return (
                     <div
@@ -1272,14 +1241,16 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                             {/* Price Section - Only show if in stock */}
                             {product.stock > 0 ? (
                               <div className="mt-auto pt-2 border-t border-gray-200">
-                                {/* Price tachado y descuento */}
+                                {/* Precio de lista tachado siempre visible */}
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-xs text-gray-500 line-through">
-                                    ${previousPrice.toLocaleString('es-AR')}
+                                    ${listPrice.toLocaleString('es-AR')}
                                   </span>
-                                  <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded transition-all duration-200 group-hover:bg-green-100">
-                                    {discountPercentage}% OFF
-                                  </span>
+                                  {discountPercentage > 0 && (
+                                    <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded transition-all duration-200 group-hover:bg-green-100">
+                                      {discountPercentage}% OFF
+                                    </span>
+                                  )}
                                 </div>
 
                                 <div className="mb-1">
@@ -1289,7 +1260,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                                 </div>
 
                                 <div className="text-[10px] text-gray-600">
-                                  6 cuotas de ${Math.floor(product.price / 6).toLocaleString('es-AR')}
+                                  3 cuotas sin interés de ${Math.floor(product.price / 3).toLocaleString('es-AR')}
                                 </div>
                               </div>
                             ) : (

@@ -1,36 +1,33 @@
 /**
- * Admin Login Page - Exact Rapicompras Style
- * Dark theme with orange accents using shadcn/ui components
+ * Admin Login Page - Dashboard Theme
+ * Matches the exact dashboard skin with grid and color scheme
  */
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react'
 import { adminLogin } from '@/features/admin/api'
-import AnimatedBackground from '@/components/AnimatedBackground'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import Image from 'next/image'
+import dynamic from 'next/dynamic'
 
-// Exact colors from rapicompras darkColors theme
+// Dynamic import to avoid SSR hydration issues with PIXI.js
+const AnimatedBackground = dynamic(() => import('@/components/AnimatedBackground'), {
+  ssr: false
+})
+
+// Exact colors from dashboard theme
 const colors = {
-  background: '#3d3d3b',  // Más oscuro basado en referencia
+  background: '#30302e',
   foreground: '#fafafa',
-  card: '#333331',        // Card más oscura
-  cardForeground: '#fafafa',
+  card: '#262624',
   primary: '#d97757',
-  primaryForeground: '#ffffff',
-  secondary: '#2d2d2b',
-  secondaryForeground: '#fafafa',
-  muted: '#2d2d2b',
-  mutedForeground: '#999999',  // Más claro para mejor contraste
-  border: '#2d2d2b',
-  input: '#2d2d2b',       // Inputs más oscuros
-  ring: '#d97757',
+  mutedForeground: '#a1a1aa',
+  border: '#262626',
+  secondary: '#262626',
 }
 
 export default function AdminLoginPage() {
@@ -38,9 +35,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [isExiting, setIsExiting] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -56,10 +51,7 @@ export default function AdminLoginPage() {
       const session = await adminLogin(email, password)
 
       if (session) {
-        setIsExiting(true)
-        setTimeout(() => {
-          router.push('/admin')
-        }, 600)
+        router.push('/admin')
       } else {
         setError('Credenciales inválidas. Por favor intente de nuevo.')
       }
@@ -76,291 +68,207 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div
-      className="min-h-screen relative overflow-hidden transition-colors"
-      style={{
-        backgroundColor: colors.background
-      }}
-    >
-      {/* Animated background */}
-      <AnimatedBackground />
+    <div className="min-h-screen relative" style={{ backgroundColor: colors.background }}>
+      {/* Animated Background - Same as dashboard */}
+      <div className="fixed inset-0 z-0">
+        <AnimatedBackground />
+      </div>
 
-      {/* Header */}
-      <motion.header
-        className="absolute top-0 left-0 right-0 z-50 p-6 md:p-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: colors.primary }}
-            >
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
-            <span className="text-lg font-light" style={{ color: colors.foreground }}>
-              Neumáticos del Valle
-            </span>
-          </div>
-        </div>
-      </motion.header>
-
-      {/* Main content */}
-      <div className="relative min-h-screen flex items-center justify-center p-6">
+      {/* Login Form Container */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <motion.div
           className="w-full max-w-md"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Card container */}
-          <motion.div
-            className="rounded-xl border-0"
+          {/* Card Container */}
+          <div
+            className="rounded-2xl shadow-2xl overflow-hidden"
             style={{
               backgroundColor: colors.card,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.4)'
-            }}
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
-            animate={{
-              opacity: isExiting ? 0 : 1,
-              y: isExiting ? -50 : 0,
-              scale: isExiting ? 1.05 : 1
-            }}
-            transition={{
-              duration: isExiting ? 0.4 : 0.5,
-              ease: [0.23, 1, 0.32, 1]
+              border: `1px solid ${colors.border}`,
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)'
             }}
           >
-            <div className="p-8">
-                {/* Icon */}
-                <motion.div
-                  className="flex justify-center mb-8"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: 0.2,
-                    type: "spring",
-                    stiffness: 200
-                  }}
-                >
-                  <div
-                    className="w-20 h-20 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: colors.primary + '20' }}
+            {/* Header with Logo */}
+            <div
+              className="px-8 py-6"
+              style={{
+                borderBottom: `1px solid ${colors.border}`,
+                background: `linear-gradient(180deg, ${colors.card} 0%, rgba(38, 38, 36, 0.8) 100%)`
+              }}
+            >
+              <div className="flex justify-center">
+                <Image
+                  src="/NDV_Logo_Negro.svg"
+                  alt="Neumáticos del Valle"
+                  width={180}
+                  height={45}
+                  className="brightness-0 invert"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Form Section */}
+            <div className="px-8 py-8">
+              {/* Welcome Text */}
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-bold mb-2" style={{ color: colors.foreground }}>
+                  Panel de Administración
+                </h1>
+                <p className="text-sm" style={{ color: colors.mutedForeground }}>
+                  Ingresá tus credenciales para continuar
+                </p>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label
+                    htmlFor="email"
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: colors.foreground }}
                   >
-                    <User className="h-10 w-10" style={{ color: colors.primary }} />
-                  </div>
-                </motion.div>
+                    Email
+                  </Label>
+                  <Input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full h-12 px-4 rounded-lg transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: `1px solid ${colors.border}`,
+                      color: colors.foreground
+                    }}
+                    placeholder="admin@neumaticosdelvalle.com"
+                  />
+                </div>
 
-                {/* Title */}
-                <motion.div
-                  className="text-center mb-10"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h1 className="text-3xl font-light mb-3" style={{ color: colors.foreground }}>
-                    Iniciar Sesión
-                  </h1>
-                  <p className="text-sm" style={{ color: colors.mutedForeground }}>
-                    Neumáticos del Valle
-                  </p>
-                </motion.div>
-
-                {/* Form */}
-                <motion.form
-                  onSubmit={handleSubmit}
-                  className="space-y-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  {/* Email */}
-                  <div>
-                    <Label
-                      htmlFor="email"
-                      className="block text-sm font-normal mb-2"
-                      style={{ color: colors.foreground }}
-                    >
-                      Usuario o Email
-                    </Label>
-                    <Input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="h-12 px-4 rounded-lg border-0 focus-visible:ring-1 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
-                      style={{
-                        backgroundColor: colors.input,
-                        borderColor: 'transparent',
-                        color: colors.foreground,
-                        boxShadow: 'none'
-                      }}
-                      placeholder="tu@email.com"
-                    />
-                  </div>
-
-                  {/* Password */}
-                  <div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
                     <Label
                       htmlFor="password"
-                      className="block text-sm font-normal mb-2"
+                      className="text-sm font-medium"
                       style={{ color: colors.foreground }}
                     >
                       Contraseña
                     </Label>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="h-12 px-4 pr-12 rounded-lg border-0 focus-visible:ring-1 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
-                        style={{
-                          backgroundColor: colors.input,
-                          borderColor: 'transparent',
-                          color: colors.foreground,
-                          boxShadow: 'none'
-                        }}
-                        placeholder="••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:opacity-70"
-                        style={{ color: colors.mutedForeground }}
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Error Message */}
-                  {error && (
-                    <Alert
-                      className="border"
-                      style={{
-                        backgroundColor: '#7f1d1d20',
-                        borderColor: '#ef444480',
-                        color: '#fca5a5'
-                      }}
-                    >
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Remember me checkbox */}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      className="border data-[state=checked]:bg-primary data-[state=checked]:border-primary rounded"
-                      style={{
-                        borderColor: '#555555',
-                        backgroundColor: 'transparent'
-                      }}
-                    />
-                    <Label
-                      htmlFor="remember"
-                      className="text-sm font-normal cursor-pointer select-none"
-                      style={{ color: colors.mutedForeground }}
-                    >
-                      Recordarme por 30 días
-                    </Label>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-12 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 border-0"
-                    style={{
-                      backgroundColor: colors.primary,
-                      color: colors.primaryForeground
-                    }}
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
-                        <span>Iniciando sesión...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Iniciar Sesión</span>
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Links */}
-                  <div className="text-center pt-2">
                     <a
                       href="#"
-                      className="text-sm underline transition-colors"
+                      className="text-sm hover:opacity-80 transition-opacity"
                       style={{ color: colors.primary }}
                     >
                       ¿Olvidaste tu contraseña?
                     </a>
                   </div>
-                </motion.form>
+                  <Input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full h-12 px-4 rounded-lg transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: `1px solid ${colors.border}`,
+                      color: colors.foreground
+                    }}
+                    placeholder="••••••••••••••••"
+                  />
+                </div>
 
-                {/* Footer */}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-12 font-semibold rounded-xl transition-all transform hover:scale-105"
+                  style={{
+                    background: `linear-gradient(135deg, #FF8A1D 0%, #FFA758 100%)`,
+                    color: '#ffffff',
+                    boxShadow: '0 4px 15px rgba(255, 138, 29, 0.3)'
+                  }}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Iniciando sesión...
+                    </span>
+                  ) : (
+                    'Iniciar sesión'
+                  )}
+                </Button>
+              </form>
+
+              {error && (
                 <motion.div
-                  className="text-center mt-8 pt-6"
-                  style={{ borderTop: `1px solid ${colors.border}20` }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
+                  className="mt-4 p-3 rounded-lg text-sm"
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#ef4444'
+                  }}
                 >
-                  <p className="text-xs" style={{ color: colors.mutedForeground }}>
-                    ¿No tienes cuenta?{' '}
-                    <a
-                      href="#"
-                      className="underline transition-colors"
-                      style={{ color: colors.primary }}
-                    >
-                      Contacta al administrador
-                    </a>
-                  </p>
+                  {error}
                 </motion.div>
-              </div>
-            </motion.div>
-
-          {/* Additional links */}
-          <motion.div
-            className="text-center mt-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            <div className="flex items-center justify-center gap-6 text-xs">
-              <a
-                href="#"
-                className="transition-colors hover:underline"
-                style={{ color: colors.mutedForeground }}
-              >
-                Ayuda
-              </a>
-              <a
-                href="#"
-                className="transition-colors hover:underline"
-                style={{ color: colors.mutedForeground }}
-              >
-                Términos
-              </a>
-              <a
-                href="#"
-                className="transition-colors hover:underline"
-                style={{ color: colors.mutedForeground }}
-              >
-                Privacidad
-              </a>
+              )}
             </div>
-          </motion.div>
+
+            {/* Footer */}
+            <div
+              className="px-8 py-4 text-center"
+              style={{
+                borderTop: `1px solid ${colors.border}`,
+                background: `linear-gradient(180deg, rgba(38, 38, 36, 0.8) 0%, ${colors.card} 100%)`
+              }}
+            >
+              <p className="text-sm" style={{ color: colors.mutedForeground }}>
+                ¿No tienes una cuenta?{' '}
+                <a
+                  href="#"
+                  className="font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: colors.primary }}
+                >
+                  Contacta al administrador
+                </a>
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom Links */}
+          <div className="mt-8 flex items-center justify-center space-x-6">
+            <a
+              href="#"
+              className="text-sm hover:opacity-80 transition-opacity"
+              style={{ color: colors.mutedForeground }}
+            >
+              Términos de uso
+            </a>
+            <span className="text-sm" style={{ color: colors.border }}>•</span>
+            <a
+              href="#"
+              className="text-sm hover:opacity-80 transition-opacity"
+              style={{ color: colors.mutedForeground }}
+            >
+              Política de privacidad
+            </a>
+            <span className="text-sm" style={{ color: colors.border }}>•</span>
+            <a
+              href="#"
+              className="text-sm hover:opacity-80 transition-opacity"
+              style={{ color: colors.mutedForeground }}
+            >
+              Ayuda
+            </a>
+          </div>
         </motion.div>
       </div>
     </div>

@@ -23,7 +23,8 @@ import {
   Sun,
   Moon,
   Globe,
-  ChevronRight
+  ChevronRight,
+  Bot
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import dynamic from 'next/dynamic'
@@ -73,6 +74,7 @@ const menuItems: MenuItem[] = [
   { href: '/admin/turnos', label: 'Turnos', Icon: Calendar },
   { href: '/admin/vouchers', label: 'Vouchers', Icon: Ticket },
   { href: '/admin/usuarios', label: 'Usuarios', Icon: Users },
+  { href: '/admin/ia', label: 'Asistente IA', Icon: Bot },
   { href: '/admin/stock/import', label: 'Importar Stock', Icon: Import },
 ]
 
