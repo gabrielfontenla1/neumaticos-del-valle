@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { findEquivalentTires } from '@/features/tire-equivalence/api'
 import { EquivalentTire } from '@/features/tire-equivalence/types'
 import { toast } from 'sonner'
+import InstallmentTable from './InstallmentTable'
 
 interface ProductDetailProps {
   productId: string
@@ -61,6 +62,20 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   }
 
   useEffect(() => {
+    // Force scroll to top immediately on mount
+    if (typeof window !== 'undefined') {
+      // Disable smooth scrolling temporarily for immediate effect
+      document.documentElement.style.scrollBehavior = 'auto'
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+
+      // Re-enable smooth scrolling after a brief delay
+      setTimeout(() => {
+        document.documentElement.style.scrollBehavior = 'smooth'
+      }, 100)
+    }
+
     const loadProduct = async () => {
       setLoading(true)
       const data = await getProductById(productId)
@@ -452,6 +467,17 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             </div>
           </div>
         </div>
+
+        {/* Installment Table - Full Width */}
+        {priceList > 0 && (
+          <div className="mt-8">
+            <InstallmentTable
+              priceList={priceList}
+              quantity={quantity}
+              onQuantityChange={setQuantity}
+            />
+          </div>
+        )}
 
         {/* Equivalent Tires Carousel - Full Width */}
         {equivalentTires.length > 0 && (
