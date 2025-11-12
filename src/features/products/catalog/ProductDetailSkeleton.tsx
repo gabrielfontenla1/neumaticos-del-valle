@@ -107,12 +107,51 @@ export default function ProductDetailSkeleton() {
               </div>
             </div>
 
+            {/* Stock por sucursal Skeleton */}
+            <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+              <div className="px-4 py-4 lg:p-5">
+                <Skeleton className="h-5 w-48 mb-3" />
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="flex items-start gap-2">
+                    <Skeleton className="h-4 w-4 flex-shrink-0 rounded" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Size Information Skeleton */}
+            <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+              <div className="px-4 py-4 lg:p-5">
+                <Skeleton className="h-5 w-40 mb-3" />
+                <div className="bg-gray-50 lg:rounded-lg p-4">
+                  <Skeleton className="h-8 w-40 mb-3" />
+                  <div className="grid grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i}>
+                        <Skeleton className="h-4 w-full mb-1" />
+                        <Skeleton className="h-5 w-full" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Description Card Skeleton */}
-            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-              <Skeleton className="h-4 w-24 mb-2" />
-              <Skeleton className="h-3 w-full mb-1" />
-              <Skeleton className="h-3 w-full mb-1" />
-              <Skeleton className="h-3 w-3/4" />
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+              <Skeleton className="h-5 w-24 mb-3" />
+              <Skeleton className="h-4 w-full mb-1" />
+              <Skeleton className="h-4 w-full mb-1" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
 
             {/* Features Card Skeleton */}

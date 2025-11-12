@@ -1224,16 +1224,39 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                               {product.model || '\u00A0'}
                             </div>
 
-                            {/* Disponible y Envío gratis */}
-                            <div className="flex items-center gap-2 mb-3">
-                              {product.stock > 0 && (
-                                <span className="text-xs text-green-600 font-medium">
-                                  Disponible
-                                </span>
-                              )}
-                              {product.stock > 15 && (
-                                <span className="text-xs text-green-600 font-medium">
-                                  • Envío gratis
+                            {/* Código de proveedor */}
+                            {(product.features as any)?.codigo_proveedor && (
+                              <div className="text-[10px] text-gray-500 mb-2">
+                                Cód: {(product.features as any).codigo_proveedor}
+                              </div>
+                            )}
+
+                            {/* Stock y Envío gratis */}
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                              {product.stock > 0 ? (
+                                <>
+                                  <span className={`text-[10px] px-2 py-1 rounded font-semibold ${
+                                    product.stock === 1
+                                      ? 'bg-orange-50 text-orange-700'
+                                      : 'bg-green-50 text-green-700'
+                                  }`}>
+                                    Stock: {(() => {
+                                      if (product.stock === 1) return 'Última unidad'
+                                      if (product.stock <= 10) return `${product.stock} unidades`
+                                      if (product.stock <= 50) return '+10 unidades'
+                                      if (product.stock <= 100) return '+50 unidades'
+                                      return '+100 unidades'
+                                    })()}
+                                  </span>
+                                  {product.stock > 15 && (
+                                    <span className="text-[10px] text-green-600 font-medium">
+                                      • Envío gratis
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-[10px] px-2 py-1 rounded font-semibold bg-gray-100 text-gray-600">
+                                  Sin stock
                                 </span>
                               )}
                             </div>

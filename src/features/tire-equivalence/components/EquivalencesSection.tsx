@@ -58,6 +58,15 @@ export function EquivalencesSection({
     return tire.name
   }
 
+  // Función para mostrar el stock en rangos
+  const getStockDisplay = (stock: number) => {
+    if (stock === 1) return 'Última unidad'
+    if (stock <= 10) return `${stock} unidades`
+    if (stock <= 50) return '+10 unidades'
+    if (stock <= 100) return '+50 unidades'
+    return '+100 unidades'
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -199,8 +208,12 @@ export function EquivalencesSection({
 
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {tire.stock > 0 && (
-                            <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded transition-colors duration-200 whitespace-nowrap">
-                              Stock: {tire.stock}
+                            <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded transition-colors duration-200 whitespace-nowrap ${
+                              tire.stock === 1
+                                ? 'bg-orange-50 text-orange-700'
+                                : 'bg-green-50 text-green-700'
+                            }`}>
+                              Stock: {getStockDisplay(tire.stock)}
                             </span>
                           )}
                           <div className="flex text-yellow-400">

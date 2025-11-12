@@ -465,6 +465,61 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
               )}
             </div>
 
+            {/* Stock por sucursal */}
+            <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+              <div className="px-4 py-4 lg:p-5">
+                <h3 className="text-base font-semibold text-gray-900 mb-3">Disponibilidad por sucursal</h3>
+                <div className="space-y-2">
+                  {(() => {
+                    const sucursales = [
+                      { key: 'belgrano', name: 'Santiago del Estero - Capital' },
+                      { key: 'catamarca', name: 'Catamarca - Capital ( Alem )' },
+                      { key: 'la_banda', name: 'Santiago del Estero - La Banda' },
+                      { key: 'salta', name: 'Salta' },
+                      { key: 'tucuman', name: 'Tucumán' },
+                      { key: 'virgen', name: 'Catamarca - Capital ( Belgrano )' }
+                    ]
+
+                    const stockPorSucursal = (product.features as any)?.stock_por_sucursal || {}
+
+                    const getStockDisplay = (stock: number) => {
+                      if (stock === 1) return 'Última unidad'
+                      if (stock <= 10) return `${stock} unidades`
+                      if (stock <= 50) return '+10 unidades'
+                      if (stock <= 100) return '+50 unidades'
+                      return '+100 unidades'
+                    }
+
+                    return sucursales.map(({ key, name }) => {
+                      const stock = stockPorSucursal[key]
+                      const hasStock = stock && stock > 0
+
+                      return (
+                        <div key={key} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                          <span className="text-sm text-gray-700">{name}</span>
+                          {hasStock ? (
+                            <span className={`text-sm font-semibold ${stock === 1 ? 'text-orange-600' : 'text-green-600'}`}>
+                              {getStockDisplay(stock)}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-medium text-gray-500">Sin stock</span>
+                          )}
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 flex items-start gap-2">
+                    <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span>
+                      Si tu sucursal no tiene stock, igual podés comprar y te lo enviamos desde otra sucursal sin cargo adicional.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Medida del neumático - Después de los botones */}
             {(product.width && product.profile && product.diameter &&
               product.width > 0 && product.profile > 0 && product.diameter > 0) && (
@@ -659,6 +714,25 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                             <p className="text-lg font-bold text-gray-900 mb-2">
                               ${Number(tire.price).toLocaleString('es-AR')}
                             </p>
+                            {/* Stock Badge */}
+                            {typeof (tire as any).stock === 'number' && (
+                              <div className="mb-2">
+                                <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded transition-colors duration-200 whitespace-nowrap ${
+                                  (tire as any).stock === 1
+                                    ? 'bg-orange-50 text-orange-700'
+                                    : (tire as any).stock > 0
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {(tire as any).stock === 0 ? 'Sin stock' :
+                                   (tire as any).stock === 1 ? 'Stock: Última unidad' :
+                                   (tire as any).stock <= 10 ? `Stock: ${(tire as any).stock} unidades` :
+                                   (tire as any).stock <= 50 ? 'Stock: +10 unidades' :
+                                   (tire as any).stock <= 100 ? 'Stock: +50 unidades' :
+                                   'Stock: +100 unidades'}
+                                </span>
+                              </div>
+                            )}
                             {tire.equivalenceLevel && (
                               <Badge
                                 variant="secondary"
