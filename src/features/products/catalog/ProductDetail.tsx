@@ -303,7 +303,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
 
               {/* Product Name - Hidden on mobile, shown on desktop */}
               <h1 className="hidden lg:block text-base lg:text-lg font-normal lg:font-semibold text-gray-900 mb-3 leading-tight">
-                {getCleanProductName(product)}
+                {product.brand} {getCleanProductName(product)} {product.width}/{product.profile}R{product.diameter}
               </h1>
 
               {/* Rating - Hidden on mobile, shown on desktop */}
@@ -335,8 +335,16 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                   </span>
                 </div>
                 <div className="text-sm lg:text-xs text-gray-700 mb-2">
-                  6 cuotas de ${Math.floor(product.price / 6).toLocaleString('es-AR')}
+                  3 cuotas sin interés de ${Math.floor(product.price / 3).toLocaleString('es-AR')}
                 </div>
+                {/* Código de proveedor */}
+                {(product.features as any)?.proveedor && (
+                  <div className="mb-2">
+                    <p className="text-xs text-gray-500">
+                      Código: {(product.features as any).proveedor}
+                    </p>
+                  </div>
+                )}
                 <div className="mt-2">
                   <p className="text-sm lg:text-xs text-green-600 font-medium">
                     Colocación sin cargo en cualquiera de nuestras sucursales
