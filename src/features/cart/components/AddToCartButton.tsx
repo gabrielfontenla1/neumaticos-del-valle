@@ -60,8 +60,8 @@ export function AddToCartButton({
         // Show notification toast with enhanced visibility
         showNotification({
           type: 'success',
-          title: '🛒 ¡Producto Agregado al Carrito!',
-          message: `${productName} x${quantity} - Ver carrito para finalizar compra`,
+          title: 'Producto agregado al carrito',
+          message: `${productName} x${quantity}`,
           duration: 5000
         })
 
@@ -239,8 +239,8 @@ export function QuickAddButton({
         // Show success notification with enhanced visibility
         showNotification({
           type: 'success',
-          title: '🛒 ¡Agregado al Carrito!',
-          message: 'Producto añadido exitosamente',
+          title: 'Producto agregado al carrito',
+          message: 'Agregado exitosamente',
           duration: 4000
         })
         // Show success state for 1 second, then return to idle

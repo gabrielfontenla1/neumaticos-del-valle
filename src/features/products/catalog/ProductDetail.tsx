@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Package, Truck, ShieldCheck, Star, Minus, Plus, Info, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Package, Truck, ShieldCheck, Star, Minus, Plus, Info, ChevronLeft, ChevronRight, MessageCircle, ShoppingCart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Product } from '../types'
 import { getProductById } from '../api'
@@ -10,6 +10,13 @@ import { useCartContext } from '@/providers/CartProvider'
 import { Navbar } from '@/components/Navbar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { findEquivalentTires } from '@/features/tire-equivalence/api'
 import { EquivalentTire } from '@/features/tire-equivalence/types'
 import { toast } from 'sonner'
@@ -188,12 +195,15 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const imageUrl = product.image_url || "/no-image.png"
 
   return (
-    <div className="min-h-screen bg-[#EDEDED]">
+    <div className="min-h-screen bg-white lg:bg-[#EDEDED]">
       <Navbar />
 
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Breadcrumb */}
-        <div className="mb-4">
+      {/* Mobile spacing for navbar - White background on mobile, gray on desktop */}
+      <div className="pt-4 lg:pt-0 bg-white lg:bg-[#EDEDED]"></div>
+
+      <div className="lg:max-w-[1440px] lg:mx-auto lg:px-4 sm:px-6 lg:px-8 lg:py-6">
+        {/* Desktop Breadcrumb */}
+        <div className="hidden lg:block mb-4">
           <Button variant="ghost" size="sm" asChild className="h-auto py-1 px-2">
             <Link href="/productos" className="inline-flex items-center gap-2">
               <ArrowLeft className="h-3 w-3" />
@@ -202,10 +212,43 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Image */}
-          <div className="space-y-4">
-            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-6">
+          {/* Mobile: Image First (order-1) / Desktop: Left Column */}
+          <div className="order-1 lg:space-y-4">
+            {/* Mobile Back Button and Title */}
+            <div className="lg:hidden px-4 py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="h-auto p-0 hover:bg-transparent -ml-2 mb-3"
+              >
+                <Link href="/productos" className="inline-flex items-center gap-1 text-gray-700">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="text-sm">Volver</span>
+                </Link>
+              </Button>
+
+              {/* Condición y ventas */}
+              <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                <span>Nuevo</span>
+                <span>|</span>
+                <span>+{(() => {
+                  // Generar números redondos (500, 1000, 1500, 2000, 2500, 3000, etc.)
+                  const hash = product.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                  const options = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000];
+                  return options[hash % options.length];
+                })()} vendidos</span>
+              </div>
+
+              {/* Título del producto */}
+              <h1 className="text-xl font-normal text-gray-900 leading-tight capitalize">
+                {product.brand.toLowerCase()} {getCleanProductName(product).toLowerCase()} {product.width}/{product.profile}R{product.diameter}
+              </h1>
+            </div>
+
+            {/* Image - Full width on mobile, no padding */}
+            <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:p-6 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
               <div className="relative aspect-square bg-[#FFFFFF]">
                 {imageUrl ? (
                   <img
@@ -221,29 +264,31 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
               </div>
             </div>
 
-            {/* Features Cards */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+            {/* Features Cards - Hidden on mobile, shown on desktop */}
+            <div className="hidden lg:grid grid-cols-3 gap-3">
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
                 <Truck className="h-5 w-5 text-green-600 mx-auto mb-1.5" />
                 <p className="text-[10px] text-gray-600">Envío gratis</p>
               </div>
-              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
                 <ShieldCheck className="h-5 w-5 text-blue-600 mx-auto mb-1.5" />
                 <p className="text-[10px] text-gray-600">Garantía oficial</p>
               </div>
-              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-3 text-center shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
                 <Star className="h-5 w-5 text-yellow-500 mx-auto mb-1.5" />
                 <p className="text-[10px] text-gray-600">Calidad premium</p>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Info */}
-          <div className="space-y-4">
-            {/* Main Info Card */}
-            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-5 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
-              {/* Brand and Stock Status */}
-              <div className="flex items-center justify-between mb-2">
+          {/* Mobile: Info Second (order-2) / Desktop: Right Column */}
+          <div className="order-2 space-y-4">
+            {/* Main Info Card - Full width on mobile without padding */}
+            <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:p-5 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+              {/* Mobile padding wrapper - only for content that needs padding */}
+              <div className="px-4 py-5 lg:p-0">
+              {/* Brand and Stock Status - Hidden on mobile, shown on desktop */}
+              <div className="hidden lg:flex items-center justify-between mb-2">
                 <p className="text-[11px] text-gray-500 uppercase tracking-wider">{product.brand}</p>
                 {product.stock > 0 ? (
                   <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-[10px] h-5 px-2">
@@ -256,13 +301,13 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 )}
               </div>
 
-              {/* Product Name */}
-              <h1 className="text-lg font-semibold text-gray-900 mb-3 leading-tight">
+              {/* Product Name - Hidden on mobile, shown on desktop */}
+              <h1 className="hidden lg:block text-base lg:text-lg font-normal lg:font-semibold text-gray-900 mb-3 leading-tight">
                 {getCleanProductName(product)}
               </h1>
 
-              {/* Rating */}
-              <div className="flex items-center gap-1 mb-4">
+              {/* Rating - Hidden on mobile, shown on desktop */}
+              <div className="hidden lg:flex items-center gap-1 mb-4">
                 <span className="text-xs text-gray-900">4.7</span>
                 <div className="flex items-center text-blue-500">
                   {"★★★★★".split("").map((star, i) => (
@@ -272,80 +317,115 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 <span className="text-[11px] text-gray-500 ml-1">({Math.floor(product.stock * 10 + 100)} valoraciones)</span>
               </div>
 
-              {/* Price */}
+              {/* Price - Larger on mobile like ML */}
               <div className="mb-4 pb-4 border-b border-gray-200">
                 {discountPercentage > 0 && (
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-gray-500 line-through">
+                    <span className="text-sm lg:text-xs text-gray-500 line-through">
                       ${previousPrice.toLocaleString('es-AR')}
                     </span>
-                    <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-[10px] h-5 px-2">
+                    <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-xs lg:text-[10px] h-6 lg:h-5 px-2">
                       {discountPercentage}% OFF
                     </Badge>
                   </div>
                 )}
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-2xl font-bold text-gray-900">
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl lg:text-2xl font-normal text-gray-900">
                     ${Number(product.price).toLocaleString('es-AR')}
                   </span>
                 </div>
-                <div className="text-xs text-gray-700">
+                <div className="text-sm lg:text-xs text-gray-700 mb-2">
                   6 cuotas de ${Math.floor(product.price / 6).toLocaleString('es-AR')}
                 </div>
-                {product.stock > 15 && (
-                  <div className="mt-2">
-                    <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-100 text-[10px] h-5 px-2">
-                      Llega gratis hoy
-                    </Badge>
-                  </div>
-                )}
+                <div className="mt-2">
+                  <p className="text-sm lg:text-xs text-green-600 font-medium">
+                    Colocación sin cargo en cualquiera de nuestras sucursales
+                  </p>
+                </div>
               </div>
+              </div>
+              {/* End of padded content wrapper */}
 
-              {/* Size Information */}
-              {(product.width && product.profile && product.diameter &&
-                product.width > 0 && product.profile > 0 && product.diameter > 0) && (
-                <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h3 className="text-xs font-semibold text-gray-900 mb-2">Medida del neumático</h3>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-lg font-bold text-gray-900 mb-2">
-                      {product.width}/{product.profile} R{product.diameter}
-                    </p>
-                    <div className="grid grid-cols-3 gap-2 text-[11px]">
-                      <div>
-                        <p className="text-gray-500 mb-0.5">Ancho</p>
-                        <p className="font-medium text-gray-900">{product.width} mm</p>
+              {/* Stock disponible - Full width */}
+              {product.stock > 0 && (
+                <div className="mb-2 px-4 lg:px-0">
+                  <p className="text-base font-semibold text-gray-900">Stock disponible</p>
+                </div>
+              )}
+
+              {/* Selector de cantidad - Full width, sin border-radius en mobile */}
+              {product.stock > 0 && (
+                <div className="mb-4 bg-gray-50 lg:rounded-lg p-4 lg:hidden">
+                  <Select value={String(quantity)} onValueChange={(value) => setQuantity(Number(value))}>
+                    <SelectTrigger className="w-full h-auto bg-transparent border-none shadow-none hover:bg-gray-100 transition-colors p-0">
+                      <div className="flex items-center justify-between w-full py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base text-gray-900">Cantidad: </span>
+                          <span className="text-base font-semibold text-gray-900">
+                            <SelectValue />
+                          </span>
+                          <span className="text-base text-gray-500">({product.stock} disponibles)</span>
+                        </div>
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
-                      <div>
-                        <p className="text-gray-500 mb-0.5">Perfil</p>
-                        <p className="font-medium text-gray-900">{product.profile}%</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 mb-0.5">Rodado</p>
-                        <p className="font-medium text-gray-900">{product.diameter}"</p>
-                      </div>
-                    </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={String(num)}>
+                          {num} {num === 1 ? 'unidad' : 'unidades'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Botones Mobile - Vertical layout */}
+              {product.stock > 0 && (
+                <div className="px-4 mb-4 lg:hidden">
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={() => {
+                        const message = `Hola! Me interesa este producto:\n\n${getCleanProductName(product)}\nPrecio: $${Number(product.price).toLocaleString('es-AR')}\nCantidad: ${quantity}\n\n¿Está disponible?`
+                        const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+                        window.open(url, '_blank', 'noopener,noreferrer')
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white h-11 text-base font-semibold"
+                    >
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Comprar por WhatsApp
+                    </Button>
+                    <Button
+                      onClick={handleAddToCart}
+                      className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 h-11 text-base font-medium border-0"
+                    >
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Agregar al carrito
+                    </Button>
                   </div>
                 </div>
               )}
 
-              {/* Quantity and Add to Cart */}
+              {/* Desktop Quantity Selector - Hidden on mobile */}
               {product.stock > 0 && (
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-900 mb-2">
-                    Cantidad: {quantity}
+                <div className="hidden lg:block">
+                  <label className="block text-sm lg:text-[11px] font-medium text-gray-900 mb-2">
+                    Cantidad: <span className="text-gray-500">({product.stock} disponibles)</span>
                   </label>
-                  <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-3 mb-4">
                     <div className="flex items-center border border-gray-300 rounded-lg">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setQuantity(q => Math.max(1, q - 1))}
                         disabled={quantity <= 1}
-                        className="rounded-none rounded-l-lg h-8 w-8 p-0"
+                        className="rounded-none rounded-l-lg h-9 w-9 lg:h-8 lg:w-8 p-0"
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className="h-4 w-4 lg:h-3 lg:w-3" />
                       </Button>
-                      <span className="px-4 py-1 text-sm font-medium text-gray-900 border-x border-gray-300">
+                      <span className="px-5 lg:px-4 py-2 lg:py-1 text-base lg:text-sm font-medium text-gray-900 border-x border-gray-300">
                         {quantity}
                       </span>
                       <Button
@@ -353,56 +433,72 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                         size="sm"
                         onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
                         disabled={quantity >= product.stock}
-                        className="rounded-none rounded-r-lg h-8 w-8 p-0"
+                        className="rounded-none rounded-r-lg h-9 w-9 lg:h-8 lg:w-8 p-0"
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-4 w-4 lg:h-3 lg:w-3" />
                       </Button>
                     </div>
-                    <span className="text-[11px] text-gray-500">
-                      ({product.stock} disponibles)
-                    </span>
                   </div>
 
-                  <Button
-                    onClick={handleAddToCart}
-                    className="w-full bg-black hover:bg-gray-800 text-white"
-                    size="sm"
-                  >
-                    Agregar al carrito
-                  </Button>
-
-                  {/* WhatsApp Purchase Button */}
-                  <Button
-                    onClick={() => {
-                      const productName = getCleanProductName(product)
-                      const size = `${product.width}/${product.profile}R${product.diameter}`
-                      const message = encodeURIComponent(
-                        `Hola! Me interesa comprar el siguiente neumático:\n\n` +
-                        `📍 Producto: ${productName}\n` +
-                        `📏 Medida: ${size}\n` +
-                        `🏷️ Marca: ${product.brand}\n` +
-                        `💵 Precio: $${product.price.toLocaleString('es-AR')}\n` +
-                        `📦 Cantidad: ${quantity} unidad${quantity > 1 ? 'es' : ''}\n\n` +
-                        `¿Está disponible?`
-                      )
-                      const whatsappUrl = `https://wa.me/5493855946462?text=${message}`
-                      window.open(whatsappUrl, '_blank')
-                    }}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 mt-2"
-                    size="sm"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Comprar por WhatsApp
-                  </Button>
+                  {/* Botones principales - Similar a ML */}
+                  <div className="flex flex-col gap-3 mb-4">
+                    <Button
+                      onClick={() => {
+                        const message = `Hola! Me interesa este producto:\n\n${getCleanProductName(product)}\nPrecio: $${Number(product.price).toLocaleString('es-AR')}\nCantidad: ${quantity}\n\n¿Está disponible?`
+                        const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+                        window.open(url, '_blank', 'noopener,noreferrer')
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white h-11 lg:h-10 text-base lg:text-sm font-semibold"
+                    >
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Comprar por WhatsApp
+                    </Button>
+                    <Button
+                      onClick={handleAddToCart}
+                      className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 h-11 lg:h-10 text-base lg:text-sm font-medium border-0"
+                    >
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Agregar al carrito
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
 
+            {/* Medida del neumático - Después de los botones */}
+            {(product.width && product.profile && product.diameter &&
+              product.width > 0 && product.profile > 0 && product.diameter > 0) && (
+              <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+                <div className="px-4 py-4 lg:p-5">
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Medida del neumático</h3>
+                  <div className="bg-gray-50 lg:rounded-lg p-4">
+                    <p className="text-2xl font-semibold text-gray-900 mb-3">
+                      {product.width}/{product.profile} R{product.diameter}
+                    </p>
+                    <div className="grid grid-cols-3 gap-4 text-base">
+                      <div>
+                        <p className="text-gray-500 mb-1">Ancho</p>
+                        <p className="font-semibold text-gray-900">{product.width} mm</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 mb-1">Perfil</p>
+                        <p className="font-semibold text-gray-900">{product.profile}%</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 mb-1">Rodado</p>
+                        <p className="font-semibold text-gray-900">{product.diameter}"</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Description Card */}
             {product.description && (
-              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-                <h3 className="text-xs font-semibold text-gray-900 mb-2">Descripción</h3>
-                <p className="text-[11px] text-gray-700 leading-relaxed">{product.description}</p>
+              <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-3">Descripción</h3>
+                <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
               </div>
             )}
 
@@ -436,15 +532,15 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
               if (filteredFeatures.length === 0) return null;
 
               return (
-                <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-                  <h3 className="text-xs font-semibold text-gray-900 mb-2">Características técnicas</h3>
+                <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Características técnicas</h3>
                   <dl className="space-y-2">
                     {filteredFeatures.map(([key, value]) => (
-                      <div key={key} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
-                        <dt className="text-[11px] text-gray-600">
+                      <div key={key} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                        <dt className="text-sm text-gray-600">
                           {fieldTranslations[key] || key.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                         </dt>
-                        <dd className="text-[11px] font-medium text-gray-900">{String(value)}</dd>
+                        <dd className="text-sm font-semibold text-gray-900">{String(value)}</dd>
                       </div>
                     ))}
                   </dl>
@@ -453,15 +549,16 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             })()}
 
             {/* Category Card */}
-            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-gray-600">Categoría:</span>
-                <span className="text-[11px] font-medium text-gray-900 capitalize">{product.category}</span>
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] mb-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Información adicional</h3>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Categoría:</span>
+                <span className="text-sm font-semibold text-gray-900 capitalize">{product.category}</span>
               </div>
               {product.model && (
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                  <span className="text-[11px] text-gray-600">Modelo:</span>
-                  <span className="text-[11px] font-medium text-gray-900">{product.model}</span>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Modelo:</span>
+                  <span className="text-sm font-semibold text-gray-900">{product.model}</span>
                 </div>
               )}
             </div>
@@ -600,13 +697,22 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         )}
 
         {loadingEquivalents && (
-          <div className="mt-8 bg-[#FFFFFF] rounded-lg border border-gray-200 p-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+          <div className="mt-4 lg:mt-8 bg-[#FFFFFF] px-4 py-5 lg:rounded-lg lg:border lg:border-gray-200 lg:p-6 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
             <div className="flex items-center gap-2 mb-4">
               <Info className="h-4 w-4 text-blue-600" />
               <h3 className="text-base font-semibold text-gray-900">Neumáticos compatibles</h3>
             </div>
-            <div className="flex justify-center items-center h-24">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
+                  <div className="aspect-square w-full mb-3 bg-gray-100 animate-pulse rounded-md" />
+                  <div className="h-4 w-full mb-1 bg-gray-100 animate-pulse rounded" />
+                  <div className="h-4 w-3/4 mb-2 bg-gray-100 animate-pulse rounded" />
+                  <div className="h-3 w-24 mb-2 bg-gray-100 animate-pulse rounded" />
+                  <div className="h-6 w-32 mb-2 bg-gray-100 animate-pulse rounded" />
+                  <div className="h-5 w-28 bg-gray-100 animate-pulse rounded" />
+                </div>
+              ))}
             </div>
           </div>
         )}

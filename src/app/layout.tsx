@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Lora, IBM_Plex_Mono, Montserrat } from 'next/font/google';
+import { Inter, Lora, IBM_Plex_Mono, Montserrat } from 'next/font/google';
 import "./globals.css";
 import { CartProvider } from '@/providers/CartProvider';
 import { NotificationProvider } from '@/components/CartNotifications';
@@ -9,7 +9,8 @@ import { SessionProvider } from '@/features/auth/components/SessionProvider';
 import { WhatsAppBubble } from '@/components/WhatsAppBubble';
 import { Toaster } from '@/components/ui/sonner';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+// Inter is very similar to Proxima Nova (Mercado Libre's font)
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
@@ -83,7 +84,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#FFC700" />
       </head>
       <body
-        className={`${plusJakartaSans.variable} ${lora.variable} ${ibmPlexMono.variable} ${montserrat.variable} font-sans antialiased`}
+        className={`${inter.variable} ${lora.variable} ${ibmPlexMono.variable} ${montserrat.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ThemeManager />

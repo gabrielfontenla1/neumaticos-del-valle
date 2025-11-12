@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { CreditCard, Info, Minus, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,14 +19,17 @@ interface InstallmentTableProps {
   onQuantityChange?: (quantity: number) => void
 }
 
-export default function InstallmentTable({ priceList, quantity: initialQuantity = 1, onQuantityChange }: InstallmentTableProps) {
-  const [localQuantity, setLocalQuantity] = useState(initialQuantity)
+export default function InstallmentTable({ priceList, quantity: externalQuantity = 1, onQuantityChange }: InstallmentTableProps) {
+  const [localQuantity, setLocalQuantity] = useState(externalQuantity)
 
-  const handleQuantityChange = (newQuantity: number) => {
+  // Actualizar el estado local cuando cambie la cantidad externa (desde arriba)
+  React.useEffect(() => {
+    setLocalQuantity(externalQuantity)
+  }, [externalQuantity])
+
+  const handleLocalQuantityChange = (newQuantity: number) => {
+    // Solo actualizar el estado local, NO notificar al padre
     setLocalQuantity(newQuantity)
-    if (onQuantityChange) {
-      onQuantityChange(newQuantity)
-    }
   }
 
   const quantity = localQuantity
@@ -79,7 +82,7 @@ export default function InstallmentTable({ priceList, quantity: initialQuantity 
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
+                onClick={() => handleLocalQuantityChange(Math.max(1, quantity - 1))}
                 disabled={quantity <= 1}
                 className="rounded-none rounded-l-lg h-7 w-7 p-0"
               >
@@ -91,7 +94,7 @@ export default function InstallmentTable({ priceList, quantity: initialQuantity 
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleQuantityChange(quantity + 1)}
+                onClick={() => handleLocalQuantityChange(quantity + 1)}
                 className="rounded-none rounded-r-lg h-7 w-7 p-0"
               >
                 <Plus className="h-3 w-3" />
@@ -169,16 +172,11 @@ export default function InstallmentTable({ priceList, quantity: initialQuantity 
         ))}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-200 space-y-1">
+      <div className="mt-3 pt-3 border-t border-gray-200">
         <p className="text-[10px] text-gray-500 flex items-center gap-1">
           <Info className="h-3 w-3" />
           Precio de lista por cubierta: ${priceList.toLocaleString('es-AR')}
         </p>
-        {quantity > 1 && (
-          <p className="text-[10px] text-gray-500 pl-4">
-            Total: {quantity} cubierta{quantity > 1 ? 's' : ''} × ${priceList.toLocaleString('es-AR')} = ${(priceList * quantity).toLocaleString('es-AR')}
-          </p>
-        )}
       </div>
     </div>
   )

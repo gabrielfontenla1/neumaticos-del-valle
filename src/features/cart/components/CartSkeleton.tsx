@@ -1,9 +1,13 @@
+import { Navbar } from '@/components/Navbar'
+
 export function CartSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-16 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="min-h-screen bg-[#EDEDED]">
+      <Navbar />
+
+      {/* Breadcrumb */}
+      <div className="bg-[#FFFFFF] border-b border-gray-200 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6">
           <div className="py-4">
             <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
           </div>
@@ -11,13 +15,13 @@ export function CartSkeleton() {
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Items List */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center">
                   <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
                   <div className="ml-3 h-5 w-32 bg-gray-200 rounded animate-pulse" />
@@ -32,7 +36,7 @@ export function CartSkeleton() {
 
                 {/* Cart items skeleton */}
                 {[1, 2, 3].map((item, index) => (
-                  <div key={item} className={index !== 2 ? 'border-b border-gray-100' : ''}>
+                  <div key={item} className={index !== 2 ? 'border-b border-gray-200' : ''}>
                     <div className="flex gap-3 sm:gap-4 p-4 sm:p-6">
                       {/* Checkbox */}
                       <div className="pt-4">
@@ -95,7 +99,7 @@ export function CartSkeleton() {
               </div>
 
               {/* Shipping Info */}
-              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <div className="px-6 py-4 border-t border-gray-200 bg-gradient-to-br from-green-50 to-emerald-50">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="h-5 w-12 bg-gray-200 rounded animate-pulse mb-2" />
@@ -115,7 +119,7 @@ export function CartSkeleton() {
 
           {/* Summary Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-28" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] p-6 sticky top-28">
               <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-6" />
 
               <div className="space-y-4">
@@ -137,7 +141,7 @@ export function CartSkeleton() {
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-gray-100 pt-4">
+                <div className="border-t border-gray-200 pt-4">
                   {/* Total */}
                   <div className="flex items-center justify-between">
                     <div className="h-6 w-12 bg-gray-200 rounded animate-pulse" />
@@ -148,7 +152,7 @@ export function CartSkeleton() {
 
               {/* Actions */}
               <div className="mt-6">
-                <div className="h-12 w-full bg-green-200 rounded-full animate-pulse" />
+                <div className="h-12 w-full bg-green-200 rounded-lg animate-pulse" />
               </div>
 
               {/* Additional options */}

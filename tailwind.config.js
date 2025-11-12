@@ -53,11 +53,12 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: ['Proxima Nova', 'var(--font-sans)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
         serif: ['var(--font-serif)', 'Georgia', 'serif'],
         mono: ['var(--font-mono)', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
         helvetica: ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
         montserrat: ['var(--font-montserrat)', 'sans-serif'],
+        proxima: ['Proxima Nova', '-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       keyframes: {
         shimmer: {
