@@ -212,7 +212,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </Button>
         </div>
 
-        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
           {/* Mobile: Image First (order-1) / Desktop: Left Column */}
           <div className="order-1 lg:space-y-4">
             {/* Mobile Back Button and Title */}
@@ -340,7 +340,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 {/* Código de proveedor */}
                 {(product.features as any)?.proveedor && (
                   <div className="mb-2">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-700 border border-gray-300 bg-gray-50 rounded px-2 py-1 inline-block">
                       Código: {(product.features as any).proveedor}
                     </p>
                   </div>

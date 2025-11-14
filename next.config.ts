@@ -78,6 +78,36 @@ const nextConfig: NextConfig = {
           }
         ],
       },
+      // Hidden internal tool - No indexing
+      {
+        source: '/sys/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'private, no-cache, no-store, must-revalidate'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          },
+          {
+            key: 'Expires',
+            value: '0'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'no-referrer'
+          }
+        ],
+      },
     ];
   },
 

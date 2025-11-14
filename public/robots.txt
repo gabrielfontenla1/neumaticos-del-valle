@@ -1,0 +1,51 @@
+# Robots.txt for Neumáticos del Valle
+
+# Allow public pages
+User-agent: *
+Allow: /
+Allow: /productos
+Allow: /servicios
+Allow: /turnos
+Allow: /quotation
+Allow: /equivalencias
+Allow: /aceites
+Allow: /sucursales
+
+# Block internal tools
+Disallow: /sys/
+Disallow: /internal/
+Disallow: /tools/
+Disallow: /_/
+
+# Specific bot rules
+User-agent: Googlebot
+Disallow: /sys/
+Crawl-delay: 10
+
+User-agent: Googlebot-Image
+Disallow: /sys/
+
+User-agent: Bingbot
+Disallow: /sys/
+
+User-agent: Slurp
+Disallow: /sys/
+
+User-agent: DuckDuckBot
+Disallow: /sys/
+
+# Block aggressive scrapers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Sitemap
+Sitemap: https://neumaticos-del-valle.com/sitemap.xml
