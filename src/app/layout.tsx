@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Lora, IBM_Plex_Mono, Montserrat } from 'next/font/google';
 import "./globals.css";
 import { CartProvider } from '@/providers/CartProvider';
-import { NotificationProvider } from '@/components/CartNotifications';
-import { ConditionalLayout } from '@/components/ConditionalNav';
-import { ThemeManager } from '@/components/ThemeManager';
+import { NotificationProvider } from '@/components/notifications/CartNotifications';
+import { ConditionalLayout } from '@/components/layout/ConditionalNav';
+import { ThemeManager } from '@/components/layout/ThemeManager';
 import { SessionProvider } from '@/features/auth/components/SessionProvider';
-import { WhatsAppBubble } from '@/components/WhatsAppBubble';
+import { WhatsAppBubble } from '@/components/marketing/WhatsAppBubble';
 import { Toaster } from '@/components/ui/sonner';
 
 // Inter is very similar to Proxima Nova (Mercado Libre's font)

@@ -15,7 +15,7 @@ interface ApiResponse {
   method: string
   status: number
   statusText: string
-  data: any
+  data: Record<string, unknown>
   duration: number
   error?: string
 }
@@ -25,14 +25,21 @@ interface TestLog {
   timestamp: string
   type: 'info' | 'success' | 'error' | 'warning'
   message: string
-  details?: any
+  details?: Record<string, unknown>
+}
+
+interface SystemHealth {
+  status: string
+  database?: string
+  timestamp?: string
+  [key: string]: unknown
 }
 
 const TestOrdersPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isLoading, setIsLoading] = useState(false)
   const [testLogs, setTestLogs] = useState<TestLog[]>([])
-  const [systemHealth, setSystemHealth] = useState<any>(null)
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [lastResponses, setLastResponses] = useState<ApiResponse[]>([])
   const logsEndRef = useRef<HTMLDivElement>(null)
 
@@ -43,7 +50,7 @@ const TestOrdersPage = () => {
 
   // Add log entry
   const addLog = useCallback(
-    (type: TestLog['type'], message: string, details?: any) => {
+    (type: TestLog['type'], message: string, details?: Record<string, unknown>) => {
       const log: TestLog = {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleTimeString(),

@@ -1,10 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Check, AlertCircle } from 'lucide-react'
-import { useCartContext } from '@/providers/CartProvider'
-import { useNotifications } from '@/components/CartNotifications'
+import { useAddToCart, useQuickAddToCart, AddToCartStatus } from '../hooks/useAddToCart'
 
 interface AddToCartButtonProps {
   productId: string
@@ -23,96 +21,13 @@ export function AddToCartButton({
   className = '',
   variant = 'default'
 }: AddToCartButtonProps) {
-  const { addItem } = useCartContext()
-  const { showNotification } = useNotifications()
-  const [isAdding, setIsAdding] = useState(false)
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')
+  const { status, message, isAdding, addToCart } = useAddToCart()
 
-  const handleAddToCart = async () => {
-    console.log('🟣 [AddToCartButton] handleAddToCart INICIO')
-    console.log('🟣 [AddToCartButton] disabled:', disabled)
-    console.log('🟣 [AddToCartButton] isAdding:', isAdding)
-
-    if (disabled || isAdding) {
-      console.warn('⚠️ [AddToCartButton] Botón deshabilitado o ya agregando')
-      return
-    }
-
-    setIsAdding(true)
-    setStatus('loading')
-    console.log('🟣 [AddToCartButton] Estado cambiado a loading')
-
-    try {
-      console.log('🟣 [AddToCartButton] Llamando a addItem con:', {
-        productId,
-        quantity
-      })
-
-      const success = await addItem(productId, quantity)
-      console.log('🟣 [AddToCartButton] Resultado de addItem:', success)
-
-      if (success) {
-        setStatus('success')
-        setMessage(`${productName} agregado al carrito`)
-        console.log('✅ [AddToCartButton] Producto agregado exitosamente')
-
-        // Show notification toast with enhanced visibility
-        showNotification({
-          type: 'success',
-          title: 'Producto agregado al carrito',
-          message: `${productName} x${quantity}`,
-          duration: 5000
-        })
-
-        // Reset status after 2 seconds
-        setTimeout(() => {
-          setStatus('idle')
-          setMessage('')
-        }, 2000)
-      } else {
-        setStatus('error')
-        setMessage('Error al agregar el producto')
-        console.error('❌ [AddToCartButton] addItem retornó false')
-
-        // Show error notification
-        showNotification({
-          type: 'error',
-          title: 'Error al agregar',
-          message: 'No se pudo agregar el producto al carrito',
-          duration: 4000
-        })
-
-        setTimeout(() => {
-          setStatus('idle')
-          setMessage('')
-        }, 3000)
-      }
-    } catch (error) {
-      console.error('❌ [AddToCartButton] Error en addToCart:', error)
-      console.error('❌ [AddToCartButton] Stack:', error instanceof Error ? error.stack : 'No stack')
-      setStatus('error')
-      setMessage('Error al agregar el producto')
-
-      // Show error notification
-      showNotification({
-        type: 'error',
-        title: 'Error inesperado',
-        message: error instanceof Error ? error.message : 'Algo salió mal',
-        duration: 4000
-      })
-
-      setTimeout(() => {
-        setStatus('idle')
-        setMessage('')
-      }, 3000)
-    } finally {
-      setIsAdding(false)
-      console.log('🟣 [AddToCartButton] handleAddToCart FIN')
-    }
+  const handleAddToCart = () => {
+    if (disabled) return
+    addToCart(productId, quantity, productName)
   }
 
-  // Button content based on status
   const getButtonContent = () => {
     switch (status) {
       case 'loading':
@@ -146,7 +61,6 @@ export function AddToCartButton({
     }
   }
 
-  // Button colors based on status
   const getButtonColors = () => {
     if (disabled) return 'bg-gray-300 cursor-not-allowed'
 
@@ -160,7 +74,6 @@ export function AddToCartButton({
     }
   }
 
-  // Variant styles
   const getVariantStyles = () => {
     switch (variant) {
       case 'compact':
@@ -191,7 +104,6 @@ export function AddToCartButton({
         {getButtonContent()}
       </motion.button>
 
-      {/* Toast message */}
       {message && status !== 'idle' && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -219,53 +131,15 @@ export function QuickAddButton({
   productId: string
   disabled?: boolean
 }) {
-  const { addItem } = useCartContext()
-  const { showNotification } = useNotifications()
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
+  const { status, quickAdd } = useQuickAddToCart()
 
-  const handleQuickAdd = async (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent navigation if inside a link
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation()
-
-    if (disabled || status !== 'idle') return
-
-    setStatus('loading')
-
-    try {
-      const success = await addItem(productId, 1)
-
-      if (success) {
-        setStatus('success')
-        // Show success notification with enhanced visibility
-        showNotification({
-          type: 'success',
-          title: 'Producto agregado al carrito',
-          message: 'Agregado exitosamente',
-          duration: 4000
-        })
-        // Show success state for 1 second, then return to idle
-        setTimeout(() => setStatus('idle'), 1000)
-      } else {
-        setStatus('idle')
-        showNotification({
-          type: 'error',
-          title: 'No se pudo agregar el producto',
-          duration: 3000
-        })
-      }
-    } catch (error) {
-      console.error('Error adding to cart:', error)
-      setStatus('idle')
-      showNotification({
-        type: 'error',
-        title: 'Error inesperado',
-        message: error instanceof Error ? error.message : 'Algo salió mal',
-        duration: 3000
-      })
-    }
+    if (disabled) return
+    quickAdd(productId)
   }
 
-  // Button background color based on status
   const getButtonColor = () => {
     if (disabled) return 'bg-gray-300'
     if (status === 'success') return 'bg-green-600'

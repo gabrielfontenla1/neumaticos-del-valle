@@ -1,7 +1,7 @@
 'use client'
 
-import { ShellHelixShowcase } from '@/components/ShellHelixShowcase'
-import { Navbar } from '@/components/Navbar'
+import { ShellHelixShowcase } from '@/components/marketing/ShellHelixShowcase'
+import { Navbar } from '@/components/layout/Navbar'
 
 export default function AceitesPage() {
   return (

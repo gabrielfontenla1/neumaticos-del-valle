@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+coverage/
+
+# Generated files
+*.tsbuildinfo
+*.lock
+package-lock.json
+
+# Public assets
+public/
+
+# Misc
+.git/
+.env*
+*.md

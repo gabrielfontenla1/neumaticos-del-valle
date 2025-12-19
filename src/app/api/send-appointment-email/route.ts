@@ -1,19 +1,21 @@
 // API Route for sending appointment confirmation emails
 import { NextRequest, NextResponse } from 'next/server'
 import { resend, FROM_EMAIL } from '@/lib/resend'
+import { sendAppointmentEmailSchema, parseRequestBody } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { to, appointmentId, customerName, branchName, services, date, time } = body
+    // Validate request body with Zod
+    const validation = await parseRequestBody(request, sendAppointmentEmailSchema)
 
-    // Validate required fields
-    if (!to || !appointmentId || !customerName || !branchName || !services || !date || !time) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: validation.error },
         { status: 400 }
       )
     }
+
+    const { to, appointmentId, customerName, branchName, services, date, time } = validation.data
 
     // Format services list
     const servicesList = services.map((service: string) => `• ${service}`).join('\n')

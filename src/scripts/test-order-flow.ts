@@ -15,7 +15,21 @@ interface TestResult {
   status: 'PASS' | 'FAIL'
   duration: number
   message: string
-  data?: any
+  data?: Record<string, unknown>
+}
+
+interface ApiCallResponse {
+  status: number
+  data: Record<string, unknown>
+  duration: number
+}
+
+interface OrderData {
+  id: string
+  order_number: string
+  customer_email: string
+  status: string
+  total_amount?: number
 }
 
 const results: TestResult[] = []
@@ -25,9 +39,9 @@ const baseUrl = process.env.API_BASE_URL || 'http://localhost:6001'
 async function apiCall(
   method: string,
   endpoint: string,
-  body?: any,
+  body?: Record<string, unknown>,
   step?: number
-): Promise<{ status: number; data: any; duration: number }> {
+): Promise<ApiCallResponse> {
   const startTime = Date.now()
 
   try {
@@ -55,7 +69,7 @@ function addResult(
   name: string,
   status: 'PASS' | 'FAIL',
   message: string,
-  data?: any,
+  data?: Record<string, unknown>,
   duration: number = 0
 ) {
   const result: TestResult = { step, name, status, message, data, duration }
@@ -138,7 +152,7 @@ async function testCreateOrder() {
     const { status, data, duration } = await apiCall('POST', '/api/orders', testOrderData)
 
     if (status === 201 && data.success && data.order) {
-      const order = data.order
+      const order = data.order as OrderData
       addResult(
         2,
         'Create Order',
@@ -179,7 +193,7 @@ async function testFetchOrder(orderNumber: string, email: string) {
     )
 
     if (status === 200 && data.success && data.order) {
-      const order = data.order
+      const order = data.order as OrderData
       addResult(
         3,
         'Fetch Order',
@@ -217,7 +231,8 @@ async function testListOrders() {
     const { status, data, duration } = await apiCall('GET', '/api/admin/orders?page=1&limit=10')
 
     if (status === 200 && data.success) {
-      const { total, orders } = data
+      const total = data.total as number
+      const orders = data.orders as OrderData[]
       addResult(
         4,
         'List Orders',
@@ -262,7 +277,7 @@ async function testUpdateOrderStatus(orderId: string) {
     )
 
     if (status === 200 && data.success) {
-      const order = data.order
+      const order = data.order as OrderData
       addResult(
         5,
         'Update Order Status',
@@ -301,7 +316,8 @@ async function testOrderHistory(orderId: string) {
     const { status, data } = await apiCall('GET', `/api/admin/orders?limit=50`)
 
     if (status === 200 && data.success) {
-      const order = data.orders.find((o: any) => o.id === orderId)
+      const orders = data.orders as OrderData[]
+      const order = orders.find((o: OrderData) => o.id === orderId)
 
       if (order) {
         addResult(
@@ -340,7 +356,8 @@ async function testOrderFiltering() {
     )
 
     if (status === 200 && data.success) {
-      const matchingOrders = data.orders.filter((o: any) => o.status === 'pending')
+      const orders = data.orders as OrderData[]
+      const matchingOrders = orders.filter((o: OrderData) => o.status === 'pending')
       addResult(
         7,
         'Order Filtering',
@@ -381,7 +398,8 @@ async function testOrderSearch() {
     )
 
     if (status === 200 && data.success) {
-      const results = data.orders.filter((o: any) => o.customer_email.includes('test-e2e'))
+      const orders = data.orders as OrderData[]
+      const results = orders.filter((o: OrderData) => o.customer_email.includes('test-e2e'))
       addResult(
         8,
         'Order Search',
@@ -420,20 +438,20 @@ async function testPagination() {
     const page2 = await apiCall('GET', '/api/admin/orders?page=2&limit=5')
 
     if (page1.status === 200 && page2.status === 200) {
-      const data1 = page1.data
-      const data2 = page2.data
+      const orders1 = page1.data.orders as OrderData[]
+      const orders2 = page2.data.orders as OrderData[]
 
-      const hasDifferentOrders = !data1.orders.some((o: any) =>
-        data2.orders.find((p: any) => p.id === o.id)
+      const hasDifferentOrders = !orders1.some((o: OrderData) =>
+        orders2.find((p: OrderData) => p.id === o.id)
       )
 
-      if (hasDifferentOrders || data2.orders.length === 0) {
+      if (hasDifferentOrders || orders2.length === 0) {
         addResult(
           9,
           'Pagination',
           'PASS',
-          `Pagination works correctly. Page 1: ${data1.orders.length}, Page 2: ${data2.orders.length}`,
-          { page1_count: data1.orders.length, page2_count: data2.orders.length }
+          `Pagination works correctly. Page 1: ${orders1.length}, Page 2: ${orders2.length}`,
+          { page1_count: orders1.length, page2_count: orders2.length }
         )
         return { success: true }
       } else {
@@ -508,9 +526,9 @@ async function main() {
     process.exit(1)
   }
 
-  const orderId = createResult.order.id
-  const orderNumber = createResult.order.order_number
-  const email = createResult.order.customer_email
+  const orderId = createResult.order!.id
+  const orderNumber = createResult.order!.order_number
+  const email = createResult.order!.customer_email
 
   // Step 3: Fetch order
   await testFetchOrder(orderNumber, email)

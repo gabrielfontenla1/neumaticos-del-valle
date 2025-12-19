@@ -26,10 +26,10 @@ function isValidStatusTransition(currentStatus: string, newStatus: string): bool
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
-): Promise<NextResponse<any>> {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse<{ success: boolean; order?: unknown; history?: unknown[]; error?: string }>> {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Validate UUID format
     if (!id || id.length !== 36) {
@@ -101,10 +101,10 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<UpdateOrderResponse>> {
   try {
-    const { id } = params
+    const { id } = await params
     const body: UpdateOrderRequest = await request.json()
 
     // Validate UUID format
@@ -168,7 +168,12 @@ export async function PUT(
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: {
+      updated_at: string
+      status?: string
+      payment_status?: string
+      notes?: string
+    } = {
       updated_at: new Date().toISOString(),
     }
 
@@ -287,10 +292,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<UpdateOrderResponse>> {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Validate UUID format
     if (!id || id.length !== 36) {

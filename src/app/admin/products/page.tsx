@@ -100,7 +100,7 @@ export default function AdminProductsPage() {
       setProducts(data as Product[])
       // Initialize edit stock values
       const stockValues: { [key: string]: number } = {}
-      data.forEach((p: any) => {
+      data.forEach((p: Product) => {
         stockValues[p.id] = p.stock
       })
       setEditStock(stockValues)

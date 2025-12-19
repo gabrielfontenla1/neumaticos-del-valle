@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import type { AppointmentFormData, Branch, TimeSlot } from '../types'
+import type { AppointmentFormData, Appointment, Branch, TimeSlot } from '../types'
 import { TIME_SLOTS } from '../types'
 import {
   createAppointment,
@@ -91,7 +91,7 @@ export function useAppointment() {
       }
 
       const appointments = ('data' in result ? result.data : null) || []
-      const bookedSlots = appointments.reduce((acc: Record<string, number>, apt: any) => {
+      const bookedSlots = appointments.reduce((acc: Record<string, number>, apt: Pick<Appointment, 'preferred_time'>) => {
         const key = apt.preferred_time
         acc[key] = (acc[key] || 0) + 1
         return acc

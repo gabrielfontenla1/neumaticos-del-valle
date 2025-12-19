@@ -2,6 +2,14 @@ import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 import { CartItem, CustomerData, VoucherData } from '@/features/cart/types'
 
+// Type for voucher status update
+interface VoucherStatusUpdate {
+  status: 'active' | 'redeemed' | 'expired' | 'cancelled'
+  updated_at: string
+  redeemed_at?: string
+  redemption_notes?: string
+}
+
 // Generate voucher code
 function generateVoucherCode(): string {
   const prefix = 'NDV'
@@ -140,7 +148,7 @@ export async function updateVoucherStatus(
   notes?: string
 ): Promise<boolean> {
   try {
-    const updateData: any = {
+    const updateData: VoucherStatusUpdate = {
       status,
       updated_at: new Date().toISOString()
     }

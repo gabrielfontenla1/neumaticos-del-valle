@@ -24,7 +24,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { PixiBackground } from '@/components/PixiBackground';
+import { PixiBackground } from '@/components/effects/PixiBackground';
 import Link from 'next/link';
 
 // Animation variants

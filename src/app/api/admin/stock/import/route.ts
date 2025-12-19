@@ -5,6 +5,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { parseTireDescription } from '@/lib/tire-parser'
 import { parseTireDescriptionWithAI } from '@/lib/ai/tire-parser-ai'
 import type { AIModel } from '@/lib/ai/types'
+import type { Database } from '@/types/database'
+
+// Type aliases from Database
+type ProductInsert = Database['public']['Tables']['products']['Insert']
 
 // Branch name to code mapping
 const BRANCH_MAPPING: Record<string, string> = {
@@ -30,6 +34,35 @@ interface ExcelRow {
   PUBLICO: number
   CONTADO: number
   STOCK: number
+}
+
+// Database branch record type
+interface DBBranch {
+  id: string
+  code: string
+  name: string
+}
+
+// ProductInsertData is now ProductInsert from Database types
+
+// Stock record for branch
+interface StockRecord {
+  product_id: string
+  branch_id: string
+  quantity: number
+  last_updated: string
+}
+
+// Stock data per product before DB insert
+interface ProductStockData {
+  branchId: string
+  branchCode: string
+  quantity: number
+}
+
+// SSE event data types
+interface SSEEventData {
+  [key: string]: unknown
 }
 
 interface ImportResult {
@@ -77,7 +110,7 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      const sendEvent = (event: string, data: any) => {
+      const sendEvent = (event: string, data: SSEEventData) => {
         const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
         controller.enqueue(encoder.encode(message))
       }
@@ -142,7 +175,7 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
         }
 
         const branchMap = new Map<string, string>(
-          branches.map((b: any) => [b.code, b.id])
+          branches.map((b: DBBranch) => [b.code, b.id])
         )
 
         // ==================== PHASE 1: PARSE ALL PRODUCTS ====================
@@ -153,8 +186,8 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
 
         const BATCH_SIZE = 100
         const totalBatches = Math.ceil(jsonData.length / BATCH_SIZE)
-        const productsToInsert: Array<any> = []
-        const stockDataByProduct: Array<{ sku: string, stocks: Array<any> }> = []
+        const productsToInsert: ProductInsert[] = []
+        const stockDataByProduct: Array<{ sku: string, stocks: ProductStockData[] }> = []
 
         // Process in batches to maintain parallelism while parsing
         for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
@@ -227,7 +260,7 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
                   extra_load: tireData.extra_load,
                   run_flat: tireData.run_flat,
                   seal_inside: tireData.seal_inside,
-                  tube_type: tireData.tube_type,
+                  tube_type: tireData.tube_type ? 'TT' : null,
                   homologation: tireData.homologation,
                   original_description: tireData.original_description,
                   display_name: tireData.display_name,
@@ -254,7 +287,7 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
                     branchCode,
                     quantity
                   }
-                }).filter(Boolean)
+                }).filter((stock): stock is ProductStockData => stock !== null)
 
                 // Capture samples
                 if (result.samples.length < 10) {
@@ -327,6 +360,8 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
             step: 'inserting_product_chunk'
           })
 
+          // Type assertion needed due to Supabase generated types compatibility issue
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: newProducts, error: bulkInsertError } = await (supabaseAdmin as any)
             .from('products')
             .insert(chunk)
@@ -362,7 +397,7 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
         console.log(`📊 Stock data by product count: ${stockDataByProduct.length}`)
 
         // Prepare all stock records
-        const allStockRecords: Array<any> = []
+        const allStockRecords: StockRecord[] = []
         let skippedProducts = 0
         let emptyStocks = 0
 
@@ -413,6 +448,7 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
             step: 'inserting_stock_chunk'
           })
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { error: stockBulkError } = await (supabaseAdmin as any)
             .from('branch_stock')
             .insert(chunk)
@@ -581,7 +617,7 @@ export async function POST(request: NextRequest) {
     }
 
     const branchMap = new Map<string, string>(
-      branches.map((b: any) => [b.code, b.id])
+      branches.map((b: DBBranch) => [b.code, b.id])
     )
 
     // Process each row
@@ -638,6 +674,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new product (we always create since we deleted all existing products)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: newProduct, error: createError } = await (supabaseAdmin as any)
           .from('products')
           .insert({
@@ -653,7 +690,7 @@ export async function POST(request: NextRequest) {
             extra_load: tireData.extra_load,
             run_flat: tireData.run_flat,
             seal_inside: tireData.seal_inside,
-            tube_type: tireData.tube_type,
+            tube_type: tireData.tube_type ? 'TT' : null,
             homologation: tireData.homologation,
             original_description: tireData.original_description,
             display_name: tireData.display_name,
@@ -689,6 +726,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Insert branch stock (we deleted all stock at the beginning)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { error: stockError } = await (supabaseAdmin as any)
             .from('branch_stock')
             .insert({

@@ -1,6 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js'
+
+// Supabase error type for error handling
+interface SupabaseErrorLike {
+  code?: string
+  message?: string
+}
 
 let supabaseInstance: SupabaseClient<Database> | null = null
 
@@ -65,22 +71,25 @@ export type Tables = Database['public']['Tables']
 export type TableName = keyof Tables
 
 // Helper functions for common operations
-export const handleSupabaseError = (error: any) => {
-  if (error?.code === 'PGRST116') {
+export const handleSupabaseError = (error: unknown) => {
+  // Type guard to check if error has Supabase error structure
+  const supabaseError = error as PostgrestError | SupabaseErrorLike | null
+
+  if (supabaseError?.code === 'PGRST116') {
     return { error: 'No se encontraron datos' }
   }
-  if (error?.code === '23505') {
+  if (supabaseError?.code === '23505') {
     return { error: 'El registro ya existe' }
   }
-  if (error?.code === '23503') {
+  if (supabaseError?.code === '23503') {
     return { error: 'Referencia a datos inexistentes' }
   }
-  if (error?.code === '22P02') {
+  if (supabaseError?.code === '22P02') {
     return { error: 'Formato de datos inválido' }
   }
 
   console.error('Supabase error:', error)
-  return { error: error?.message || 'Error al procesar la solicitud' }
+  return { error: supabaseError?.message || 'Error al procesar la solicitud' }
 }
 
 // Storage helpers

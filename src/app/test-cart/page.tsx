@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useCartContext } from '@/providers/CartProvider'
-import { useNotifications } from '@/components/CartNotifications'
+import { useNotifications } from '@/components/notifications/CartNotifications'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'

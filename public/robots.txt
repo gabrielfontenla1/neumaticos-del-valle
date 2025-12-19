@@ -48,4 +48,4 @@ User-agent: DotBot
 Disallow: /
 
 # Sitemap
-Sitemap: https://neumaticos-del-valle.com/sitemap.xml
+Sitemap: https://neumaticosdelvallesrl.com/sitemap.xml

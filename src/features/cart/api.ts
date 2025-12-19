@@ -1,105 +1,153 @@
-import { supabase } from '@/lib/supabase'
-import { createClient } from '@supabase/supabase-js'
 import { CartSession, CartItem, CartTotals } from './types'
+import { getProductById } from '@/features/products/api'
 
 // Generate unique session ID
 export function generateSessionId(): string {
   return `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
-// Get or create cart session
-export async function getOrCreateCartSession(sessionId: string): Promise<CartSession | null> {
+// Get cart from localStorage
+function getLocalCart(sessionId: string): CartItem[] {
+  console.log('📦 [api-local/getLocalCart] INICIO - sessionId:', sessionId)
+
+  if (typeof window === 'undefined') {
+    console.warn('⚠️ [api-local/getLocalCart] Window undefined (SSR)')
+    return []
+  }
+
+  const key = `cart_${sessionId}`
+  console.log('📦 [api-local/getLocalCart] Buscando key:', key)
+
+  const cartData = localStorage.getItem(key)
+  console.log('📦 [api-local/getLocalCart] Datos encontrados:', cartData ? 'SÍ' : 'NO')
+
+  if (!cartData) {
+    console.log('📦 [api-local/getLocalCart] No hay datos - retornando array vacío')
+    return []
+  }
+
   try {
-    // First try to get existing session
-    const { data: existingSession, error: fetchError } = await supabase
-      .from('cart_sessions')
-      .select('*')
-      .eq('session_id', sessionId)
-      .single()
+    const items = JSON.parse(cartData)
+    console.log('📦 [api-local/getLocalCart] Items parseados:', items.length, 'items')
+    console.log('📦 [api-local/getLocalCart] FIN - SUCCESS')
+    return items
+  } catch (error) {
+    console.error('❌ [api-local/getLocalCart] Error parseando JSON:', error)
+    return []
+  }
+}
 
-    if (existingSession && !fetchError) {
-      const session = existingSession as any
+// Save cart to localStorage
+function saveLocalCart(sessionId: string, items: CartItem[]): void {
+  console.log('💾 [api-local/saveLocalCart] INICIO')
+  console.log('💾 [api-local/saveLocalCart] sessionId:', sessionId)
+  console.log('💾 [api-local/saveLocalCart] Cantidad de items:', items.length)
 
-      // Get cart items
-      const { data: items } = await supabase
-        .from('cart_items')
-        .select(`
-          *,
-          products (
-            name, brand_id, sku, price, sale_price, stock_quantity,
-            width, aspect_ratio, rim_diameter, season,
-            brands (name),
-            product_images (url, is_primary)
-          )
-        `)
-        .eq('cart_session_id', session.id)
+  if (typeof window === 'undefined') {
+    console.warn('⚠️ [api-local/saveLocalCart] Window undefined (SSR)')
+    return
+  }
 
-      const cartItems: CartItem[] = (items as any[] || []).map((item: any) => ({
-        id: item.id,
-        product_id: item.product_id,
-        name: item.products.name,
-        brand: item.products.brands?.name || '',
-        sku: item.products.sku,
-        price: item.price_at_time,
-        sale_price: item.products.sale_price,
-        quantity: item.quantity,
-        image_url: item.products.product_images?.find((img: any) => img.is_primary)?.url || null,
-        width: item.products.width,
-        aspect_ratio: item.products.aspect_ratio,
-        rim_diameter: item.products.rim_diameter,
-        season: item.products.season,
-        stock_quantity: item.products.stock_quantity
-      }))
+  const key = `cart_${sessionId}`
+  const data = JSON.stringify(items)
+  console.log('💾 [api-local/saveLocalCart] Guardando en key:', key)
+  console.log('💾 [api-local/saveLocalCart] Tamaño de datos:', data.length, 'caracteres')
 
-      return {
-        id: session.id,
-        session_id: session.session_id,
-        items: cartItems,
-        expires_at: session.expires_at,
-        created_at: session.created_at,
-        updated_at: session.updated_at
-      }
-    }
+  localStorage.setItem(key, data)
+  console.log('💾 [api-local/saveLocalCart] Guardado exitosamente')
 
-    // Create new session
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
+  // Verificación
+  const verification = localStorage.getItem(key)
+  console.log('💾 [api-local/saveLocalCart] Verificación:', verification ? 'OK' : 'FALLÓ')
+  console.log('💾 [api-local/saveLocalCart] FIN')
+}
 
-    // Create untyped client to avoid type inference issues
-    const untypedClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+// Get product from actual products list
+async function getProduct(productId: string) {
+  console.log('🔶 [api-local/getProduct] INICIO - productId:', productId)
+  try {
+    console.log('🔶 [api-local/getProduct] Llamando a getProductById...')
+    const product = await getProductById(productId)
+    console.log('🔶 [api-local/getProduct] Producto recibido:', product)
 
-    const { data: newSession, error: createError } = await untypedClient
-      .from('cart_sessions')
-      .insert({
-        session_id: sessionId,
-        expires_at: expiresAt.toISOString()
-      })
-      .select()
-      .single()
-
-    if (createError) {
-      // Silently fail if database is not set up yet
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Cart database not available:', createError.message)
-      }
+    if (!product) {
+      console.error('❌ [api-local/getProduct] Producto no encontrado:', productId)
       return null
     }
 
-    const session = newSession as any
-
-    return {
-      id: session.id,
-      session_id: session.session_id,
-      items: [],
-      expires_at: session.expires_at,
-      created_at: session.created_at,
-      updated_at: session.updated_at
+    // Validate required fields
+    if (!product.id || !product.name || product.price === undefined) {
+      console.error('❌ [api-local/getProduct] Producto incompleto - campos requeridos faltantes', {
+        id: product.id,
+        name: product.name,
+        price: product.price
+      })
+      return null
     }
+
+    // Map Product to cart-compatible format
+    const mappedProduct = {
+      id: product.id,
+      product_id: product.id, // IMPORTANTE: Asignar product_id
+      name: product.name,
+      brand: product.brand || 'Sin marca',
+      sku: `SKU-${product.id}`, // Product type doesn't have SKU, generate from ID
+      price: product.price,
+      sale_price: product.price, // If there's no sale_price in Product type, use price
+      stock_quantity: product.stock || product.stock_quantity || 0,
+      width: product.width || null,
+      aspect_ratio: product.profile || null,
+      rim_diameter: product.diameter || null,
+      season: product.features?.season || product.category || null,
+      image_url: product.image_url || product.images?.[0] || null
+    }
+
+    console.log('🔶 [api-local/getProduct] Producto mapeado completamente:', {
+      id: mappedProduct.id,
+      product_id: mappedProduct.product_id,
+      name: mappedProduct.name,
+      price: mappedProduct.price,
+      stock_quantity: mappedProduct.stock_quantity,
+      brand: mappedProduct.brand,
+      sku: mappedProduct.sku,
+      width: mappedProduct.width,
+      aspect_ratio: mappedProduct.aspect_ratio,
+      rim_diameter: mappedProduct.rim_diameter
+    })
+    console.log('🔶 [api-local/getProduct] FIN - SUCCESS')
+    return mappedProduct
   } catch (error) {
-    console.error('Error in getOrCreateCartSession:', error)
+    console.error('❌ [api-local/getProduct] Error:', error)
+    console.error('❌ [api-local/getProduct] Stack:', error instanceof Error ? error.stack : 'No stack')
+    return null
+  }
+}
+
+// Get or create cart session
+export async function getOrCreateCartSession(sessionId: string): Promise<CartSession | null> {
+  console.log('🔷 [api-local/getOrCreateCartSession] INICIO - sessionId:', sessionId)
+  try {
+    console.log('🔷 [api-local/getOrCreateCartSession] Obteniendo items del localStorage...')
+    const items = getLocalCart(sessionId)
+    console.log('🔷 [api-local/getOrCreateCartSession] Items encontrados:', items.length)
+
+    const now = new Date()
+    const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
+
+    const session = {
+      id: sessionId,
+      session_id: sessionId,
+      items,
+      expires_at: expires.toISOString(),
+      created_at: now.toISOString(),
+      updated_at: now.toISOString()
+    }
+    console.log('🔷 [api-local/getOrCreateCartSession] Sesión creada:', session)
+    console.log('🔷 [api-local/getOrCreateCartSession] FIN - SUCCESS')
+    return session
+  } catch (error) {
+    console.error('❌ [api-local/getOrCreateCartSession] Error:', error)
+    console.error('❌ [api-local/getOrCreateCartSession] Stack:', error instanceof Error ? error.stack : 'No stack')
     return null
   }
 }
@@ -110,67 +158,119 @@ export async function addToCart(
   productId: string,
   quantity: number = 1
 ): Promise<boolean> {
+  console.log('🟡 [api-local] addToCart INICIO')
+  console.log('🟡 [api-local] sessionId:', sessionId)
+  console.log('🟡 [api-local] productId:', productId)
+  console.log('🟡 [api-local] quantity:', quantity)
+
   try {
-    // Get cart session
-    const session = await getOrCreateCartSession(sessionId)
-    if (!session) return false
+    // Validate inputs
+    if (!sessionId || !sessionId.trim()) {
+      console.error('❌ [api-local] sessionId inválido:', sessionId)
+      return false
+    }
 
-    // Get product details
-    const { data: productData } = await supabase
-      .from('products')
-      .select('price, sale_price, stock_quantity')
-      .eq('id', productId)
-      .single()
+    if (!productId || !productId.trim()) {
+      console.error('❌ [api-local] productId inválido:', productId)
+      return false
+    }
 
-    const product = productData as any
+    if (quantity <= 0) {
+      console.error('❌ [api-local] quantity debe ser mayor a 0:', quantity)
+      return false
+    }
 
-    if (!product || product.stock_quantity < quantity) return false
+    const items = getLocalCart(sessionId)
+    console.log('🟡 [api-local] Items actuales en carrito:', items.length)
+
+    console.log('🟡 [api-local] Obteniendo producto...')
+    const product = await getProduct(productId)
+    console.log('🟡 [api-local] Producto obtenido:', product ? {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      stock: product.stock_quantity
+    } : 'NULL')
+
+    if (!product) {
+      console.error('❌ [api-local] Producto no encontrado:', productId)
+      return false
+    }
+
+    if (product.stock_quantity === undefined || product.stock_quantity === null) {
+      console.error('❌ [api-local] Stock del producto no disponible:', {
+        productId,
+        stock_quantity: product.stock_quantity
+      })
+      return false
+    }
+
+    if (product.stock_quantity < quantity) {
+      console.error('❌ [api-local] Stock insuficiente:', {
+        disponible: product.stock_quantity,
+        solicitado: quantity
+      })
+      return false
+    }
 
     // Check if item exists
-    const { data: existingItemData } = await supabase
-      .from('cart_items')
-      .select('id, quantity')
-      .eq('cart_session_id', session.id)
-      .eq('product_id', productId)
-      .single()
+    const existingItemIndex = items.findIndex(item => item.product_id === productId)
+    console.log('🟡 [api-local] Index de item existente:', existingItemIndex)
 
-    const existingItem = existingItemData as any
-
-    // Create untyped client to avoid type inference issues
-    const untypedClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    if (existingItem) {
+    if (existingItemIndex >= 0) {
       // Update quantity
+      const existingItem = items[existingItemIndex]
       const newQuantity = existingItem.quantity + quantity
-      if (newQuantity > product.stock_quantity) return false
+      console.log('🟡 [api-local] Actualizando cantidad existente:', {
+        cantidadActual: existingItem.quantity,
+        agregando: quantity,
+        nuevaCantidad: newQuantity
+      })
 
-      const { error } = await untypedClient
-        .from('cart_items')
-        .update({
-          quantity: newQuantity,
-          updated_at: new Date().toISOString()
+      if (newQuantity > product.stock_quantity) {
+        console.error('❌ [api-local] Nueva cantidad excede stock:', {
+          nuevaCantidad: newQuantity,
+          stockDisponible: product.stock_quantity
         })
-        .eq('id', existingItem.id)
+        return false
+      }
 
-      return !error
+      items[existingItemIndex] = {
+        ...existingItem,
+        quantity: newQuantity
+      }
+      console.log('🟡 [api-local] Item actualizado:', items[existingItemIndex])
     } else {
       // Add new item
-      const { error } = await untypedClient
-        .from('cart_items')
-        .insert({
-          cart_session_id: session.id,
-          product_id: productId,
-          quantity,
-          price_at_time: product.sale_price || product.price
-        })
-
-      return !error
+      const newItem: CartItem = {
+        id: `item_${Date.now()}`,
+        product_id: productId,
+        name: product.name,
+        brand: product.brand,
+        sku: product.sku,
+        price: product.price,
+        sale_price: product.sale_price,
+        quantity,
+        image_url: product.image_url,
+        width: product.width,
+        aspect_ratio: product.aspect_ratio,
+        rim_diameter: product.rim_diameter,
+        season: product.season,
+        stock_quantity: product.stock_quantity
+      }
+      console.log('🟡 [api-local] Agregando nuevo item:', newItem)
+      items.push(newItem)
     }
+
+    console.log('🟡 [api-local] Guardando carrito en localStorage...')
+    saveLocalCart(sessionId, items)
+    console.log('🟡 [api-local] Carrito guardado exitosamente')
+    console.log('🟡 [api-local] Total items en carrito:', items.length)
+    console.log('🟡 [api-local] addToCart FIN - SUCCESS')
+    return true
   } catch (error) {
-    console.error('Error adding to cart:', error)
+    console.error('❌ [api-local] Error en addToCart:', error)
+    console.error('❌ [api-local] Stack trace:', error instanceof Error ? error.stack : 'No stack')
     return false
   }
 }
@@ -186,36 +286,23 @@ export async function updateCartItemQuantity(
       return await removeFromCart(sessionId, itemId)
     }
 
-    const session = await getOrCreateCartSession(sessionId)
-    if (!session) return false
+    const items = getLocalCart(sessionId)
+    const itemIndex = items.findIndex(item => item.id === itemId)
 
-    // Get item and check stock
-    const { data: item } = await supabase
-      .from('cart_items')
-      .select('product_id, products(stock_quantity)')
-      .eq('id', itemId)
-      .eq('cart_session_id', session.id)
-      .single()
+    if (itemIndex < 0) return false
 
-    const itemData = item as any
+    const item = items[itemIndex]
+    const product = await getProduct(item.product_id)
 
-    if (!itemData || itemData.products.stock_quantity < quantity) return false
+    if (!product || product.stock_quantity < quantity) return false
 
-    // Create untyped client to avoid type inference issues
-    const untypedClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    items[itemIndex] = {
+      ...item,
+      quantity
+    }
 
-    const { error } = await untypedClient
-      .from('cart_items')
-      .update({
-        quantity,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', itemId)
-
-    return !error
+    saveLocalCart(sessionId, items)
+    return true
   } catch (error) {
     console.error('Error updating cart item:', error)
     return false
@@ -228,16 +315,13 @@ export async function removeFromCart(
   itemId: string
 ): Promise<boolean> {
   try {
-    const session = await getOrCreateCartSession(sessionId)
-    if (!session) return false
+    const items = getLocalCart(sessionId)
+    const filteredItems = items.filter(item => item.id !== itemId)
 
-    const { error } = await supabase
-      .from('cart_items')
-      .delete()
-      .eq('id', itemId)
-      .eq('cart_session_id', session.id)
+    if (filteredItems.length === items.length) return false // Item not found
 
-    return !error
+    saveLocalCart(sessionId, filteredItems)
+    return true
   } catch (error) {
     console.error('Error removing from cart:', error)
     return false
@@ -247,15 +331,8 @@ export async function removeFromCart(
 // Clear cart
 export async function clearCart(sessionId: string): Promise<boolean> {
   try {
-    const session = await getOrCreateCartSession(sessionId)
-    if (!session) return false
-
-    const { error } = await supabase
-      .from('cart_items')
-      .delete()
-      .eq('cart_session_id', session.id)
-
-    return !error
+    saveLocalCart(sessionId, [])
+    return true
   } catch (error) {
     console.error('Error clearing cart:', error)
     return false
@@ -265,26 +342,17 @@ export async function clearCart(sessionId: string): Promise<boolean> {
 // Calculate cart totals
 export async function calculateCartTotals(sessionId: string): Promise<CartTotals> {
   try {
-    const session = await getOrCreateCartSession(sessionId)
-    if (!session || session.items.length === 0) {
-      return {
-        subtotal: 0,
-        tax: 0,
-        shipping: 0,
-        total: 0,
-        items_count: 0
-      }
-    }
+    const items = getLocalCart(sessionId)
 
-    const subtotal = session.items.reduce((sum, item) => {
+    const subtotal = items.reduce((total, item) => {
       const price = item.sale_price || item.price
-      return sum + (price * item.quantity)
+      return total + (price * item.quantity)
     }, 0)
 
-    const tax = subtotal * 0.19 // 19% IVA
-    const shipping = 0 // Free shipping for pickup
-    const total = subtotal + tax + shipping
-    const items_count = session.items.reduce((sum, item) => sum + item.quantity, 0)
+    const tax = 0 // IVA ya incluido en el precio
+    const shipping = 0 // Free shipping or calculate based on location
+    const total = subtotal + shipping
+    const items_count = items.reduce((count, item) => count + item.quantity, 0)
 
     return {
       subtotal,

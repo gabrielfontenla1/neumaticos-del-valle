@@ -15,7 +15,7 @@ import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
 // Dynamic import to avoid SSR hydration issues with PIXI.js
-const AnimatedBackground = dynamic(() => import('@/components/AnimatedBackground'), {
+const AnimatedBackground = dynamic(() => import('@/components/effects/AnimatedBackground'), {
   ssr: false
 })
 

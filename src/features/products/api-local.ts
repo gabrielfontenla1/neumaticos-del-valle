@@ -1,4 +1,4 @@
-import { Product, ProductFilters } from './types'
+import { Product, ProductFilters, SizeOption } from './types'
 
 // Mock products data
 const MOCK_PRODUCTS: Product[] = [
@@ -22,7 +22,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 69
     },
     images: ['/tire.webp'],
-    sku: 'MICH-PS4-225-45-17',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -46,7 +45,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 70
     },
     images: ['/tire.webp'],
-    sku: 'BRID-RE050-245-40-18',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -70,7 +68,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 71
     },
     images: ['/tire.webp'],
-    sku: 'PIR-PZ-255-35-19',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -94,7 +91,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 68
     },
     images: ['/tire.webp'],
-    sku: 'CONT-SC5-215-55-17',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -118,7 +114,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 69
     },
     images: ['/tire.webp'],
-    sku: 'GOOD-EF1-235-45-18',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -142,7 +137,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 72
     },
     images: ['/tire.webp'],
-    sku: 'DUNL-SM-265-30-20',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -166,7 +160,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 69
     },
     images: ['/tire.webp'],
-    sku: 'MICH-CC2-205-55-16',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -190,7 +183,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 67
     },
     images: ['/tire.webp'],
-    sku: 'BRID-T005-195-65-15',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -214,7 +206,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 68
     },
     images: ['/tire.webp'],
-    sku: 'PIR-CP7-225-50-17',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -238,7 +229,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 66
     },
     images: ['/tire.webp'],
-    sku: 'CONT-EC6-185-60-15',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -262,7 +252,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 67
     },
     images: ['/tire.webp'],
-    sku: 'GOOD-EGP-215-60-16',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -286,7 +275,6 @@ const MOCK_PRODUCTS: Product[] = [
       noise_level: 70
     },
     images: ['/tire.webp'],
-    sku: 'BRID-WS90-195-55-16',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
@@ -334,7 +322,6 @@ function generateMoreProducts(): Product[] {
             noise_level: 66 + Math.floor(Math.random() * 6)
           },
           images: ['/tire.webp'],
-          sku: `${brand.substring(0, 4).toUpperCase()}-${model.substring(0, 2).toUpperCase()}-${size.width}-${size.profile}-${size.diameter}`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -461,14 +448,14 @@ export async function getSizes() {
   try {
     const uniqueSizes = ALL_PRODUCTS
       .filter(p => p.width && p.profile && p.diameter)
-      .reduce((acc: any[], product) => {
+      .reduce((acc: SizeOption[], product) => {
         const size = `${product.width}/${product.profile}R${product.diameter}`
         if (!acc.some(s => s.display === size)) {
           acc.push({
             display: size,
-            width: product.width,
-            profile: product.profile,
-            diameter: product.diameter
+            width: product.width!,
+            profile: product.profile!,
+            diameter: product.diameter!
           })
         }
         return acc

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Product, ProductFilters } from '../types'
+import { Product, ProductFilters, ProductSearchResult } from '../types'
 import { getProducts, getFeaturedProducts, searchProducts } from '../api'
 
 export function useProducts(filters: ProductFilters = {}, page = 1, limit = 20) {
@@ -73,7 +73,7 @@ export function useFeaturedProducts() {
 }
 
 export function useProductSearch() {
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<ProductSearchResult[]>([])
   const [loading, setLoading] = useState(false)
 
   const search = useCallback(async (query: string) => {

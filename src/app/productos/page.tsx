@@ -1,4 +1,4 @@
-import { Navbar } from '@/components/Navbar'
+import { Navbar } from '@/components/layout/Navbar'
 import ProductsClient from './ProductsClient'
 
 // Force dynamic rendering for pages using useSearchParams

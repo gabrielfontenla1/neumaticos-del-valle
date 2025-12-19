@@ -1,18 +1,23 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import type {
-  CreateOrderRequest,
   CreateOrderResponse,
   Order,
-  OrderStatus,
 } from '@/features/orders/types'
-import { OrderStatus as OrderStatusEnum, OrderSource, PaymentStatus } from '@/features/orders/types'
+import { OrderSource } from '@/features/orders/types'
+import type { Database } from '@/types/database'
+import {
+  createOrderRequestSchema,
+  getOrderQuerySchema,
+  parseRequestBody,
+  parseAndValidate,
+} from '@/lib/validations'
 
 /**
  * Generate sequential order number
  * Format: ORD-2025-00001
  */
-async function generateOrderNumber(supabase: any): Promise<string> {
+async function generateOrderNumber(supabase: SupabaseClient<Database>): Promise<string> {
   try {
     const today = new Date()
     const year = today.getFullYear()
@@ -45,38 +50,20 @@ async function generateOrderNumber(supabase: any): Promise<string> {
  */
 export async function POST(request: Request): Promise<NextResponse<CreateOrderResponse>> {
   try {
-    const body: CreateOrderRequest = await request.json()
+    // Validate request body with Zod
+    const validation = await parseRequestBody(request, createOrderRequestSchema)
 
-    // Validate required fields
-    if (!body.customer_name || !body.customer_email || !body.customer_phone) {
+    if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required customer information',
+          error: validation.error,
         },
         { status: 400 }
       )
     }
 
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Order must contain at least one item',
-        },
-        { status: 400 }
-      )
-    }
-
-    if (!body.payment_method) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Payment method is required',
-        },
-        { status: 400 }
-      )
-    }
+    const body = validation.data
 
     // Create Supabase client
     const supabase = createClient(
@@ -192,21 +179,29 @@ export async function POST(request: Request): Promise<NextResponse<CreateOrderRe
  * Get orders for public use (minimal info)
  * Requires order_number and customer_email for security
  */
-export async function GET(request: Request): Promise<NextResponse<any>> {
+export async function GET(request: Request): Promise<NextResponse<{ success: boolean; order?: Order; error?: string }>> {
   try {
     const { searchParams } = new URL(request.url)
-    const order_number = searchParams.get('order_number')
-    const customer_email = searchParams.get('email')
 
-    if (!order_number || !customer_email) {
+    // Validate query params with Zod
+    const queryData = {
+      order_number: searchParams.get('order_number') || '',
+      email: searchParams.get('email') || '',
+    }
+
+    const validation = parseAndValidate(getOrderQuerySchema, queryData)
+
+    if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          error: 'order_number and email parameters are required',
+          error: validation.error,
         },
         { status: 400 }
       )
     }
+
+    const { order_number, email: customer_email } = validation.data
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

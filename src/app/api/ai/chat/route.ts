@@ -7,6 +7,36 @@ import {
   searchSimilarContent,
   searchFAQs
 } from '@/lib/ai/embeddings';
+import { chatRequestSchema, parseRequestBody, ChatMessage } from '@/lib/validations';
+
+interface ProductResult {
+  id?: string;
+  name?: string;
+  brand?: string;
+  price?: number;
+  width?: number;
+  profile?: number;
+  diameter?: number;
+  similarity?: number;
+  [key: string]: unknown;
+}
+
+interface SemanticResult {
+  product?: ProductResult;
+  similarity: number;
+}
+
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+interface ChatContext {
+  products?: ProductResult[];
+  faqs?: FAQItem[];
+}
 
 // Helper to search for relevant products based on user query
 async function searchProducts(query: string) {
@@ -19,10 +49,11 @@ async function searchProducts(query: string) {
       contentType: 'product',
     });
 
-    if (semanticResults && semanticResults.length > 0) {
-      return semanticResults
-        .filter((r: any) => r.product)
-        .map((r: any) => ({ ...r.product, similarity: r.similarity }));
+    const results = semanticResults as SemanticResult[];
+    if (results && results.length > 0) {
+      return results
+        .filter((r) => r.product)
+        .map((r) => ({ ...r.product, similarity: r.similarity }));
     }
   } catch (error) {
     console.log('Semantic search failed, falling back to keyword search');
@@ -99,19 +130,22 @@ function needsProductSearch(query: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, stream = true } = await request.json();
+    // Validate request body with Zod
+    const validation = await parseRequestBody(request, chatRequestSchema);
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Messages are required' },
+        { error: validation.error },
         { status: 400 }
       );
     }
 
-    // Get the last user message
-    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
+    const { messages, stream } = validation.data;
 
-    let context: any = {};
+    // Get the last user message
+    const lastUserMessage = messages.filter((m: ChatMessage) => m.role === 'user').pop();
+
+    const context: ChatContext = {};
 
     // Search for products if needed
     if (lastUserMessage && needsProductSearch(lastUserMessage.content)) {
@@ -196,11 +230,13 @@ export async function POST(request: NextRequest) {
         model: response.model,
       });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Chat API error:', error);
 
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
     // Check if it's an OpenAI API key error
-    if (error.message?.includes('API key')) {
+    if (errorMessage.includes('API key')) {
       return NextResponse.json(
         { error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.' },
         { status: 500 }
@@ -208,7 +244,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to process chat request', details: error.message },
+      { error: 'Failed to process chat request', details: errorMessage },
       { status: 500 }
     );
   }

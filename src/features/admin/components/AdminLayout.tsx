@@ -23,6 +23,7 @@ import {
   Sun,
   Moon,
   Globe,
+  type LucideIcon,
   ChevronRight,
   Bot
 } from 'lucide-react'
@@ -42,7 +43,7 @@ import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
 
 // Dynamic import to avoid SSR hydration issues with PIXI.js
-const AnimatedBackground = dynamic(() => import('@/components/AnimatedBackground'), {
+const AnimatedBackground = dynamic(() => import('@/components/effects/AnimatedBackground'), {
   ssr: false
 })
 
@@ -64,7 +65,7 @@ interface AdminLayoutProps {
 type MenuItem = {
   href: string
   label: string
-  Icon: any
+  Icon: LucideIcon
 }
 
 const menuItems: MenuItem[] = [

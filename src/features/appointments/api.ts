@@ -2,7 +2,63 @@
 
 import { supabase, handleSupabaseError } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
-import type { Appointment, AppointmentFormData, Branch, Service } from './types'
+import type { Appointment, AppointmentFormData, Branch, BusinessHours, Service } from './types'
+
+// Local type for opening hours structure
+interface DayHours {
+  open?: string
+  close?: string
+  closed?: boolean
+}
+
+interface OpeningHours {
+  monday?: DayHours
+  tuesday?: DayHours
+  wednesday?: DayHours
+  thursday?: DayHours
+  friday?: DayHours
+  saturday?: DayHours
+  sunday?: DayHours
+}
+
+// Database row types (for Supabase queries before mapping to domain types)
+interface DBAppointmentService {
+  id: string
+  name: string
+  description: string
+  duration: number
+  price: string | number
+}
+
+interface DBStore {
+  id: string
+  name: string
+  address: string
+  city: string
+  province?: string
+  phone?: string
+  whatsapp?: string
+  email?: string
+  latitude?: number
+  longitude?: number
+  opening_hours?: OpeningHours
+  is_main: boolean
+  active: boolean
+}
+
+interface DBVoucher {
+  id: string
+  code: string
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  status: 'active' | 'redeemed' | 'expired'
+  valid_until: string
+}
+
+interface AppointmentFormDataWithUserId extends AppointmentFormData {
+  user_id?: string | null
+}
 
 // Service operations
 export async function getAppointmentServices() {
@@ -15,12 +71,13 @@ export async function getAppointmentServices() {
     if (error) throw error
 
     // Map database records to Service type
-    const services: Service[] = ((data as any[]) || []).map((service: any) => ({
+    const dbServices = (data || []) as DBAppointmentService[]
+    const services: Service[] = dbServices.map((service) => ({
       id: service.id,
       name: service.name,
       description: service.description,
       duration: service.duration,
-      price: parseFloat(service.price),
+      price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
       voucherEligible: service.id === 'tire-repair' // Only tire repair is voucher eligible
     }))
 
@@ -43,28 +100,30 @@ export async function getBranches() {
     if (error) throw error
 
     // Map stores to branches format
-    const branches: Branch[] = ((data as any[]) || []).map((store: any) => ({
+    const dbStores = (data || []) as DBStore[]
+    const defaultOpeningHours: OpeningHours = {
+      monday: { open: '09:00', close: '18:00' },
+      tuesday: { open: '09:00', close: '18:00' },
+      wednesday: { open: '09:00', close: '18:00' },
+      thursday: { open: '09:00', close: '18:00' },
+      friday: { open: '09:00', close: '18:00' },
+      saturday: { open: '09:00', close: '13:00' },
+      sunday: { closed: true }
+    }
+    const branches: Branch[] = dbStores.map((store) => ({
       id: store.id,
       name: store.name,
       address: store.address,
       city: store.city,
-      province: store.province, // Include province
-      phone: store.phone,
+      province: store.province,
+      phone: store.phone || '',
       whatsapp: store.whatsapp,
       email: store.email,
       latitude: store.latitude,
       longitude: store.longitude,
-      opening_hours: (store.opening_hours as any) || {
-        monday: { open: '09:00', close: '18:00' },
-        tuesday: { open: '09:00', close: '18:00' },
-        wednesday: { open: '09:00', close: '18:00' },
-        thursday: { open: '09:00', close: '18:00' },
-        friday: { open: '09:00', close: '18:00' },
-        saturday: { open: '09:00', close: '13:00' },
-        sunday: { closed: true }
-      },
-      is_main: store.is_main,
-      active: store.active,
+      opening_hours: (store.opening_hours || defaultOpeningHours) as BusinessHours,
+      is_main: store.is_main ?? false,
+      active: store.active ?? true,
       services: ['alignment', 'balancing', 'rotation', 'nitrogen', 'front-end', 'tire-repair']
     }))
 
@@ -84,30 +143,31 @@ export async function getBranch(branchId: string) {
 
     if (error) throw error
 
-    const storeData = data as any
+    const storeData = data as DBStore
+    const defaultOpeningHours: OpeningHours = {
+      monday: { open: '09:00', close: '18:00' },
+      tuesday: { open: '09:00', close: '18:00' },
+      wednesday: { open: '09:00', close: '18:00' },
+      thursday: { open: '09:00', close: '18:00' },
+      friday: { open: '09:00', close: '18:00' },
+      saturday: { open: '09:00', close: '13:00' },
+      sunday: { closed: true }
+    }
 
     const branch: Branch = {
       id: storeData.id,
       name: storeData.name,
       address: storeData.address,
       city: storeData.city,
-      province: storeData.province, // Include province
-      phone: storeData.phone,
+      province: storeData.province,
+      phone: storeData.phone || '',
       whatsapp: storeData.whatsapp,
       email: storeData.email,
       latitude: storeData.latitude,
       longitude: storeData.longitude,
-      opening_hours: (storeData.opening_hours as any) || {
-        monday: { open: '09:00', close: '18:00' },
-        tuesday: { open: '09:00', close: '18:00' },
-        wednesday: { open: '09:00', close: '18:00' },
-        thursday: { open: '09:00', close: '18:00' },
-        friday: { open: '09:00', close: '18:00' },
-        saturday: { open: '09:00', close: '13:00' },
-        sunday: { closed: true }
-      },
-      is_main: storeData.is_main,
-      active: storeData.active,
+      opening_hours: (storeData.opening_hours || defaultOpeningHours) as BusinessHours,
+      is_main: storeData.is_main ?? false,
+      active: storeData.active ?? true,
       services: ['alignment', 'balancing', 'rotation', 'nitrogen', 'front-end', 'tire-repair']
     }
 
@@ -168,7 +228,7 @@ export async function createAppointment(formData: AppointmentFormData) {
         .eq('id', formData.branch_id)
         .single()
 
-      branchName = (branch as any)?.name || ''
+      branchName = (branch as { name?: string } | null)?.name || ''
     }
 
     // Validate voucher if provided
@@ -180,7 +240,7 @@ export async function createAppointment(formData: AppointmentFormData) {
         .eq('code', formData.voucher_code)
         .single()
 
-      const voucherData = voucher as any
+      const voucherData = voucher as DBVoucher | null
 
       if (voucherError || !voucherData) {
         return { error: 'Código de voucher inválido' }
@@ -223,7 +283,7 @@ export async function createAppointment(formData: AppointmentFormData) {
         appointment_time: formData.preferred_time, // Duplicate for legacy column
         notes: formData.notes,
         status: 'pending',
-        user_id: (formData as any).user_id || null
+        user_id: (formData as AppointmentFormDataWithUserId).user_id || null
       })
       .select()
       .single()
@@ -314,7 +374,7 @@ export async function validateVoucher(voucherCode: string) {
       throw error
     }
 
-    const voucherData = data as any
+    const voucherData = data as DBVoucher | null
 
     if (!voucherData) {
       return { error: 'Código de voucher no válido' }

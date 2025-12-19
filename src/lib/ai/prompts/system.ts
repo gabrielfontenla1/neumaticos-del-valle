@@ -129,7 +129,29 @@ Mantén las respuestas:
 4. Incluyendo enlaces o referencias cuando sea útil
 5. Anticipando preguntas de seguimiento comunes`;
 
-export const formatSystemPrompt = (basePrompt: string, context?: any): string => {
+// Context types for system prompt formatting
+interface PromptProduct {
+  name?: string
+  brand?: string
+  model?: string
+  width?: number
+  profile?: number
+  diameter?: number
+  price?: number
+}
+
+interface PromptFAQ {
+  question: string
+  answer: string
+}
+
+interface PromptContext {
+  products?: PromptProduct[]
+  faqs?: PromptFAQ[]
+  previousInteraction?: string
+}
+
+export const formatSystemPrompt = (basePrompt: string, context?: PromptContext): string => {
   let prompt = basePrompt;
 
   // Add product information if available
@@ -137,7 +159,7 @@ export const formatSystemPrompt = (basePrompt: string, context?: any): string =>
     prompt += `\n\n📦 PRODUCTOS DISPONIBLES - SOLO USA ESTOS, NO INVENTES OTROS:\n`;
     prompt += `====================================================\n`;
     prompt += `REGLA ABSOLUTA: Si no hay productos listados aquí, responde que no tenés esa medida pero podés conseguirla.\n`;
-    context.products.forEach((p: any) => {
+    context.products.forEach((p) => {
       const name = p.name || `${p.brand || ''} ${p.model || ''}`.trim() || 'Neumático';
       const size = `${p.width}/${p.profile}R${p.diameter}`;
       const price = p.price ? `$${p.price.toLocaleString('es-AR')}` : 'Consultar';
@@ -162,7 +184,7 @@ export const formatSystemPrompt = (basePrompt: string, context?: any): string =>
   if (context?.faqs && context.faqs.length > 0) {
     prompt += `\n\n❓ INFORMACIÓN RELEVANTE DE PREGUNTAS FRECUENTES:\n`;
     prompt += `================================================\n`;
-    context.faqs.forEach((faq: any) => {
+    context.faqs.forEach((faq) => {
       prompt += `\nP: ${faq.question}\n`;
       prompt += `R: ${faq.answer}\n`;
     });

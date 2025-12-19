@@ -1,6 +1,44 @@
 import { openai, models } from './openai';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+// Type definitions for embeddings
+interface ProductForEmbedding {
+  id: number
+  brand: string
+  model?: string
+  width?: number
+  profile?: number
+  diameter?: number
+  load_index?: string
+  speed_index?: string
+  season?: string
+  vehicle_type?: string
+  description?: string
+  price: number
+}
+
+interface EmbeddingRecord {
+  product_id?: number
+  content: string
+  content_type: string
+  embedding: string
+  metadata: Record<string, unknown>
+  [key: string]: string | number | Record<string, unknown> | undefined
+}
+
+interface EmbeddingMatch {
+  product_id?: number
+  similarity: number
+  metadata?: Record<string, unknown>
+}
+
+interface FAQItem {
+  id: string
+  question: string
+  answer: string
+  category?: string
+}
+
 /**
  * Generate embedding for a given text using OpenAI
  */
@@ -21,7 +59,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 /**
  * Generate text content for product embedding
  */
-export function generateProductContent(product: any): string {
+export function generateProductContent(product: ProductForEmbedding): string {
   const parts = [
     `Neumático ${product.brand} ${product.model || ''}`,
     `Medida: ${product.width}/${product.profile}R${product.diameter}`,
@@ -46,18 +84,21 @@ export async function storeEmbedding(
   contentType: string = 'product'
 ) {
   try {
-    const { error } = await supabaseAdmin
-      .from('product_embeddings')
-      .upsert({
-        product_id: productId,
-        content,
-        content_type: contentType,
-        embedding: JSON.stringify(embedding),
-        metadata: {
-          model: models.embeddings,
-          generated_at: new Date().toISOString(),
-        },
-      }, {
+    const embeddingData: EmbeddingRecord = {
+      product_id: productId,
+      content,
+      content_type: contentType,
+      embedding: JSON.stringify(embedding),
+      metadata: {
+        model: models.embeddings,
+        generated_at: new Date().toISOString(),
+      },
+    };
+
+    // Use type assertion for tables not in generated types
+    const { error } = await (supabaseAdmin
+      .from('product_embeddings') as ReturnType<typeof supabaseAdmin.from>)
+      .upsert(embeddingData as Record<string, unknown>, {
         onConflict: 'product_id',
       });
 
@@ -86,37 +127,42 @@ export async function searchSimilarContent(
   } = options;
 
   try {
-    const { data, error } = await supabaseAdmin
-      .rpc('match_embeddings', {
-        query_embedding: JSON.stringify(queryEmbedding),
-        match_threshold: matchThreshold,
-        match_count: matchCount,
-        content_type_filter: contentType,
-      });
+    // Type assertion for RPC function not in generated types
+    const rpcParams = {
+      query_embedding: JSON.stringify(queryEmbedding),
+      match_threshold: matchThreshold,
+      match_count: matchCount,
+      content_type_filter: contentType,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabaseAdmin as unknown as { rpc: (fn: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }> })
+      .rpc('match_embeddings', rpcParams);
 
     if (error) throw error;
 
     // Fetch full product details for matched items
-    if (data && data.length > 0) {
-      const productIds = data
-        .filter((item: any) => item.product_id)
-        .map((item: any) => item.product_id);
+    const embeddingMatches = (data as EmbeddingMatch[]) || [];
+    if (embeddingMatches.length > 0) {
+      const productIds = embeddingMatches
+        .filter((item) => item.product_id)
+        .map((item) => item.product_id);
 
       if (productIds.length > 0) {
         const { data: products } = await supabaseAdmin
           .from('products')
           .select('*')
-          .in('id', productIds);
+          .in('id', productIds as number[]);
 
         // Merge product details with similarity scores
-        return data.map((item: any) => ({
+        return embeddingMatches.map((item) => ({
           ...item,
-          product: products?.find((p: any) => p.id === item.product_id),
+          product: products?.find((p: { id: number }) => p.id === item.product_id),
         }));
       }
     }
 
-    return data || [];
+    return embeddingMatches;
   } catch (error) {
     console.error('Error searching similar content:', error);
     return [];
@@ -129,17 +175,18 @@ export async function searchSimilarContent(
 export async function generateProductEmbeddings(limit: number = 100) {
   try {
     // Get products without embeddings
-    const { data: products, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('products')
       .select('*')
       .limit(limit);
 
     if (error) throw error;
 
+    const products = (data as ProductForEmbedding[]) || [];
     let successCount = 0;
     let errorCount = 0;
 
-    for (const product of products || []) {
+    for (const product of products) {
       try {
         const content = generateProductContent(product);
         const embedding = await generateEmbedding(content);
@@ -158,7 +205,7 @@ export async function generateProductEmbeddings(limit: number = 100) {
     return {
       success: successCount,
       errors: errorCount,
-      total: products?.length || 0,
+      total: products.length,
     };
   } catch (error) {
     console.error('Error in batch embedding generation:', error);
@@ -183,7 +230,7 @@ export async function searchFAQs(query: string, limit: number = 5) {
 
     // Get full FAQ items
     if (results.length > 0) {
-      const faqIds = results.map((r: any) => r.metadata?.faq_id).filter(Boolean);
+      const faqIds = results.map((r: EmbeddingMatch) => r.metadata?.faq_id).filter(Boolean);
 
       if (faqIds.length > 0) {
         const { data: faqs } = await supabaseAdmin
@@ -225,24 +272,27 @@ export async function generateFAQEmbeddings() {
 
     let successCount = 0;
 
-    for (const faq of faqs || []) {
+    const faqItems = faqs as FAQItem[] | null;
+    for (const faq of faqItems || []) {
       try {
         const content = `${faq.question} ${faq.answer}`;
         const embedding = await generateEmbedding(content);
 
         // Store embedding with FAQ reference
-        const { error: storeError } = await supabaseAdmin
-          .from('product_embeddings')
-          .insert({
-            content,
-            content_type: 'faq',
-            embedding: JSON.stringify(embedding),
-            metadata: {
-              faq_id: faq.id,
-              category: faq.category,
-              model: models.embeddings,
-            },
-          });
+        const embeddingData: EmbeddingRecord = {
+          content,
+          content_type: 'faq',
+          embedding: JSON.stringify(embedding),
+          metadata: {
+            faq_id: faq.id,
+            category: faq.category,
+            model: models.embeddings,
+          },
+        };
+
+        const { error: storeError } = await (supabaseAdmin
+          .from('product_embeddings') as ReturnType<typeof supabaseAdmin.from>)
+          .insert(embeddingData as Record<string, unknown>);
 
         if (!storeError) {
           successCount++;
@@ -258,7 +308,7 @@ export async function generateFAQEmbeddings() {
 
     return {
       success: successCount,
-      total: faqs?.length || 0,
+      total: faqItems?.length || 0,
     };
   } catch (error) {
     console.error('Error generating FAQ embeddings:', error);

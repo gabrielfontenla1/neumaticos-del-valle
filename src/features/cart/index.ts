@@ -21,7 +21,7 @@ export type {
   VoucherData
 } from './types'
 
-// API Functions (localStorage - primary)
+// API Functions (localStorage)
 export {
   generateSessionId,
   getOrCreateCartSession,
@@ -30,7 +30,7 @@ export {
   removeFromCart,
   clearCart,
   calculateCartTotals
-} from './api-local'
+} from './api'
 
 // Hooks
 export { useCart } from './hooks/useCart'
@@ -40,9 +40,9 @@ export type { UseCartReturn } from './hooks/useCart'
  * Cart Module Summary
  *
  * Architecture:
- * - Storage: localStorage (primary) + Supabase (fallback)
+ * - Storage: localStorage
  * - Session: 7-day expiration
- * - Tax: Not included in localStorage version (0%)
+ * - Tax: 0% (IVA included in prices)
  * - Shipping: Free
  *
  * Features:
@@ -56,8 +56,7 @@ export type { UseCartReturn } from './hooks/useCart'
  *
  * Files:
  * - types.ts: Type definitions
- * - api.ts: Supabase implementation
- * - api-local.ts: localStorage implementation (active)
+ * - api.ts: localStorage implementation
  * - hooks/useCart.ts: React hook
  * - index.ts: Module exports (this file)
  */

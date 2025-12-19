@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
 
 interface ProductIdRow {
   id: string
@@ -8,8 +7,8 @@ interface ProductIdRow {
 
 export async function POST() {
   try {
-    // Create a direct Supabase client (avoiding Proxy type issues)
-    const supabase = createClient<Database>(
+    // Create a direct Supabase client (without Database type to avoid type compatibility issues)
+    const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
@@ -53,7 +52,7 @@ export async function POST() {
 
       for (const update of batch) {
         const updateData = { stock_quantity: update.stock }
-        const { error: updateError } = await (supabase as any)
+        const { error: updateError } = await supabase
           .from('products')
           .update(updateData)
           .eq('id', update.id)

@@ -7,10 +7,23 @@ import { CheckCircle, MessageCircle, Clock, Package, ArrowLeft, Phone, Copy, Gif
 import { getVoucherByCode } from '@/features/checkout/api/voucher'
 import { PostPurchaseFlow } from '@/features/reviews/components'
 
+interface CheckoutVoucher {
+  id: string
+  code: string
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  discount_percentage: number
+  amount: number
+  status: string
+  valid_until: string
+  created_at: string
+}
+
 function SuccessContent() {
   const searchParams = useSearchParams()
   const code = searchParams.get('code')
-  const [voucher, setVoucher] = useState<any>(null)
+  const [voucher, setVoucher] = useState<CheckoutVoucher | null>(null)
   const [copied, setCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 

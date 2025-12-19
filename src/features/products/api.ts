@@ -1,11 +1,26 @@
 import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
-import { Product, ProductFilters, ImportRow } from './types'
+import {
+  Product,
+  ProductFilters,
+  ImportRow,
+  DBProductRaw,
+  DBBrandRow,
+  DBCategoryRow,
+  DBModelRow,
+  DBSizeRow,
+  SizeOption,
+  ProductSearchResult
+} from './types'
 
 /**
  * Applies sorting to the query based on sort option
+ * Uses generic type inference to maintain query builder compatibility
  */
-function applySorting(query: any, sortBy: string = 'name') {
+function applySorting<Q extends { order: (column: string, options?: { ascending?: boolean }) => Q }>(
+  query: Q,
+  sortBy: string = 'name'
+): Q {
   switch (sortBy) {
     case 'name':
       return query.order('name', { ascending: true })
@@ -81,7 +96,7 @@ export async function getProducts(
     if (error) throw error
 
     // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
-    const mappedData = data?.map((product: any) => ({
+    const mappedData = (data as DBProductRaw[] | null)?.map((product) => ({
       ...product,
       stock: product.stock || product.stock_quantity || 0
     })) || []
@@ -127,9 +142,10 @@ export async function getProductById(id: string) {
 
     // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
     if (data) {
-      const mappedProduct = {
-        ...data,
-        stock: data.stock || data.stock_quantity || 0
+      const productData = data as DBProductRaw
+      const mappedProduct: Product = {
+        ...productData,
+        stock: productData.stock || productData.stock_quantity || 0
       }
       console.log('🔍 [getProductById] Producto mapeado:', {
         id: mappedProduct.id,
@@ -141,7 +157,7 @@ export async function getProductById(id: string) {
         diameter: mappedProduct.diameter
       })
       console.log('🔍 [getProductById] FIN - SUCCESS')
-      return mappedProduct as Product
+      return mappedProduct
     }
 
     console.warn('🔍 [getProductById] No data returned pero tampoco error')
@@ -163,7 +179,7 @@ export async function getBrands() {
 
     if (error) throw error
 
-    const brandsData = data as any[]
+    const brandsData = data as DBBrandRow[] | null
     const uniqueBrands = [...new Set(brandsData?.map(p => p.brand) || [])]
     return uniqueBrands.filter(Boolean)
   } catch (error) {
@@ -182,7 +198,7 @@ export async function getCategories() {
 
     if (error) throw error
 
-    const categoriesData = data as any[]
+    const categoriesData = data as DBCategoryRow[] | null
     const uniqueCategories = [...new Set(categoriesData?.map(p => p.category) || [])]
     return uniqueCategories.filter(Boolean)
   } catch (error) {
@@ -201,7 +217,7 @@ export async function getModels() {
 
     if (error) throw error
 
-    const modelsData = data as any[]
+    const modelsData = data as DBModelRow[] | null
     const uniqueModels = [...new Set(modelsData?.map(p => p.model) || [])]
     return uniqueModels.filter(Boolean)
   } catch (error) {
@@ -223,8 +239,8 @@ export async function getSizes() {
 
     if (error) throw error
 
-    const sizesData = data as any[]
-    const uniqueSizes = sizesData?.reduce((acc: any[], product) => {
+    const sizesData = data as DBSizeRow[] | null
+    const uniqueSizes = sizesData?.reduce((acc: SizeOption[], product) => {
       if (product.width && product.profile && product.diameter) {
         const size = `${product.width}/${product.profile}R${product.diameter}`
         if (!acc.some(s => s.display === size)) {
@@ -294,7 +310,7 @@ export async function searchProducts(query: string, limit = 10) {
       .limit(limit)
 
     if (error) throw error
-    return data as any[]
+    return (data as ProductSearchResult[] | null) || []
   } catch (error) {
     console.error('Error searching products:', error)
     return []
@@ -314,7 +330,7 @@ export async function getFeaturedProducts() {
     if (error) throw error
 
     // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
-    const mappedData = data?.map((product: any) => ({
+    const mappedData = (data as DBProductRaw[] | null)?.map((product) => ({
       ...product,
       stock: product.stock || product.stock_quantity || 0
     })) || []

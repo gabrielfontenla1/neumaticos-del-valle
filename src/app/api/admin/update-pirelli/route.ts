@@ -3,12 +3,31 @@ import prisma from '@/lib/db/client';
 import fs from 'fs';
 import path from 'path';
 
+interface PirelliProduct {
+  sku: string
+  name: string
+  stock?: number
+  price?: number
+  price_list?: number
+  list_price?: number
+  width?: number
+  aspect_ratio?: number
+  rim_diameter?: number
+  category?: string
+  supplier_code?: string
+}
+
+interface ErrorDetail {
+  sku: string
+  error: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Read the JSON file with product data
     const jsonPath = path.join(process.cwd(), 'scripts', 'pirelli_products.json');
     const jsonData = fs.readFileSync(jsonPath, 'utf-8');
-    const products = JSON.parse(jsonData);
+    const products: PirelliProduct[] = JSON.parse(jsonData);
 
     console.log(`Processing ${products.length} products...`);
 
@@ -16,7 +35,7 @@ export async function POST(request: NextRequest) {
     let created = 0;
     let notFound = 0;
     let errors = 0;
-    const errorDetails: any[] = [];
+    const errorDetails: ErrorDetail[] = [];
 
     // Get mode from query params
     const { searchParams } = new URL(request.url);
@@ -28,7 +47,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < products.length; i += batchSize) {
       const batch = products.slice(i, Math.min(i + batchSize, products.length));
 
-      const updatePromises = batch.map(async (product: any) => {
+      const updatePromises = batch.map(async (product: PirelliProduct) => {
         try {
           // First check if product exists
           const existing = await prisma.product.findFirst({
@@ -82,8 +101,9 @@ export async function POST(request: NextRequest) {
             // Product doesn't exist and not creating
             return { status: 'not_found', sku: product.sku };
           }
-        } catch (error: any) {
-          errorDetails.push({ sku: product.sku, error: error.message });
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          errorDetails.push({ sku: product.sku, error: errorMessage });
           return { status: 'error', sku: product.sku, error };
         }
       });
@@ -115,12 +135,13 @@ export async function POST(request: NextRequest) {
       message: `Successfully processed ${products.length} products`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Fatal error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred during update';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'An error occurred during update'
+        error: errorMessage
       },
       { status: 500 }
     );

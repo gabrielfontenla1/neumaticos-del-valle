@@ -178,8 +178,14 @@ export function AppointmentWizard() {
     const result = await validateVoucherCode(code)
     if (result) {
       setHasValidVoucher(true)
+      // Map DBVoucher to VoucherValidationResult (only return relevant customer fields)
+      return {
+        customer_name: result.customer_name,
+        customer_email: result.customer_email,
+        customer_phone: result.customer_phone
+      }
     }
-    return result
+    return null
   }
 
   const handleToggleService = (serviceId: string) => {

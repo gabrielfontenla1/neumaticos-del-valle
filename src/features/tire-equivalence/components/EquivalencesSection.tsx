@@ -138,8 +138,12 @@ export function EquivalencesSection({
       {/* Grid de Equivalencias - Mismo diseño que productos normales */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
         {equivalentTires.map((tire, index) => {
-          const discountPercentage = Math.floor(20 + (index % 4) * 10)
-          const previousPrice = Math.floor(tire.price * (1 + discountPercentage / 100))
+          // Usar price_list real desde la base de datos
+          const priceList = (tire as any).price_list || ((tire as any).features as any)?.price_list || 0
+          const discountPercentage = priceList && priceList > tire.price
+            ? Math.round(((priceList - tire.price) / priceList) * 100)
+            : 0
+          const previousPrice = priceList || tire.price
 
           return (
             <motion.div

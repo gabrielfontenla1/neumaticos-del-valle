@@ -57,15 +57,15 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     clearFilters,
     isLoading: isURLLoading
   } = useURLFilters({
-    debounceDelay: 300,
-    scroll: false
+    debounceMs: 300,
+    replaceHistory: true // Prevents scroll and avoids cluttering history
   })
 
   // Use filter persistence for saving presets and localStorage
   const {
-    savePreset,
-    loadPreset,
-    deletePreset,
+    saveFilterPreset,
+    loadFilterPreset,
+    deleteFilterPreset,
     presets,
     saveToSession,
     loadFromSession,
@@ -1156,9 +1156,10 @@ export default function ProductsClientImproved({ products: initialProducts, stat
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                   {paginatedProducts.map((product, index) => {
-                  // Usar el precio de lista real de la base de datos
-                  // Si no hay precio de lista, calcularlo con un 25% más
-                  const listPrice = product.price_list || Math.floor(product.price * 1.25)
+                  // Usar el precio de lista real de la base de datos (features.price_list)
+                  // Si no hay precio de lista, calcularlo con un 33.33% más (para que el descuento sea 25%)
+                  const priceListFromFeatures = (product.features as Record<string, unknown>)?.price_list as number | undefined
+                  const listPrice = priceListFromFeatures || product.price_list || Math.round(product.price / 0.75)
                   // Calcular el descuento
                   const discountPercentage = Math.round(((listPrice - product.price) / listPrice) * 100)
 

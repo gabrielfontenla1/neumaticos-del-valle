@@ -12,7 +12,7 @@ import { formatPrice, generateSimpleCartMessage, buildWhatsAppUrl, WHATSAPP_NUMB
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/Navbar'
+import { Navbar } from '@/components/layout/Navbar'
 
 export default function CarritoPage() {
   const { items, totals, clearAll } = useCartContext()

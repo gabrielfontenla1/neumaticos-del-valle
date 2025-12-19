@@ -5,24 +5,32 @@
 import React, { useEffect } from 'react'
 import { User } from 'lucide-react'
 import { AppointmentSummary } from './AppointmentSummary'
-import type { Branch } from '../types'
+import type { Branch, AppointmentFormData } from '../types'
+
+interface ContactFormData {
+  customer_name?: string
+  customer_email?: string
+  customer_phone?: string
+  vehicle_make?: string
+  vehicle_model?: string
+  vehicle_year?: number
+  voucher_code?: string
+  notes?: string
+  preferred_date?: string
+  preferred_time?: string
+  branch_id?: string
+}
+
+interface VoucherValidationResult {
+  customer_name?: string
+  customer_email?: string
+  customer_phone?: string
+}
 
 interface ContactFormProps {
-  formData: {
-    customer_name?: string
-    customer_email?: string
-    customer_phone?: string
-    vehicle_make?: string
-    vehicle_model?: string
-    vehicle_year?: number
-    voucher_code?: string
-    notes?: string
-    preferred_date?: string
-    preferred_time?: string
-    branch_id?: string
-  }
-  onUpdate: (data: any) => void
-  onValidateVoucher?: (code: string) => Promise<any>
+  formData: ContactFormData
+  onUpdate: (data: Partial<ContactFormData>) => void
+  onValidateVoucher?: (code: string) => Promise<VoucherValidationResult | null>
   hasValidVoucher?: boolean
   simplified?: boolean
   branch?: Branch
@@ -71,7 +79,7 @@ export function ContactForm({ formData, onUpdate, onValidateVoucher, hasValidVou
       <div className="space-y-6 md:space-y-8">
         {/* Summary Section */}
         <AppointmentSummary
-          formData={formData as any}
+          formData={formData as unknown as AppointmentFormData}
           branch={branch}
           hasValidVoucher={hasValidVoucher}
           selectedServices={selectedServices}

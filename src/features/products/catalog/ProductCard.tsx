@@ -53,11 +53,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   // Access price_list from features if not directly on product
-  const priceList = product.price_list || (product.features as any)?.price_list || 0
+  // Fallback: calcular precio de lista para 25% de descuento (price / 0.75)
+  const priceListFromFeatures = (product.features as Record<string, unknown>)?.price_list as number | undefined
+  const priceList = priceListFromFeatures || product.price_list || Math.round(product.price / 0.75)
 
   const discount = priceList && priceList > product.price
     ? Math.round(((priceList - product.price) / priceList) * 100)
-    : 0
+    : 25
 
   // Calculate installments (6 cuotas)
   const installmentPrice = product.price / 6

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Product } from '../types'
 import { getProductById } from '../api'
 import { useCartContext } from '@/providers/CartProvider'
-import { Navbar } from '@/components/Navbar'
+import { Navbar } from '@/components/layout/Navbar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -21,9 +21,18 @@ import { findEquivalentTires } from '@/features/tire-equivalence/api'
 import { EquivalentTire } from '@/features/tire-equivalence/types'
 import { toast } from 'sonner'
 import InstallmentTable from './InstallmentTable'
+import { buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 
 interface ProductDetailProps {
   productId: string
+}
+
+// Type for product features with known properties
+interface ProductFeatures {
+  price_list?: number
+  proveedor?: string
+  stock_por_sucursal?: Record<string, number>
+  [key: string]: unknown
 }
 
 export default function ProductDetail({ productId }: ProductDetailProps) {
@@ -183,12 +192,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   }
 
   // Get price_list from features if available
-  const priceList = product.price_list || (product.features as any)?.price_list || 0
+  // Fallback: calcular precio de lista para 25% de descuento (price / 0.75)
+  const features = product.features as ProductFeatures | undefined
+  const priceList = product.price_list || features?.price_list || Math.round(product.price / 0.75)
 
   // Calculate actual discount percentage
   const discountPercentage = priceList && priceList > product.price
     ? Math.round(((priceList - product.price) / priceList) * 100)
-    : 0
+    : 25
 
   const previousPrice = priceList || product.price
   // Use product's actual image or fallback to no-image
@@ -338,10 +349,10 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                   3 cuotas sin interés de ${Math.floor(product.price / 3).toLocaleString('es-AR')}
                 </div>
                 {/* Código de proveedor */}
-                {(product.features as any)?.proveedor && (
+                {features?.proveedor && (
                   <div className="mb-2">
                     <p className="text-xs text-gray-700 border border-gray-300 bg-gray-50 rounded px-2 py-1 inline-block">
-                      Código: {(product.features as any).proveedor}
+                      Código: {features.proveedor}
                     </p>
                   </div>
                 )}
@@ -488,7 +499,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                       { key: 'virgen', name: 'Catamarca - Capital ( Belgrano )' }
                     ]
 
-                    const stockPorSucursal = (product.features as any)?.stock_por_sucursal || {}
+                    const stockPorSucursal = features?.stock_por_sucursal || {}
 
                     const getStockDisplay = (stock: number) => {
                       if (stock === 1) return 'Última unidad'
@@ -703,7 +714,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                           <div className="aspect-square bg-[#FFFFFF] rounded-md mb-3 flex items-center justify-center overflow-hidden">
                             {/* Display actual product image or fallback */}
                             <img
-                              src={(tire as any).image_url || "/no-image.png"}
+                              src={tire.image_url || "/no-image.png"}
                               alt={tire.name}
                               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
                               loading="lazy"
@@ -723,20 +734,20 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                               ${Number(tire.price).toLocaleString('es-AR')}
                             </p>
                             {/* Stock Badge */}
-                            {typeof (tire as any).stock === 'number' && (
+                            {typeof tire.stock === 'number' && (
                               <div className="mb-2">
                                 <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded transition-colors duration-200 whitespace-nowrap ${
-                                  (tire as any).stock === 1
+                                  tire.stock === 1
                                     ? 'bg-orange-50 text-orange-700'
-                                    : (tire as any).stock > 0
+                                    : tire.stock > 0
                                     ? 'bg-green-50 text-green-700'
                                     : 'bg-gray-100 text-gray-600'
                                 }`}>
-                                  {(tire as any).stock === 0 ? 'Sin stock' :
-                                   (tire as any).stock === 1 ? 'Stock: Última unidad' :
-                                   (tire as any).stock <= 10 ? `Stock: ${(tire as any).stock} unidades` :
-                                   (tire as any).stock <= 50 ? 'Stock: +10 unidades' :
-                                   (tire as any).stock <= 100 ? 'Stock: +50 unidades' :
+                                  {tire.stock === 0 ? 'Sin stock' :
+                                   tire.stock === 1 ? 'Stock: Última unidad' :
+                                   tire.stock <= 10 ? `Stock: ${tire.stock} unidades` :
+                                   tire.stock <= 50 ? 'Stock: +10 unidades' :
+                                   tire.stock <= 100 ? 'Stock: +50 unidades' :
                                    'Stock: +100 unidades'}
                                 </span>
                               </div>

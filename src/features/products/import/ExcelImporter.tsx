@@ -2,14 +2,28 @@
 
 import { useState, useCallback } from 'react'
 import * as XLSX from 'xlsx'
-import { ImportRow } from '../types'
+import { ImportRow, ImportRowPreview } from '../types'
 import { importProducts } from '../api'
+
+interface ImportBatchResult {
+  batch: number
+  success: boolean
+  count?: number
+  error?: string
+}
+
+interface ImportResult {
+  success: boolean
+  totalImported?: number
+  results?: ImportBatchResult[]
+  error?: string
+}
 
 export default function ExcelImporter() {
   const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<ImportRow[]>([])
+  const [preview, setPreview] = useState<ImportRowPreview[]>([])
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<ImportResult | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [deleteExisting, setDeleteExisting] = useState(false)
 
@@ -329,7 +343,7 @@ export default function ExcelImporter() {
             )}
             {result.results && (
               <ul className="mt-2 space-y-1">
-                {result.results.map((r: any, i: number) => (
+                {result.results.map((r: ImportBatchResult, i: number) => (
                   <li key={i} className="text-sm text-gray-600">
                     Batch {r.batch}: {r.success ? `✓ ${r.count} productos` : `✗ ${r.error}`}
                   </li>

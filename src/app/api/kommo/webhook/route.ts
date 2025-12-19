@@ -1,5 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Tipos base de Kommo
+interface KommoLead {
+  id: number
+  name: string
+  price?: number
+  responsible_user_id?: number
+  status_id?: number
+  pipeline_id?: number
+  created_at?: number
+  updated_at?: number
+  account_id?: number
+}
+
+interface KommoContact {
+  id: number
+  name?: string
+  phone?: string
+  email?: string
+  created_at?: number
+  updated_at?: number
+}
+
 // Tipos de eventos de Kommo según la documentación
 interface KommoWebhook {
   leads?: {
@@ -14,14 +36,14 @@ interface KommoWebhook {
       updated_at: number
       account_id: number
     }>
-    add?: Array<any>
-    update?: Array<any>
-    delete?: Array<any>
+    add?: Array<KommoLead>
+    update?: Array<KommoLead>
+    delete?: Array<{ id: number }>
   }
   contacts?: {
-    add?: Array<any>
-    update?: Array<any>
-    delete?: Array<any>
+    add?: Array<KommoContact>
+    update?: Array<KommoContact>
+    delete?: Array<{ id: number }>
   }
   account?: {
     subdomain: string
@@ -62,7 +84,20 @@ interface KommoWebhook {
         phone?: string
       }
     }>
-    update?: Array<any>
+    update?: Array<{
+      id: number
+      entity_id: number
+      created_at: number
+      updated_at: number
+      responsible_user_id: number
+      group_id: number
+      note_type: string
+      params?: {
+        text?: string
+        service?: string
+        phone?: string
+      }
+    }>
   }
   // Eventos de chat
   chat?: {
@@ -114,7 +149,7 @@ export async function POST(request: NextRequest) {
       // Nuevos leads
       if (body.leads.add && body.leads.add.length > 0) {
         console.log(`  ✅ ${body.leads.add.length} nuevo(s) lead(s) agregado(s)`)
-        body.leads.add.forEach((lead: any) => {
+        body.leads.add.forEach((lead) => {
           console.log(`     - Lead ID: ${lead.id}, Nombre: ${lead.name}`)
         })
       }
@@ -122,7 +157,7 @@ export async function POST(request: NextRequest) {
       // Leads actualizados
       if (body.leads.update && body.leads.update.length > 0) {
         console.log(`  🔄 ${body.leads.update.length} lead(s) actualizado(s)`)
-        body.leads.update.forEach((lead: any) => {
+        body.leads.update.forEach((lead) => {
           console.log(`     - Lead ID: ${lead.id}, Nombre: ${lead.name}`)
         })
       }
@@ -211,8 +246,14 @@ export async function POST(request: NextRequest) {
       message: 'Webhook procesado correctamente',
       timestamp: new Date().toISOString(),
       processed: {
-        leads: body.leads ? Object.keys(body.leads).filter(k => (body.leads as any)[k]?.length > 0) : [],
-        contacts: body.contacts ? Object.keys(body.contacts).filter(k => (body.contacts as any)[k]?.length > 0) : []
+        leads: body.leads ? Object.keys(body.leads).filter(k => {
+          const value = body.leads?.[k as keyof typeof body.leads]
+          return Array.isArray(value) && value.length > 0
+        }) : [],
+        contacts: body.contacts ? Object.keys(body.contacts).filter(k => {
+          const value = body.contacts?.[k as keyof typeof body.contacts]
+          return Array.isArray(value) && value.length > 0
+        }) : []
       }
     }
 

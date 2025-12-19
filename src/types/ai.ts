@@ -49,7 +49,7 @@ export interface Product {
   width: number;
   profile: number;
   diameter: number;
-  features?: any;
+  features?: Record<string, string | number | boolean>;
 }
 
 export interface UserIntent {

@@ -327,7 +327,7 @@ export interface ReadonlyURLSearchParams {
   entries(): IterableIterator<[string, string]>
   forEach(
     callbackfn: (value: string, key: string, parent: ReadonlyURLSearchParams) => void,
-    thisArg?: any
+    thisArg?: unknown
   ): void
   [Symbol.iterator](): IterableIterator<[string, string]>
   toString(): string

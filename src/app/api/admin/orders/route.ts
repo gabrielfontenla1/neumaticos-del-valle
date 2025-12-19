@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import type { ListOrdersResponse, Order, OrderFilters } from '@/features/orders/types'
+import type { ListOrdersResponse, Order, OrderFilters, OrderItem, CreateOrderResponse } from '@/features/orders/types'
+import { OrderStatus, PaymentStatus, OrderSource } from '@/features/orders/types'
+import {
+  adminCreateOrderSchema,
+  adminListOrdersFilterSchema,
+  parseRequestBody,
+  parseAndValidate,
+} from '@/lib/validations'
 
 /**
  * Build WHERE clause for Supabase query based on filters
@@ -49,10 +56,14 @@ export async function GET(request: Request): Promise<NextResponse<ListOrdersResp
     const { searchParams } = new URL(request.url)
 
     // Parse query parameters
+    const statusParam = searchParams.get('status')
+    const paymentStatusParam = searchParams.get('payment_status')
+    const sourceParam = searchParams.get('source')
+
     const filters: OrderFilters = {
-      status: (searchParams.get('status') as any) || undefined,
-      payment_status: (searchParams.get('payment_status') as any) || undefined,
-      source: (searchParams.get('source') as any) || undefined,
+      status: statusParam as OrderStatus | undefined,
+      payment_status: paymentStatusParam as PaymentStatus | undefined,
+      source: sourceParam as OrderSource | undefined,
       date_from: searchParams.get('date_from') || undefined,
       date_to: searchParams.get('date_to') || undefined,
       search: searchParams.get('search') || undefined,
@@ -60,9 +71,11 @@ export async function GET(request: Request): Promise<NextResponse<ListOrdersResp
       limit: Math.min(parseInt(searchParams.get('limit') || '50', 10), 500), // Max 500 per page
     }
 
-    // Validate pagination
-    if (filters.page < 1) filters.page = 1
-    if (filters.limit < 1) filters.limit = 50
+    // Validate pagination with explicit number handling
+    const page = filters.page ?? 1
+    const limit = filters.limit ?? 50
+    filters.page = page < 1 ? 1 : page
+    filters.limit = limit < 1 ? 50 : limit
 
     // Create Supabase client
     const supabase = createClient(
@@ -163,40 +176,22 @@ export async function GET(request: Request): Promise<NextResponse<ListOrdersResp
  * POST /api/admin/orders
  * Create an order manually from admin panel
  */
-export async function POST(request: Request): Promise<NextResponse<any>> {
+export async function POST(request: Request): Promise<NextResponse<CreateOrderResponse>> {
   try {
-    const body = await request.json()
+    // Validate request body with Zod
+    const validation = await parseRequestBody(request, adminCreateOrderSchema)
 
-    // Validate required fields
-    if (!body.customer_name || !body.customer_email || !body.customer_phone) {
+    if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required customer information',
+          error: validation.error,
         },
         { status: 400 }
       )
     }
 
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Order must contain at least one item',
-        },
-        { status: 400 }
-      )
-    }
-
-    if (!body.payment_method) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Payment method is required',
-        },
-        { status: 400 }
-      )
-    }
+    const body = validation.data
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -214,7 +209,7 @@ export async function POST(request: Request): Promise<NextResponse<any>> {
     const order_number = `ORD-${year}-${String(nextNumber).padStart(5, '0')}`
 
     // Calculate totals
-    const subtotal = body.subtotal || body.items.reduce((sum: number, item: any) => sum + item.total_price, 0)
+    const subtotal = body.subtotal || body.items.reduce((sum, item) => sum + item.total_price, 0)
     const tax = body.tax || 0
     const shipping = body.shipping || 0
     const total_amount = subtotal + tax + shipping

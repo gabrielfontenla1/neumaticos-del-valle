@@ -1,10 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Skip type checking and ESLint during build (for faster deployments)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // ESLint - use separate npm run lint (we have our own config)
   eslint: {
     ignoreDuringBuilds: true,
   },

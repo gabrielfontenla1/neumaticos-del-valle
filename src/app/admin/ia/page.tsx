@@ -114,8 +114,8 @@ export default function IAPage() {
           }
         }
       }
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name !== 'AbortError') {
         console.error('Chat error:', error);
         setMessages(prev => {
           const newMessages = [...prev];

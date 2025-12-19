@@ -19,6 +19,8 @@ import {
   ChevronLeft
 } from 'lucide-react'
 
+type VoucherStatus = 'active' | 'used' | 'cancelled' | 'expired'
+
 interface Voucher {
   id: string
   code: string
@@ -28,7 +30,7 @@ interface Voucher {
   amount: number
   discount_percentage: number
   product_id: string | null
-  status: 'active' | 'used' | 'cancelled' | 'expired'
+  status: VoucherStatus
   valid_until: string
   created_by: string
   branch_id: string
@@ -37,13 +39,25 @@ interface Voucher {
   used_at: string | null
 }
 
+interface VoucherStatusUpdate {
+  status: VoucherStatus
+  used_at?: string
+  used_by?: string
+}
+
+interface UserProfile {
+  id: string
+  role: 'admin' | 'vendedor' | 'user'
+  [key: string]: unknown
+}
+
 export default function ManageVouchersPage() {
   const [vouchers, setVouchers] = useState<Voucher[]>([])
   const [filteredVouchers, setFilteredVouchers] = useState<Voucher[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
 
   const router = useRouter()
   const supabase = createClientComponentClient()
@@ -133,10 +147,10 @@ export default function ManageVouchersPage() {
     setFilteredVouchers(filtered)
   }
 
-  const handleStatusChange = async (voucherId: string, newStatus: string) => {
+  const handleStatusChange = async (voucherId: string, newStatus: VoucherStatus) => {
     try {
-      const updates: any = { status: newStatus }
-      if (newStatus === 'used') {
+      const updates: VoucherStatusUpdate = { status: newStatus }
+      if (newStatus === 'used' && profile) {
         updates.used_at = new Date().toISOString()
         updates.used_by = profile.id
       }
@@ -150,7 +164,7 @@ export default function ManageVouchersPage() {
         // Update local state
         setVouchers(prev => prev.map(v =>
           v.id === voucherId
-            ? { ...v, status: newStatus as any, used_at: updates.used_at }
+            ? { ...v, status: newStatus, used_at: updates.used_at || null }
             : v
         ))
       }

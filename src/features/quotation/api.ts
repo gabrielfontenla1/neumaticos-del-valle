@@ -1,5 +1,30 @@
-import { TireModel, Service, Vehicle } from './types';
+import { TireModel, Service, Vehicle, QuotationData } from './types';
 import { supabase } from '@/lib/supabase';
+
+// Database row types
+interface DBQuotationService {
+  id: string
+  name: string
+  description: string
+  icon: string
+  price: string | number
+  price_type: string
+}
+
+interface DBVehicleBrand {
+  id: string
+  name: string
+}
+
+interface DBVehicleModel {
+  brand_id: string
+  name: string
+}
+
+// Extended type for submission with total
+interface QuotationSubmission extends QuotationData {
+  total: number
+}
 
 // === DATABASE API FUNCTIONS ===
 
@@ -13,12 +38,13 @@ export async function getQuotationServices(): Promise<Service[]> {
 
     if (error) throw error;
 
-    return (data || []).map((service: any) => ({
+    const services = data as DBQuotationService[] | null
+    return (services || []).map((service) => ({
       id: service.id,
       name: service.name,
       description: service.description,
       icon: service.icon,
-      price: parseFloat(service.price),
+      price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
       priceType: service.price_type as 'per-tire' | 'flat',
       selected: false // UI state, not stored in database
     }));
@@ -38,7 +64,8 @@ export async function getVehicleBrands(): Promise<string[]> {
 
     if (error) throw error;
 
-    return (data || []).map((brand: any) => brand.name);
+    const brands = data as Pick<DBVehicleBrand, 'name'>[] | null
+    return (brands || []).map((brand) => brand.name);
   } catch (error) {
     console.error('Error fetching vehicle brands:', error);
     return vehicleBrands; // Fallback to hardcoded data
@@ -56,17 +83,21 @@ export async function getVehicleModelsByBrand(brandName: string): Promise<string
       .single();
 
     if (brandError) throw brandError;
+    if (!brandData) throw new Error('Brand not found');
+
+    const brand = brandData as Pick<DBVehicleBrand, 'id'>
 
     // Then get models for that brand
     const { data: modelsData, error: modelsError } = await supabase
       .from('vehicle_models')
       .select('name')
-      .eq('brand_id', brandData.id)
+      .eq('brand_id', brand.id)
       .order('name');
 
     if (modelsError) throw modelsError;
 
-    return (modelsData || []).map((model: any) => model.name);
+    const models = modelsData as Pick<DBVehicleModel, 'name'>[] | null
+    return (models || []).map((model) => model.name);
   } catch (error) {
     console.error('Error fetching vehicle models:', error);
     return vehicleModels[brandName] || []; // Fallback to hardcoded data
@@ -90,12 +121,15 @@ export async function getAllVehicleModels(): Promise<Record<string, string[]>> {
 
     if (modelsError) throw modelsError;
 
+    const brands = brandsData as DBVehicleBrand[] | null
+    const models = modelsData as DBVehicleModel[] | null
+
     // Group models by brand
     const modelsByBrand: Record<string, string[]> = {};
-    (brandsData || []).forEach((brand: any) => {
-      modelsByBrand[brand.name] = (modelsData || [])
-        .filter((model: any) => model.brand_id === brand.id)
-        .map((model: any) => model.name);
+    (brands || []).forEach((brand) => {
+      modelsByBrand[brand.name] = (models || [])
+        .filter((model) => model.brand_id === brand.id)
+        .map((model) => model.name);
     });
 
     return modelsByBrand;
@@ -271,13 +305,13 @@ export async function getTiresByVehicle(vehicle: Vehicle): Promise<TireModel[]> 
   });
 }
 
-export async function submitQuotation(data: any): Promise<{ success: boolean; id: string }> {
+export async function submitQuotation(data: QuotationSubmission): Promise<{ success: boolean; id: string }> {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
+
   // In a real app, this would send data to backend
   console.log('Submitting quotation:', data);
-  
+
   return {
     success: true,
     id: `QUO-${Date.now()}`

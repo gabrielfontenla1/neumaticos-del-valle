@@ -276,7 +276,7 @@ export default function TicketForm({ ticketData, onChange }: Props) {
               <Label>Condición IVA</Label>
               <Select
                 value={ticketData.business.taxCondition}
-                onValueChange={(value: any) => updateBusiness({ taxCondition: value })}
+                onValueChange={(value) => updateBusiness({ taxCondition: value as 'RI' | 'MT' | 'EX' | 'CF' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -319,7 +319,7 @@ export default function TicketForm({ ticketData, onChange }: Props) {
                 <Label>Tipo de Factura</Label>
                 <Select
                   value={ticketData.voucher.type}
-                  onValueChange={(value: any) => updateVoucher({ type: value })}
+                  onValueChange={(value) => updateVoucher({ type: value as 'A' | 'B' | 'C' | 'X' })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -582,8 +582,8 @@ export default function TicketForm({ ticketData, onChange }: Props) {
                       <Label>Tipo de Pago</Label>
                       <Select
                         value={method.type}
-                        onValueChange={(value: any) =>
-                          updatePaymentMethod(method.id, { type: value })
+                        onValueChange={(value) =>
+                          updatePaymentMethod(method.id, { type: value as 'cash' | 'card' | 'mp' | 'transfer' | 'other' })
                         }
                       >
                         <SelectTrigger>

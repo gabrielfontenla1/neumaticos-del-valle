@@ -1,7 +1,18 @@
 'use client'
 
-import { useEffect, useRef, memo } from 'react'
+import { useEffect, useRef } from 'react'
 import * as PIXI from 'pixi.js'
+
+// Extended PIXI.Graphics with custom animation properties
+interface AnimatedShape extends PIXI.Graphics {
+  vx: number
+  vy: number
+  rotationSpeed: number
+  size: number
+  mass: number
+  initialX: number
+  initialY: number
+}
 
 // Memoized to prevent re-initialization on parent re-renders
 function AnimatedBackground() {
@@ -9,17 +20,9 @@ function AnimatedBackground() {
   const appRef = useRef<PIXI.Application | null>(null)
 
   useEffect(() => {
-    if (!canvasRef.current) {
-      console.log('🔴 AnimatedBackground: canvasRef not available')
-      return
-    }
-    // Prevent multiple initializations - check if already initialized
-    if (appRef.current !== null) {
-      console.log('✅ AnimatedBackground: Already initialized, skipping')
-      return
-    }
-
-    console.log('🎨 AnimatedBackground: Starting initialization...')
+    if (!canvasRef.current) return
+    // Prevent multiple initializations
+    if (appRef.current !== null) return
 
     // Create Pixi Application
     const app = new PIXI.Application()
@@ -40,7 +43,6 @@ function AnimatedBackground() {
 
       // Store reference AFTER successful init and canvas append
       appRef.current = app
-      console.log('🚀 AnimatedBackground: PIXI.js initialized successfully')
 
       // Grid setup - Visible but subtle grid (Rapicompras reference)
       const gridGraphics = new PIXI.Graphics()
@@ -64,7 +66,7 @@ function AnimatedBackground() {
 
       // Create geometric shapes - Only outlines, no fill
       // FIXED SEED for consistent positions across navigation
-      const shapes: PIXI.Graphics[] = []
+      const shapes: AnimatedShape[] = []
       const numShapes = 15
 
       // Fixed shape configurations (seed-based) - More shapes with varied types
@@ -113,55 +115,56 @@ function AnimatedBackground() {
         shape.y = config.y * app.screen.height
         shape.rotation = config.rotation
 
-        // Fixed velocity values
-        ;(shape as any).vx = config.vx
-        ;(shape as any).vy = config.vy
-        ;(shape as any).rotationSpeed = config.rotSpeed
-        ;(shape as any).size = config.size
-        ;(shape as any).mass = config.size
-        ;(shape as any).initialX = config.x // Store for resize
-        ;(shape as any).initialY = config.y // Store for resize
+        // Cast to AnimatedShape and assign custom properties
+        const animatedShape = shape as unknown as AnimatedShape
+        animatedShape.vx = config.vx
+        animatedShape.vy = config.vy
+        animatedShape.rotationSpeed = config.rotSpeed
+        animatedShape.size = config.size
+        animatedShape.mass = config.size
+        animatedShape.initialX = config.x // Store for resize
+        animatedShape.initialY = config.y // Store for resize
 
         app.stage.addChild(shape)
-        shapes.push(shape)
+        shapes.push(animatedShape)
       }
 
       // Animation loop with lunar gravity and collision detection
       app.ticker.add(() => {
         shapes.forEach((shape, index) => {
           // Move shape
-          shape.x += (shape as any).vx
-          shape.y += (shape as any).vy
-          shape.rotation += (shape as any).rotationSpeed
+          shape.x += shape.vx
+          shape.y += shape.vy
+          shape.rotation += shape.rotationSpeed
 
-          const shapeSize = (shape as any).size
+          const shapeSize = shape.size
 
           // Collision detection with screen boundaries
           // Left boundary
           if (shape.x - shapeSize < 0) {
             shape.x = shapeSize
-            ;(shape as any).vx *= -0.9 // Bounce with energy loss
+            shape.vx *= -0.9 // Bounce with energy loss
           }
           // Right boundary
           if (shape.x + shapeSize > app.screen.width) {
             shape.x = app.screen.width - shapeSize
-            ;(shape as any).vx *= -0.9
+            shape.vx *= -0.9
           }
           // Top boundary
           if (shape.y - shapeSize < 0) {
             shape.y = shapeSize
-            ;(shape as any).vy *= -0.9
+            shape.vy *= -0.9
           }
           // Bottom boundary
           if (shape.y + shapeSize > app.screen.height) {
             shape.y = app.screen.height - shapeSize
-            ;(shape as any).vy *= -0.9
+            shape.vy *= -0.9
           }
 
           // Collision detection between shapes
           for (let i = index + 1; i < shapes.length; i++) {
             const otherShape = shapes[i]
-            const otherSize = (otherShape as any).size
+            const otherSize = otherShape.size
 
             // Calculate distance between centers
             const dx = otherShape.x - shape.x
@@ -185,13 +188,13 @@ function AnimatedBackground() {
               otherShape.y += separationY
 
               // Calculate velocities along collision axis
-              const vx1 = (shape as any).vx
-              const vy1 = (shape as any).vy
-              const vx2 = (otherShape as any).vx
-              const vy2 = (otherShape as any).vy
+              const vx1 = shape.vx
+              const vy1 = shape.vy
+              const vx2 = otherShape.vx
+              const vy2 = otherShape.vy
 
-              const m1 = (shape as any).mass
-              const m2 = (otherShape as any).mass
+              const m1 = shape.mass
+              const m2 = otherShape.mass
 
               // Simple elastic collision with energy loss
               const newVx1 = ((m1 - m2) * vx1 + 2 * m2 * vx2) / (m1 + m2) * 0.85
@@ -199,10 +202,10 @@ function AnimatedBackground() {
               const newVx2 = ((m2 - m1) * vx2 + 2 * m1 * vx1) / (m1 + m2) * 0.85
               const newVy2 = ((m2 - m1) * vy2 + 2 * m1 * vy1) / (m1 + m2) * 0.85
 
-              ;(shape as any).vx = newVx1
-              ;(shape as any).vy = newVy1
-              ;(otherShape as any).vx = newVx2
-              ;(otherShape as any).vy = newVy2
+              shape.vx = newVx1
+              shape.vy = newVy1
+              otherShape.vx = newVx2
+              otherShape.vy = newVy2
             }
           }
         })
@@ -230,12 +233,8 @@ function AnimatedBackground() {
 
           // Reposition shapes based on initial percentage positions
           shapes.forEach((shape) => {
-            const initialX = (shape as any).initialX
-            const initialY = (shape as any).initialY
-            if (initialX !== undefined && initialY !== undefined) {
-              shape.x = initialX * app.screen.width
-              shape.y = initialY * app.screen.height
-            }
+            shape.x = shape.initialX * app.screen.width
+            shape.y = shape.initialY * app.screen.height
           })
         }, 300) // Debounce 300ms
       }

@@ -9,6 +9,64 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      branches: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          address: string | null
+          phone: string | null
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          name: string
+          address?: string | null
+          phone?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          name?: string
+          address?: string | null
+          phone?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      branch_stock: {
+        Row: {
+          id: string
+          product_id: string
+          branch_id: string
+          quantity: number
+          last_updated: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          branch_id: string
+          quantity?: number
+          last_updated?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          branch_id?: string
+          quantity?: number
+          last_updated?: string
+          created_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string
@@ -175,14 +233,25 @@ export interface Database {
           slug: string
           description: string | null
           brand_id: string | null
+          brand_name: string | null
           category_id: string | null
           width: number | null
           aspect_ratio: number | null
           rim_diameter: number | null
+          construction: string | null
           load_index: number | null
           speed_rating: string | null
+          extra_load: boolean
+          run_flat: boolean
+          seal_inside: boolean
+          tube_type: string | null
+          homologation: string | null
+          original_description: string | null
+          display_name: string | null
+          parse_confidence: number | null
+          parse_warnings: string[] | null
           season: string | null
-          price: number
+          price: number | null
           sale_price: number | null
           cost: number | null
           stock_quantity: number
@@ -207,14 +276,25 @@ export interface Database {
           slug: string
           description?: string | null
           brand_id?: string | null
+          brand_name?: string | null
           category_id?: string | null
           width?: number | null
           aspect_ratio?: number | null
           rim_diameter?: number | null
+          construction?: string | null
           load_index?: number | null
           speed_rating?: string | null
+          extra_load?: boolean
+          run_flat?: boolean
+          seal_inside?: boolean
+          tube_type?: string | null
+          homologation?: string | null
+          original_description?: string | null
+          display_name?: string | null
+          parse_confidence?: number | null
+          parse_warnings?: string[] | null
           season?: string | null
-          price: number
+          price?: number | null
           sale_price?: number | null
           cost?: number | null
           stock_quantity?: number
@@ -239,14 +319,25 @@ export interface Database {
           slug?: string
           description?: string | null
           brand_id?: string | null
+          brand_name?: string | null
           category_id?: string | null
           width?: number | null
           aspect_ratio?: number | null
           rim_diameter?: number | null
+          construction?: string | null
           load_index?: number | null
           speed_rating?: string | null
+          extra_load?: boolean
+          run_flat?: boolean
+          seal_inside?: boolean
+          tube_type?: string | null
+          homologation?: string | null
+          original_description?: string | null
+          display_name?: string | null
+          parse_confidence?: number | null
+          parse_warnings?: string[] | null
           season?: string | null
-          price?: number
+          price?: number | null
           sale_price?: number | null
           cost?: number | null
           stock_quantity?: number

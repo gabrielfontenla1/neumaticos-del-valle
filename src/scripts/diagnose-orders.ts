@@ -4,7 +4,7 @@
  * Run: npx ts-node src/scripts/diagnose-orders.ts
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 import path from 'path'
 
@@ -28,7 +28,7 @@ console.log('  Has Anon Key:', !!supabaseAnonKey)
 console.log('  Has Service Key:', !!supabaseServiceKey)
 console.log('')
 
-async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
+async function checkTableExists(supabase: SupabaseClient, tableName: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from(tableName)
@@ -56,7 +56,7 @@ async function checkTableExists(supabase: any, tableName: string): Promise<boole
   }
 }
 
-async function checkOrdersTable(supabase: any) {
+async function checkOrdersTable(supabase: SupabaseClient) {
   console.log('\n📊 Checking Orders Table...')
 
   // Check if table exists
@@ -103,7 +103,7 @@ async function checkOrdersTable(supabase: any) {
   return true
 }
 
-async function checkVouchersTable(supabase: any) {
+async function checkVouchersTable(supabase: SupabaseClient) {
   console.log('\n📊 Checking Vouchers Table...')
 
   const exists = await checkTableExists(supabase, 'vouchers')
@@ -164,7 +164,7 @@ async function testAPIEndpoint() {
   }
 }
 
-async function createRLSPolicies(supabase: any) {
+async function createRLSPolicies(supabase: SupabaseClient) {
   console.log('\n🔐 Checking/Creating RLS Policies...')
 
   if (!supabaseServiceKey) {

@@ -1,7 +1,16 @@
 // Admin API for Neumáticos del Valle
 import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
-import { AdminSession, DashboardStats, Order } from './types'
+import { AdminSession, DashboardStats, Order, OrderItem } from './types'
+import type { Database, Json } from '@/types/database'
+
+// Voucher row from database query
+type VoucherRow = Database['public']['Tables']['vouchers']['Row']
+
+// Partial voucher for specific queries
+interface VoucherWithFinalPrice {
+  final_price: number
+}
 
 // Simple admin authentication (using sessionStorage)
 export async function adminLogin(email: string, password: string): Promise<AdminSession | null> {
@@ -116,7 +125,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .select('final_price')
       .gte('created_at', startOfMonth)
 
-    const monthlyRevenue = (monthlyVouchers as any[] | null)?.reduce((sum: number, voucher: any) => sum + (voucher.final_price || 0), 0) || 0
+    const monthlyRevenue = (monthlyVouchers as VoucherWithFinalPrice[] | null)?.reduce((sum: number, voucher: VoucherWithFinalPrice) => sum + (voucher.final_price || 0), 0) || 0
 
     // Calculate growth (mock data for now)
     const monthlyGrowth = 15.5 // Percentage
@@ -153,16 +162,27 @@ export async function getOrders(limit = 10): Promise<Order[]> {
 
     if (error) throw error
 
-    return ((data as any[]) || []).map((voucher: any) => ({
+    // Map voucher status to order status
+    const mapVoucherStatusToOrder = (voucherStatus: string | null): 'pending' | 'confirmed' | 'cancelled' | 'completed' => {
+      switch (voucherStatus) {
+        case 'redeemed': return 'completed'
+        case 'cancelled':
+        case 'expired': return 'cancelled'
+        case 'active': return 'confirmed'
+        default: return 'pending'
+      }
+    }
+
+    return ((data as VoucherRow[]) || []).map((voucher: VoucherRow) => ({
       id: voucher.id,
       customer_name: voucher.customer_name,
       customer_phone: voucher.customer_phone,
       customer_email: voucher.customer_email,
-      items: [voucher.product_details], // Product details stored as JSONB
+      items: voucher.product_details ? [voucher.product_details as unknown as OrderItem] : [],
       total_amount: voucher.final_price,
-      status: voucher.status || 'pending',
+      status: mapVoucherStatusToOrder(voucher.status),
       payment_method: 'voucher',
-      notes: voucher.notes || voucher.redemption_notes,
+      notes: voucher.notes || voucher.redemption_notes || undefined,
       created_at: voucher.created_at,
       updated_at: voucher.updated_at
     }))

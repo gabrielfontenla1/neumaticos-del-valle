@@ -66,7 +66,6 @@ class CartSystemVerifier {
     const requiredFiles = [
       'src/features/cart/types.ts',
       'src/features/cart/api.ts',
-      'src/features/cart/api-local.ts',
       'src/features/cart/hooks/useCart.ts',
       'src/features/cart/index.ts',
       'src/providers/CartProvider.tsx',
@@ -96,11 +95,11 @@ class CartSystemVerifier {
 
     const filesToCheck = {
       'src/features/cart/hooks/useCart.ts': [
-        "from '@/features/cart/types'",
-        "from '@/features/cart/api-local'",
+        "from '../types'",
+        "from '../api'",
         "from 'react'"
       ],
-      'src/features/cart/api-local.ts': [
+      'src/features/cart/api.ts': [
         "from '@/features/products/api'",
         "from './types'"
       ],
@@ -206,18 +205,18 @@ class CartSystemVerifier {
   private async checkLocalStorage(): Promise<void> {
     console.log('💾 Checking localStorage implementation...')
 
-    const apiLocalFile = path.join(this.projectRoot, 'src/features/cart/api-local.ts')
+    const apiFile = path.join(this.projectRoot, 'src/features/cart/api.ts')
 
-    if (!fs.existsSync(apiLocalFile)) {
+    if (!fs.existsSync(apiFile)) {
       this.results.push({
         name: 'localStorage implementation',
         status: 'fail',
-        message: 'api-local.ts not found'
+        message: 'api.ts not found'
       })
       return
     }
 
-    const content = fs.readFileSync(apiLocalFile, 'utf-8')
+    const content = fs.readFileSync(apiFile, 'utf-8')
     const requiredFunctions = [
       'getLocalCart',
       'saveLocalCart',
@@ -442,8 +441,7 @@ class CartSystemVerifier {
     console.log('🔗 Checking API files...')
 
     const apiFiles = {
-      'src/features/cart/api.ts': ['getOrCreateCartSession', 'addToCart', 'calculateCartTotals'],
-      'src/features/cart/api-local.ts': ['getOrCreateCartSession', 'addToCart', 'calculateCartTotals']
+      'src/features/cart/api.ts': ['getOrCreateCartSession', 'addToCart', 'calculateCartTotals']
     }
 
     for (const [file, functions] of Object.entries(apiFiles)) {

@@ -25,6 +25,13 @@ interface Product {
   price: number
 }
 
+interface VoucherProfile {
+  id: string
+  role: 'admin' | 'vendedor' | 'user'
+  branch_id?: string
+  [key: string]: unknown
+}
+
 export default function NewVoucherPage() {
   const [formData, setFormData] = useState({
     code: '',
@@ -40,7 +47,7 @@ export default function NewVoucherPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<VoucherProfile | null>(null)
 
   const router = useRouter()
   const supabase = createClientComponentClient()
@@ -111,6 +118,13 @@ export default function NewVoucherPage() {
       if (!formData.customer_name || !formData.customer_phone || !formData.amount ||
           !formData.discount_percentage || !formData.valid_until) {
         setError('Por favor completa todos los campos obligatorios')
+        setLoading(false)
+        return
+      }
+
+      // Verify profile is loaded
+      if (!profile) {
+        setError('No se pudo verificar el usuario. Por favor recarga la página.')
         setLoading(false)
         return
       }

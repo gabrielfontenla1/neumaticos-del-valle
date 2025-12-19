@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Product, ProductFilters } from '../types'
+import { Product, ProductFilters, SizeOption } from '../types'
 import { getProducts, getBrands, getCategories, getSizes } from '../api'
 import ProductCard from './ProductCard'
 
@@ -26,7 +26,7 @@ export default function ProductGrid() {
   // Opciones para filtros
   const [brands, setBrands] = useState<string[]>([])
   const [categories, setCategories] = useState<string[]>([])
-  const [sizes, setSizes] = useState<any[]>([])
+  const [sizes, setSizes] = useState<SizeOption[]>([])
   const [showFilters, setShowFilters] = useState(false)
 
   // Cargar opciones de filtros
@@ -82,7 +82,7 @@ export default function ProductGrid() {
     }
   }, [filters])
 
-  const handleFilterChange = (key: keyof ProductFilters, value: any) => {
+  const handleFilterChange = (key: keyof ProductFilters, value: ProductFilters[keyof ProductFilters]) => {
     setFilters(prev => ({
       ...prev,
       [key]: value || undefined
@@ -95,7 +95,7 @@ export default function ProductGrid() {
     setPage(1)
   }
 
-  const handleSizeChange = (size: any) => {
+  const handleSizeChange = (size: SizeOption | null) => {
     setFilters(prev => ({
       ...prev,
       width: size ? size.width : undefined,
@@ -183,7 +183,7 @@ export default function ProductGrid() {
                   value={filters.width ? `${filters.width}/${filters.profile}R${filters.diameter}` : ''}
                   onChange={(e) => {
                     const size = sizes.find(s => s.display === e.target.value)
-                    handleSizeChange(size)
+                    handleSizeChange(size || null)
                   }}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-[#FFC700]"
                 >

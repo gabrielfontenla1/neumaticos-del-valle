@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getProducts, getBrands, getCategories, getModels, getSizes } from '@/features/products/api'
 import { apiCache, type APIResponse } from '@/lib/products/api-cache'
 import type { FilterState } from '@/lib/products/filter-types'
+import type { ProductFilters } from '@/features/products/types'
 import {
   validateSortOption,
   validateItemsPerPage,
@@ -161,7 +162,7 @@ export async function GET(request: Request) {
     }
 
     // Build database filters from URL filters
-    const dbFilters: any = {}
+    const dbFilters: ProductFilters = {}
 
     if (filters.searchTerm) {
       dbFilters.search = filters.searchTerm
