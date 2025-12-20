@@ -312,7 +312,18 @@ export async function POST(request: NextRequest) {
     // Get products from DB
     const { data: products, error: fetchError } = await supabaseAdmin
       .from('products')
-      .select('id, name, price, stock, category, brand, features')
+      .select('id, name, price, stock, category, brand, features') as {
+        data: Array<{
+          id: string
+          name: string
+          price: number
+          stock: number | null
+          category: string | null
+          brand: string | null
+          features: Record<string, unknown> | null
+        }> | null
+        error: Error | null
+      }
 
     if (fetchError) {
       return NextResponse.json(
