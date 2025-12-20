@@ -357,9 +357,9 @@ Forms:
 ## SEO & Meta Information
 
 ### Meta Tags
-- Title: "Neumáticos del Valle - Distribuidor Oficial Chile"
+- Title: "Neumáticos del Valle - Distribuidor Oficial NOA Argentino"
 - Description: "Obtén tu cotización personalizada de neumáticos en 2 minutos..."
-- Keywords: "Pirelli, neumáticos, cotización, Chile"
+- Keywords: "Pirelli, neumáticos, cotización, NOA, Argentina, Salta, Tucumán, Santiago del Estero, Catamarca"
 - OG Image: Hero image or branded image
 - Canonical: Absolute URL to home page
 

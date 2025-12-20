@@ -25,7 +25,8 @@ import {
   Globe,
   type LucideIcon,
   ChevronRight,
-  Bot
+  Bot,
+  RefreshCw
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import dynamic from 'next/dynamic'
@@ -77,6 +78,7 @@ const menuItems: MenuItem[] = [
   { href: '/admin/usuarios', label: 'Usuarios', Icon: Users },
   { href: '/admin/ia', label: 'Asistente IA', Icon: Bot },
   { href: '/admin/stock/import', label: 'Importar Stock', Icon: Import },
+  { href: '/admin/stock/update', label: 'Actualizar Stock', Icon: RefreshCw },
 ]
 
 // Memoized navigation component to prevent re-renders

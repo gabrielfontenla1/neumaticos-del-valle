@@ -91,6 +91,19 @@ export function Navbar() {
               )}
             </Link>
             <Link
+              href="/agro-camiones"
+              className={`text-sm font-medium transition-all duration-300 ease-out relative ${
+                isLinkActive('/agro-camiones')
+                  ? 'text-[#FEE004]'
+                  : 'text-white hover:text-[#FEE004]'
+              }`}
+            >
+              Agro y Camiones
+              {isLinkActive('/agro-camiones') && (
+                <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#FEE004] rounded-full" />
+              )}
+            </Link>
+            <Link
               href="/equivalencias"
               className={`text-sm font-medium transition-all duration-300 ease-out relative ${
                 isLinkActive('/equivalencias')
@@ -248,6 +261,17 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
           >
             Ver Productos
+          </Link>
+          <Link
+            href="/agro-camiones"
+            className={`block px-4 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium ${
+              isLinkActive('/agro-camiones')
+                ? 'text-[#FEE004] bg-white/10'
+                : 'text-white hover:text-[#FEE004] hover:bg-white/5'
+            }`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Agro y Camiones
           </Link>
           <Link
             href="/equivalencias"

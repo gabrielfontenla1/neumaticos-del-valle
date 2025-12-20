@@ -39,9 +39,9 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Neumáticos del Valle - Distribuidor Oficial Chile",
-  description: "Obtén tu cotización personalizada de neumáticos en 2 minutos. Distribuidor oficial en Chile con instalación profesional y envío a domicilio.",
-  keywords: "Pirelli, Michelin, Bridgestone, neumáticos, cotización, Chile",
+  title: "Neumáticos del Valle - Distribuidor Oficial NOA Argentino",
+  description: "Obtén tu cotización personalizada de neumáticos en 2 minutos. Distribuidor oficial en el NOA Argentino con instalación profesional y envío a domicilio.",
+  keywords: "Pirelli, Michelin, Bridgestone, neumáticos, cotización, NOA, Argentina, Salta, Tucumán, Santiago del Estero, Catamarca",
   authors: [{ name: "Neumáticos del Valle" }],
   creator: "Neumáticos del Valle",
   publisher: "Neumáticos del Valle",

@@ -25,6 +25,8 @@ import { buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 
 interface ProductDetailProps {
   productId: string
+  backUrl?: string
+  backLabel?: string
 }
 
 // Type for product features with known properties
@@ -35,7 +37,7 @@ interface ProductFeatures {
   [key: string]: unknown
 }
 
-export default function ProductDetail({ productId }: ProductDetailProps) {
+export default function ProductDetail({ productId, backUrl = '/productos', backLabel = 'Volver al catálogo' }: ProductDetailProps) {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
@@ -180,9 +182,9 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Producto no encontrado</h2>
             <p className="text-sm text-gray-600 mb-6">El producto que buscas no existe o fue eliminado.</p>
             <Button asChild size="sm">
-              <Link href="/productos" className="inline-flex items-center gap-2">
+              <Link href={backUrl} className="inline-flex items-center gap-2">
                 <ArrowLeft className="h-3 w-3" />
-                Volver al catálogo
+                {backLabel}
               </Link>
             </Button>
           </div>
@@ -216,9 +218,9 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         {/* Desktop Breadcrumb */}
         <div className="hidden lg:block mb-4">
           <Button variant="ghost" size="sm" asChild className="h-auto py-1 px-2">
-            <Link href="/productos" className="inline-flex items-center gap-2">
+            <Link href={backUrl} className="inline-flex items-center gap-2">
               <ArrowLeft className="h-3 w-3" />
-              <span className="text-xs">Volver al catálogo</span>
+              <span className="text-xs">{backLabel}</span>
             </Link>
           </Button>
         </div>
@@ -234,7 +236,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 asChild
                 className="h-auto p-0 hover:bg-transparent -ml-2 mb-3"
               >
-                <Link href="/productos" className="inline-flex items-center gap-1 text-gray-700">
+                <Link href={backUrl} className="inline-flex items-center gap-1 text-gray-700">
                   <ArrowLeft className="h-4 w-4" />
                   <span className="text-sm">Volver</span>
                 </Link>
