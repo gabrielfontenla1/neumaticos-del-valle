@@ -3,6 +3,7 @@
 
 [variables]
 NIXPACKS_NO_CACHE = "1"
+CACHE_BUST = "2025-12-23-v2"
 
 [phases.setup]
 nixPkgs = ["nodejs_20"]
