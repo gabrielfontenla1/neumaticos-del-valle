@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build:prod"
+buildCommand = "rm -rf node_modules .next && npm cache clean --force && npm ci && npm run build:prod"
 
 [deploy]
 startCommand = "npm run start"
