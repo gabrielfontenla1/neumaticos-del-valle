@@ -1,7 +1,13 @@
 // Stock Update API Endpoint - Smart update with Pirelli/Corven support
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { createClient } from '@supabase/supabase-js'
+
+// Create untyped admin client for flexible updates
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // Sucursales conocidas
 const SUCURSALES = ['CATAMARCA', 'LA_BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN', 'BELGRANO']
@@ -421,8 +427,11 @@ export async function POST(request: NextRequest) {
         const stockByBranch = getStockByBranch(row)
 
         updateData.stock = totalStock
-        if (Object.keys(stockByBranch).length > 0) {
-          features.stock_by_branch = stockByBranch
+        // Always update stock_by_branch (even if empty, to clear old data)
+        features.stock_by_branch = stockByBranch
+        // Remove legacy field if present
+        if ('stock_por_sucursal' in features) {
+          delete features.stock_por_sucursal
         }
         result.stockUpdates++
       }

@@ -1,291 +1,287 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { processMessageAsync } from '@/lib/kommo/message-processor'
+import { verifyWebhookSignature } from '@/lib/kommo/signature'
+import type {
+  KommoWebhookPayload,
+  KommoIncomingMessage,
+  KommoChatMessage,
+  KommoNote,
+  ProcessMessageInput
+} from '@/lib/kommo/types'
 
-// Tipos base de Kommo
-interface KommoLead {
-  id: number
-  name: string
-  price?: number
-  responsible_user_id?: number
-  status_id?: number
-  pipeline_id?: number
-  created_at?: number
-  updated_at?: number
-  account_id?: number
-}
+// ============================================================================
+// CONFIGURACIÓN
+// ============================================================================
 
-interface KommoContact {
-  id: number
-  name?: string
-  phone?: string
-  email?: string
-  created_at?: number
-  updated_at?: number
-}
+const ENABLE_SIGNATURE_VERIFICATION = process.env.NODE_ENV === 'production'
+const CHANNEL_SECRET = process.env.KOMMO_CHAT_CHANNEL_SECRET || ''
 
-// Tipos de eventos de Kommo según la documentación
-interface KommoWebhook {
-  leads?: {
-    status?: Array<{
-      id: number
-      name: string
-      price: number
-      responsible_user_id: number
-      status_id: number
-      pipeline_id: number
-      created_at: number
-      updated_at: number
-      account_id: number
-    }>
-    add?: Array<KommoLead>
-    update?: Array<KommoLead>
-    delete?: Array<{ id: number }>
-  }
-  contacts?: {
-    add?: Array<KommoContact>
-    update?: Array<KommoContact>
-    delete?: Array<{ id: number }>
-  }
-  account?: {
-    subdomain: string
-    id: string
-    _links: {
-      self: string
-    }
-  }
-  // Mensajes de chat (WhatsApp, Instagram, etc.)
-  message?: {
-    add?: Array<{
-      id: string
-      chat_id: string
-      contact_id: number
-      text: string
-      created_at: number
-      origin: string // 'whatsapp', 'instagram', etc.
-      author?: {
-        id: number
-        name: string
-        type: string // 'contact' o 'user'
-      }
-    }>
-  }
-  // Notas (incluye mensajes internos y de chat)
-  notes?: {
-    add?: Array<{
-      id: number
-      entity_id: number
-      created_at: number
-      updated_at: number
-      responsible_user_id: number
-      group_id: number
-      note_type: string
-      params?: {
-        text?: string
-        service?: string // 'whatsapp', 'instagram', etc.
-        phone?: string
-      }
-    }>
-    update?: Array<{
-      id: number
-      entity_id: number
-      created_at: number
-      updated_at: number
-      responsible_user_id: number
-      group_id: number
-      note_type: string
-      params?: {
-        text?: string
-        service?: string
-        phone?: string
-      }
-    }>
-  }
-  // Eventos de chat
-  chat?: {
-    message?: Array<{
-      timestamp: number
-      msgid: string
-      conversation_id: string
-      sender: {
-        id: string
-        name: string
-        phone?: string
-      }
-      message: {
-        type: string // 'text', 'image', etc.
-        text?: string
-        caption?: string
-      }
-      receiver?: {
-        id: string
-        phone: string
-      }
-    }>
-  }
-}
+// ============================================================================
+// WEBHOOK HANDLER
+// ============================================================================
 
-// Webhook endpoint para recibir eventos de Kommo
 export async function POST(request: NextRequest) {
+  const startTime = Date.now()
+
   try {
-    // Log para ver que llegó el webhook
+    // Obtener body como texto para verificación de firma
+    const bodyText = await request.text()
+
+    // Log de inicio
     console.log('\n' + '='.repeat(60))
-    console.log('🔔 WEBHOOK RECIBIDO DE KOMMO')
+    console.log('🔔 WEBHOOK KOMMO RECIBIDO')
     console.log('Timestamp:', new Date().toISOString())
-    console.log('='.repeat(60))
 
-    // Obtener el body del request
-    const body = await request.json() as KommoWebhook
+    // Verificar firma en producción
+    if (ENABLE_SIGNATURE_VERIFICATION && CHANNEL_SECRET) {
+      const signature = request.headers.get('X-Signature')
 
-    // Log del account info si está disponible
+      if (!signature) {
+        console.warn('⚠️ Webhook sin firma X-Signature')
+      } else {
+        const isValid = verifyWebhookSignature(bodyText, signature, CHANNEL_SECRET)
+        if (!isValid) {
+          console.error('❌ Firma de webhook inválida')
+          return NextResponse.json(
+            { status: 'error', message: 'Invalid signature' },
+            { status: 401 }
+          )
+        }
+        console.log('✅ Firma verificada correctamente')
+      }
+    }
+
+    // Parsear body
+    const body = JSON.parse(bodyText) as KommoWebhookPayload
+
+    // Log del account info
     if (body.account) {
-      console.log('📍 Account Info:')
-      console.log('  - Subdomain:', body.account.subdomain)
-      console.log('  - Account ID:', body.account.id)
+      console.log('📍 Account:', body.account.subdomain, '(ID:', body.account.id, ')')
     }
 
-    // Procesar eventos de LEADS
-    if (body.leads) {
-      console.log('\n📊 EVENTOS DE LEADS:')
+    // Procesar diferentes tipos de eventos
+    let processedCount = 0
 
-      // Nuevos leads
-      if (body.leads.add && body.leads.add.length > 0) {
-        console.log(`  ✅ ${body.leads.add.length} nuevo(s) lead(s) agregado(s)`)
-        body.leads.add.forEach((lead) => {
-          console.log(`     - Lead ID: ${lead.id}, Nombre: ${lead.name}`)
-        })
-      }
-
-      // Leads actualizados
-      if (body.leads.update && body.leads.update.length > 0) {
-        console.log(`  🔄 ${body.leads.update.length} lead(s) actualizado(s)`)
-        body.leads.update.forEach((lead) => {
-          console.log(`     - Lead ID: ${lead.id}, Nombre: ${lead.name}`)
-        })
-      }
-
-      // Cambios de estado
-      if (body.leads.status && body.leads.status.length > 0) {
-        console.log(`  🎯 ${body.leads.status.length} cambio(s) de estado`)
-        body.leads.status.forEach((lead) => {
-          console.log(`     - Lead: ${lead.name}`)
-          console.log(`       Precio: $${lead.price}`)
-          console.log(`       Estado ID: ${lead.status_id}`)
-          console.log(`       Pipeline ID: ${lead.pipeline_id}`)
-        })
-      }
-    }
-
-    // Procesar eventos de CONTACTOS
-    if (body.contacts) {
-      console.log('\n👥 EVENTOS DE CONTACTOS:')
-
-      if (body.contacts.add && body.contacts.add.length > 0) {
-        console.log(`  ✅ ${body.contacts.add.length} nuevo(s) contacto(s)`)
-      }
-
-      if (body.contacts.update && body.contacts.update.length > 0) {
-        console.log(`  🔄 ${body.contacts.update.length} contacto(s) actualizado(s)`)
-      }
-    }
-
-    // PROCESAR MENSAJES DE WHATSAPP
+    // 1. Mensajes de chat (message.add)
     if (body.message?.add && body.message.add.length > 0) {
-      console.log('\n💬 MENSAJES DE CHAT:')
+      console.log(`\n💬 ${body.message.add.length} mensaje(s) de chat`)
+
       for (const msg of body.message.add) {
-        if (msg.origin === 'whatsapp') {
-          console.log('  📱 WhatsApp mensaje recibido!')
-          console.log(`     - De: ${msg.author?.name || 'Desconocido'}`)
-          console.log(`     - Texto: "${msg.text}"`)
-          console.log(`     - Chat ID: ${msg.chat_id}`)
-          console.log(`     - Contact ID: ${msg.contact_id}`)
-
-          // TODO: Aquí procesaremos el mensaje con IA
-          console.log('\n  🤖 TODO: Procesar con IA y responder...')
-        } else {
-          console.log(`  📧 Mensaje de ${msg.origin}: ${msg.text}`)
+        if (shouldProcessMessage(msg)) {
+          const input = extractMessageInput(msg)
+          if (input) {
+            console.log(`   📱 Procesando mensaje de ${msg.origin}:`, msg.text?.slice(0, 50))
+            processMessageAsync(input)
+            processedCount++
+          }
         }
       }
     }
 
-    // PROCESAR NOTAS (otro formato de mensajes)
-    if (body.notes?.add && body.notes.add.length > 0) {
-      console.log('\n📝 NOTAS/MENSAJES:')
-      for (const note of body.notes.add) {
-        if (note.params?.service === 'whatsapp') {
-          console.log('  📱 WhatsApp (via notas):')
-          console.log(`     - Texto: "${note.params.text}"`)
-          console.log(`     - Teléfono: ${note.params.phone}`)
-          console.log(`     - Entity ID: ${note.entity_id}`)
-        }
-      }
-    }
-
-    // PROCESAR EVENTOS DE CHAT (otro posible formato)
+    // 2. Eventos de chat (chat.message)
     if (body.chat?.message && body.chat.message.length > 0) {
-      console.log('\n💬 EVENTOS DE CHAT:')
-      for (const chat of body.chat.message) {
-        console.log('  📱 Mensaje de chat:')
-        console.log(`     - De: ${chat.sender.name} (${chat.sender.phone || 'Sin teléfono'})`)
-        console.log(`     - Texto: "${chat.message.text}"`)
-        console.log(`     - Conversation ID: ${chat.conversation_id}`)
+      console.log(`\n💬 ${body.chat.message.length} evento(s) de chat`)
 
-        // TODO: Procesar con IA
-        console.log('\n  🤖 TODO: Procesar con IA y responder...')
+      for (const chat of body.chat.message) {
+        if (shouldProcessChatMessage(chat)) {
+          const input = extractChatMessageInput(chat)
+          if (input) {
+            console.log(`   📱 Procesando chat:`, chat.message.text?.slice(0, 50))
+            processMessageAsync(input)
+            processedCount++
+          }
+        }
       }
     }
 
-    // Log del payload completo para debugging
-    console.log('\n📋 Payload completo (JSON):')
-    console.log(JSON.stringify(body, null, 2))
+    // 3. Notas de WhatsApp (notes.add)
+    if (body.notes?.add && body.notes.add.length > 0) {
+      const whatsappNotes = body.notes.add.filter(
+        note => note.params?.service === 'whatsapp' && note.params?.text
+      )
 
-    // TODO: Aquí procesaremos los eventos con IA
-    // Por ejemplo, si es un nuevo lead o mensaje, consultar productos y responder
+      if (whatsappNotes.length > 0) {
+        console.log(`\n📝 ${whatsappNotes.length} nota(s) de WhatsApp`)
+
+        for (const note of whatsappNotes) {
+          const input = extractNoteInput(note)
+          if (input) {
+            console.log(`   📱 Procesando nota:`, note.params?.text?.slice(0, 50))
+            processMessageAsync(input)
+            processedCount++
+          }
+        }
+      }
+    }
+
+    // 4. Eventos de leads (logging only)
+    if (body.leads) {
+      if (body.leads.add?.length) {
+        console.log(`\n📊 ${body.leads.add.length} nuevo(s) lead(s)`)
+        body.leads.add.forEach(lead => {
+          console.log(`   - Lead #${lead.id}: ${lead.name}`)
+        })
+      }
+      if (body.leads.status?.length) {
+        console.log(`\n🎯 ${body.leads.status.length} cambio(s) de estado`)
+      }
+    }
+
+    // 5. Eventos de contactos (logging only)
+    if (body.contacts) {
+      if (body.contacts.add?.length) {
+        console.log(`\n👥 ${body.contacts.add.length} nuevo(s) contacto(s)`)
+      }
+    }
 
     // Respuesta exitosa
-    const response = {
+    const responseTime = Date.now() - startTime
+    console.log(`\n✅ Webhook procesado en ${responseTime}ms`)
+    console.log(`   Mensajes en cola: ${processedCount}`)
+    console.log('='.repeat(60) + '\n')
+
+    return NextResponse.json({
       status: 'success',
       message: 'Webhook procesado correctamente',
       timestamp: new Date().toISOString(),
-      processed: {
-        leads: body.leads ? Object.keys(body.leads).filter(k => {
-          const value = body.leads?.[k as keyof typeof body.leads]
-          return Array.isArray(value) && value.length > 0
-        }) : [],
-        contacts: body.contacts ? Object.keys(body.contacts).filter(k => {
-          const value = body.contacts?.[k as keyof typeof body.contacts]
-          return Array.isArray(value) && value.length > 0
-        }) : []
-      }
-    }
-
-    console.log('\n✅ Webhook procesado exitosamente')
-    console.log('='.repeat(60) + '\n')
-
-    // Responder con 200 OK para confirmar recepción
-    return NextResponse.json(response, { status: 200 })
+      processingTimeMs: responseTime,
+      messagesQueued: processedCount
+    }, { status: 200 })
 
   } catch (error) {
-    console.error('\n❌ ERROR PROCESANDO WEBHOOK:')
+    const responseTime = Date.now() - startTime
+    console.error('\n❌ ERROR EN WEBHOOK:')
     console.error(error)
     console.error('='.repeat(60) + '\n')
 
-    // Responder con 200 para evitar reintentos de Kommo
-    return NextResponse.json(
-      {
-        status: 'error',
-        message: 'Error procesando webhook',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 200 } // Importante: siempre 200 para Kommo
-    )
+    // Siempre responder 200 para evitar reintentos de Kommo
+    return NextResponse.json({
+      status: 'error',
+      message: 'Error procesando webhook',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      processingTimeMs: responseTime
+    }, { status: 200 })
   }
 }
 
-// Health check endpoint
-export async function GET(request: NextRequest) {
+// ============================================================================
+// FILTROS
+// ============================================================================
+
+/**
+ * Determina si un mensaje debe ser procesado
+ */
+function shouldProcessMessage(msg: KommoIncomingMessage): boolean {
+  // Solo procesar mensajes de clientes (no de operadores)
+  if (msg.author?.type === 'user') {
+    return false
+  }
+
+  // Solo procesar ciertos canales
+  const supportedOrigins = ['whatsapp', 'instagram', 'telegram']
+  if (!supportedOrigins.includes(msg.origin)) {
+    return false
+  }
+
+  // Debe tener texto
+  if (!msg.text || msg.text.trim().length === 0) {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * Determina si un evento de chat debe ser procesado
+ */
+function shouldProcessChatMessage(chat: KommoChatMessage): boolean {
+  // Solo procesar mensajes de texto
+  if (chat.message.type !== 'text') {
+    return false
+  }
+
+  // Debe tener contenido
+  if (!chat.message.text || chat.message.text.trim().length === 0) {
+    return false
+  }
+
+  return true
+}
+
+// ============================================================================
+// EXTRACTORES
+// ============================================================================
+
+/**
+ * Extrae datos de un mensaje de Kommo
+ */
+function extractMessageInput(msg: KommoIncomingMessage): ProcessMessageInput | null {
+  if (!msg.text) return null
+
+  return {
+    chatId: msg.chat_id,
+    contactId: msg.contact_id?.toString(),
+    senderName: msg.author?.name || 'Cliente',
+    senderPhone: undefined, // No disponible en este formato
+    messageText: msg.text,
+    messageId: msg.id,
+    origin: msg.origin,
+    timestamp: msg.created_at * 1000 // Convertir a ms
+  }
+}
+
+/**
+ * Extrae datos de un evento de chat
+ */
+function extractChatMessageInput(chat: KommoChatMessage): ProcessMessageInput | null {
+  if (!chat.message.text) return null
+
+  return {
+    chatId: chat.conversation_id,
+    contactId: chat.sender.id,
+    senderName: chat.sender.name,
+    senderPhone: chat.sender.phone,
+    messageText: chat.message.text,
+    messageId: chat.msgid,
+    origin: 'whatsapp', // Asumir WhatsApp para chat.message
+    timestamp: chat.msec_timestamp || chat.timestamp * 1000
+  }
+}
+
+/**
+ * Extrae datos de una nota de WhatsApp
+ */
+function extractNoteInput(note: KommoNote): ProcessMessageInput | null {
+  if (!note.params?.text) return null
+
+  return {
+    chatId: note.entity_id.toString(),
+    contactId: note.entity_id.toString(),
+    senderName: 'Cliente',
+    senderPhone: note.params.phone,
+    messageText: note.params.text,
+    messageId: note.id.toString(),
+    origin: note.params.service || 'whatsapp',
+    timestamp: note.created_at * 1000
+  }
+}
+
+// ============================================================================
+// HEALTH CHECK
+// ============================================================================
+
+export async function GET() {
   return NextResponse.json({
     status: 'healthy',
-    service: 'Kommo Webhook Receiver',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    service: 'Kommo Webhook + AI Bot',
+    version: '2.0.0',
+    features: {
+      aiProcessing: true,
+      whatsappSupport: true,
+      instagramSupport: true,
+      escalation: true,
+      persistence: true
+    },
+    timestamp: new Date().toISOString()
   })
 }

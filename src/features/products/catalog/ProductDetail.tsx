@@ -33,7 +33,8 @@ interface ProductDetailProps {
 interface ProductFeatures {
   price_list?: number
   proveedor?: string
-  stock_por_sucursal?: Record<string, number>
+  stock_by_branch?: Record<string, number>
+  stock_por_sucursal?: Record<string, number>  // Legacy field
   [key: string]: unknown
 }
 
@@ -501,7 +502,8 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                       { key: 'virgen', name: 'Catamarca - Capital ( Belgrano )' }
                     ]
 
-                    const stockPorSucursal = features?.stock_por_sucursal || {}
+                    // Use stock_by_branch (new) with fallback to stock_por_sucursal (legacy)
+                    const stockPorSucursal = features?.stock_by_branch || features?.stock_por_sucursal || {}
 
                     const getStockDisplay = (stock: number) => {
                       if (stock === 1) return 'Última unidad'

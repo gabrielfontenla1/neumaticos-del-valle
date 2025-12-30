@@ -181,20 +181,31 @@ def verify_data(excel_path: str, user_source: str = None):
     try:
         response = supabase.table('products').select('id, name, price, stock, category, features').execute()
         products_db = {}
+        legacy_field_count = 0
         for p in response.data:
             codigo = None
-            if p.get('features') and p['features'].get('codigo_propio'):
-                codigo = str(p['features'].get('codigo_propio', '')).strip()
+            features = p.get('features') or {}
+            if features.get('codigo_propio'):
+                codigo = str(features.get('codigo_propio', '')).strip()
             if codigo:
+                # Check for legacy field
+                has_legacy = 'stock_por_sucursal' in features
+                if has_legacy:
+                    legacy_field_count += 1
+
                 products_db[codigo] = {
                     'id': p['id'],
                     'name': p['name'],
                     'price': p['price'],
                     'stock': p['stock'] or 0,
                     'category': p.get('category', ''),
-                    'price_list': p.get('features', {}).get('price_list', 0) if p.get('features') else 0
+                    'price_list': features.get('price_list', 0),
+                    'stock_by_branch': features.get('stock_by_branch', {}),
+                    'has_legacy_field': has_legacy
                 }
         print(f"Productos en BD: {len(products_db)}")
+        if legacy_field_count > 0:
+            print(f"⚠️  Productos con campo legacy 'stock_por_sucursal': {legacy_field_count}")
     except Exception as e:
         print(f"Error al obtener productos: {e}")
         sys.exit(1)

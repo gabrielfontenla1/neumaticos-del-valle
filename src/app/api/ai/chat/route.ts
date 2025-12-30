@@ -78,6 +78,7 @@ async function searchProducts(query: string) {
       .eq('width', width)
       .eq('profile', profile)
       .eq('diameter', diameter)
+      .gt('stock', 0) // Solo productos con stock
       .order('price', { ascending: true })
       .limit(10);
 
@@ -93,6 +94,7 @@ async function searchProducts(query: string) {
         .from('products')
         .select('*')
         .ilike('brand', `%${foundBrand}%`)
+        .gt('stock', 0) // Solo productos con stock
         .order('price', { ascending: true })
         .limit(10);
 
@@ -102,6 +104,7 @@ async function searchProducts(query: string) {
       const { data } = await supabaseAdmin
         .from('products')
         .select('*')
+        .gt('stock', 0) // Solo productos con stock
         .order('price', { ascending: true })
         .limit(5);
 
