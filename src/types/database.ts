@@ -244,7 +244,7 @@ export interface Database {
           extra_load: boolean
           run_flat: boolean
           seal_inside: boolean
-          tube_type: string | null
+          tube_type: boolean
           homologation: string | null
           original_description: string | null
           display_name: string | null
@@ -287,7 +287,7 @@ export interface Database {
           extra_load?: boolean
           run_flat?: boolean
           seal_inside?: boolean
-          tube_type?: string | null
+          tube_type?: boolean
           homologation?: string | null
           original_description?: string | null
           display_name?: string | null
@@ -330,7 +330,7 @@ export interface Database {
           extra_load?: boolean
           run_flat?: boolean
           seal_inside?: boolean
-          tube_type?: string | null
+          tube_type?: boolean
           homologation?: string | null
           original_description?: string | null
           display_name?: string | null

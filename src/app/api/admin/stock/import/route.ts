@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireAdminAuth } from '@/lib/auth/admin-check'
 import { parseTireDescription } from '@/lib/tire-parser'
 import { parseTireDescriptionWithAI } from '@/lib/ai/tire-parser-ai'
 import type { AIModel } from '@/lib/ai/types'
@@ -16,6 +17,7 @@ const BRANCH_MAPPING: Record<string, string> = {
   'CATAMARCA': 'CATAMARCA',
   'LA_BANDA': 'LA_BANDA',
   'SALTA': 'SALTA',
+  'SANTIAGO': 'SANTIAGO',
   'TUCUMAN': 'TUCUMAN',
   'VIRGEN': 'VIRGEN',
 }
@@ -28,6 +30,7 @@ interface ExcelRow {
   CATAMARCA: number | null
   LA_BANDA: number | null
   SALTA: number | null
+  SANTIAGO: number | null
   TUCUMAN: number | null
   VIRGEN: number | null
   MARCA: string
@@ -260,13 +263,14 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
                   extra_load: tireData.extra_load,
                   run_flat: tireData.run_flat,
                   seal_inside: tireData.seal_inside,
-                  tube_type: tireData.tube_type ? 'TT' : null,
+                  tube_type: tireData.tube_type,
                   homologation: tireData.homologation,
                   original_description: tireData.original_description,
                   display_name: tireData.display_name,
                   parse_confidence: tireData.parse_confidence,
                   parse_warnings: tireData.parse_warnings,
-                  price: row.PUBLICO || null,
+                  price: row.CONTADO || row.PUBLICO || null,
+                  price_list: row.PUBLICO || null,
                   brand_name: row.MARCA || null,
                 }
 
@@ -503,6 +507,12 @@ async function createStreamingResponse(jsonData: ExcelRow[], aiModel: AIModel) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     const aiModel = (formData.get('aiModel') as AIModel) || 'gpt-4o-mini'
@@ -690,13 +700,14 @@ export async function POST(request: NextRequest) {
             extra_load: tireData.extra_load,
             run_flat: tireData.run_flat,
             seal_inside: tireData.seal_inside,
-            tube_type: tireData.tube_type ? 'TT' : null,
+            tube_type: tireData.tube_type,
             homologation: tireData.homologation,
             original_description: tireData.original_description,
             display_name: tireData.display_name,
             parse_confidence: tireData.parse_confidence,
             parse_warnings: tireData.parse_warnings,
-            price: row.PUBLICO || null,
+            price: row.CONTADO || row.PUBLICO || null,
+            price_list: row.PUBLICO || null,
             brand_name: row.MARCA || null,
           })
           .select('id')
