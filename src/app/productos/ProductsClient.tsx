@@ -190,7 +190,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     const cleanValue = value.replace(/\s/g, "").toUpperCase()
 
     // Formato: 205/55R16 o 205/55/16
-    const match = cleanValue.match(/^(\d{2,3})[\/\-](\d{2})[R\/\-]?(\d{2})$/)
+    const match = cleanValue.match(/^(\d{2,3})[-/](\d{2})[-/R]?(\d{2})$/)
 
     if (match) {
       return {
@@ -224,11 +224,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     if (debouncedSearchTerm) {
       const search = debouncedSearchTerm.toLowerCase()
       baseProducts = baseProducts.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        p.brand.toLowerCase().includes(search) ||
-        p.category.toLowerCase().includes(search) ||
-        (p.model?.toLowerCase().includes(search)) ||
-        (p.size_display?.toLowerCase().includes(search))
+        p.name?.toLowerCase().includes(search) ||
+        p.brand?.toLowerCase().includes(search) ||
+        p.category?.toLowerCase().includes(search) ||
+        p.model?.toLowerCase().includes(search) ||
+        p.size_display?.toLowerCase().includes(search)
       )
     }
 
@@ -246,11 +246,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     if (debouncedSearchTerm) {
       const search = debouncedSearchTerm.toLowerCase()
       brandsProducts = brandsProducts.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        p.brand.toLowerCase().includes(search) ||
-        p.category.toLowerCase().includes(search) ||
-        (p.model?.toLowerCase().includes(search)) ||
-        (p.size_display?.toLowerCase().includes(search))
+        p.name?.toLowerCase().includes(search) ||
+        p.brand?.toLowerCase().includes(search) ||
+        p.category?.toLowerCase().includes(search) ||
+        p.model?.toLowerCase().includes(search) ||
+        p.size_display?.toLowerCase().includes(search)
       )
     }
     if (selectedCategory !== "all") {
@@ -271,11 +271,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     if (debouncedSearchTerm) {
       const search = debouncedSearchTerm.toLowerCase()
       categoriesProducts = categoriesProducts.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        p.brand.toLowerCase().includes(search) ||
-        p.category.toLowerCase().includes(search) ||
-        (p.model?.toLowerCase().includes(search)) ||
-        (p.size_display?.toLowerCase().includes(search))
+        p.name?.toLowerCase().includes(search) ||
+        p.brand?.toLowerCase().includes(search) ||
+        p.category?.toLowerCase().includes(search) ||
+        p.model?.toLowerCase().includes(search) ||
+        p.size_display?.toLowerCase().includes(search)
       )
     }
     if (selectedBrand !== "all") {
@@ -311,11 +311,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     if (debouncedSearchTerm) {
       const search = debouncedSearchTerm.toLowerCase()
       modelsProducts = modelsProducts.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        p.brand.toLowerCase().includes(search) ||
-        p.category.toLowerCase().includes(search) ||
-        (p.model?.toLowerCase().includes(search)) ||
-        (p.size_display?.toLowerCase().includes(search))
+        p.name?.toLowerCase().includes(search) ||
+        p.brand?.toLowerCase().includes(search) ||
+        p.category?.toLowerCase().includes(search) ||
+        p.model?.toLowerCase().includes(search) ||
+        p.size_display?.toLowerCase().includes(search)
       )
     }
     if (selectedBrand !== "all") {
@@ -444,11 +444,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     if (debouncedSearchTerm) {
       const search = debouncedSearchTerm.toLowerCase()
       filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        p.brand.toLowerCase().includes(search) ||
-        p.category.toLowerCase().includes(search) ||
-        (p.model?.toLowerCase().includes(search)) ||
-        (p.size_display?.toLowerCase().includes(search))
+        p.name?.toLowerCase().includes(search) ||
+        p.brand?.toLowerCase().includes(search) ||
+        p.category?.toLowerCase().includes(search) ||
+        p.model?.toLowerCase().includes(search) ||
+        p.size_display?.toLowerCase().includes(search)
       )
     }
 
