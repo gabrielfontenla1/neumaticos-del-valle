@@ -358,8 +358,14 @@ export function convertToProduct(row: Record<string, any>) {
   const codigoPropio = String(row.codigo_propio || row.CODIGO_PROPIO || '').replace(/[[\]]/g, '').trim()
   const codigoProveedor = String(row.codigo_proveedor || row.CODIGO_PROVEEDOR || '').replace(/[[\]]/g, '').trim()
 
-  // Obtener marca
-  const brand = String(row.marca || row.MARCA || row.brand || 'PIRELLI').toUpperCase()
+  // Obtener marca - primero del Excel, luego detectar del nombre si es PIRELLI o vacío
+  let brand = String(row.marca || row.MARCA || row.brand || '').toUpperCase().trim()
+
+  // Si la marca está vacía o es PIRELLI, intentar detectarla del nombre del producto
+  // Esto permite identificar marcas como FORMULA que vienen etiquetadas como PIRELLI
+  if (!brand || brand === 'PIRELLI') {
+    brand = detectBrandFromName(name, brand || 'PIRELLI')
+  }
 
   // Manejo de precios
   const priceList = parseFloat(row.PUBLICO || row.price_list || row.precio_lista || 0)
@@ -410,6 +416,42 @@ export function mapPirelliModelToImage(brand: string, model: string, description
   return getTireImage(`${model} ${description}`, brand)
 }
 
+
+/**
+ * Detecta la marca del producto a partir del nombre
+ * Útil cuando el Excel tiene todo como "PIRELLI" pero hay otras marcas como FORMULA
+ */
+export function detectBrandFromName(name: string, defaultBrand: string = 'PIRELLI'): string {
+  if (!name) return defaultBrand
+
+  const nameUpper = name.toUpperCase()
+
+  // FORMULA es una marca separada (aunque pertenece al grupo Pirelli)
+  // Patrones: "FORMULA ENERGY", "FORMULA EVO", "FORMULA S/T", "FORMULA AT", etc.
+  if (/\bFORMULA\s+(ENERGY|EVO|SPIDER|DRAGON|S\/T|AT|A\/T)\b/i.test(nameUpper) ||
+      /\bFORMULA\b/.test(nameUpper)) {
+    return 'FORMULA'
+  }
+
+  // Otras marcas que podrían estar en el nombre
+  const brandPatterns: { pattern: RegExp; brand: string }[] = [
+    { pattern: /\bCONTINENTAL\b/i, brand: 'CONTINENTAL' },
+    { pattern: /\bMICHELIN\b/i, brand: 'MICHELIN' },
+    { pattern: /\bBRIDGESTONE\b/i, brand: 'BRIDGESTONE' },
+    { pattern: /\bGOODYEAR\b/i, brand: 'GOODYEAR' },
+    { pattern: /\bDUNLOP\b/i, brand: 'DUNLOP' },
+    { pattern: /\bFIRESTONE\b/i, brand: 'FIRESTONE' },
+    { pattern: /\bFATE\b/i, brand: 'FATE' },
+  ]
+
+  for (const { pattern, brand } of brandPatterns) {
+    if (pattern.test(nameUpper)) {
+      return brand
+    }
+  }
+
+  return defaultBrand
+}
 
 /**
  * Detecta si el Excel tiene formato de columnas por sucursal

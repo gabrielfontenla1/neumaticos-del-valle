@@ -25,6 +25,359 @@ import { useFilterPersistence } from "@/hooks/useFilterPersistence"
 import { generateShareableURL } from "@/lib/products/url-filters"
 import { StockInfoPopup } from "@/components/ui/stock-info-popup"
 
+// Type for product features with known properties
+interface ProductFeatures {
+  price_list?: number
+  codigo_proveedor?: string
+  [key: string]: unknown
+}
+
+// Filter option type for dynamic counters
+interface FilterOption {
+  value: string
+  count: number
+}
+
+// Size suggestion type
+interface SizeSuggestion {
+  size: string
+  count: number
+}
+
+// Props interface for FiltersContent component
+interface FiltersContentProps {
+  sizeSearchTerm: string
+  inputSizeSearchTerm: string
+  setInputSizeSearchTerm: (value: string) => void
+  handleSizeSearchSubmit: () => void
+  searchTerm: string
+  inputSearchTerm: string
+  setInputSearchTerm: (value: string) => void
+  handleSearchSubmit: () => void
+  selectedBrand: string
+  selectedCategory: string
+  selectedModel: string
+  selectedWidth: string
+  selectedProfile: string
+  selectedDiameter: string
+  updateFilter: (key: string, value: string | number) => void
+  updateFilters: (filters: Record<string, string | number>) => void
+  showSizeSuggestions: boolean
+  setShowSizeSuggestions: (show: boolean) => void
+  extractUniqueValues: {
+    brands: FilterOption[]
+    categories: FilterOption[]
+    models: FilterOption[]
+    widths: FilterOption[]
+    profiles: FilterOption[]
+    diameters: FilterOption[]
+    sizeSuggestions: SizeSuggestion[]
+  }
+  applyQuickSize: (width: string, profile: string, diameter: string) => void
+}
+
+// FiltersContent component extracted outside to prevent recreation on each render
+const FiltersContent = ({
+  sizeSearchTerm,
+  inputSizeSearchTerm,
+  setInputSizeSearchTerm,
+  handleSizeSearchSubmit,
+  searchTerm,
+  inputSearchTerm,
+  setInputSearchTerm,
+  handleSearchSubmit,
+  selectedBrand,
+  selectedCategory,
+  selectedModel,
+  selectedWidth,
+  selectedProfile,
+  selectedDiameter,
+  updateFilter,
+  updateFilters,
+  showSizeSuggestions,
+  setShowSizeSuggestions,
+  extractUniqueValues,
+  applyQuickSize
+}: FiltersContentProps) => (
+  <>
+    {/* Size search */}
+    <div className="mb-4 pb-4 border-b border-gray-100">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">
+        Buscar por medida
+      </label>
+      <div className="flex gap-1.5">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            placeholder="Ej: 295/80R22.5 (Enter para buscar)"
+            value={inputSizeSearchTerm}
+            onChange={(e) => {
+              setInputSizeSearchTerm(e.target.value)
+              setShowSizeSuggestions(true)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSizeSearchSubmit()
+                setShowSizeSuggestions(false)
+              }
+            }}
+            onFocus={() => setShowSizeSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSizeSuggestions(false), 200)}
+            className="w-full h-8 text-[11px]"
+          />
+          {inputSizeSearchTerm && (
+            <Button
+              onClick={() => {
+                setInputSizeSearchTerm("")
+                updateFilters({
+                  sizeSearchTerm: "",
+                  selectedWidth: "all",
+                  selectedProfile: "all",
+                  selectedDiameter: "all"
+                })
+              }}
+              size="sm"
+              variant="ghost"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        <Button
+          onClick={() => {
+            handleSizeSearchSubmit()
+            setShowSizeSuggestions(false)
+          }}
+          size="sm"
+          className="h-8 px-3 bg-black text-white hover:bg-gray-800"
+        >
+          <Search className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {showSizeSuggestions && extractUniqueValues.sizeSuggestions.length > 0 && (
+        <div className="mt-2 bg-[#FFFFFF] border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {extractUniqueValues.sizeSuggestions.map(({ size, count }) => (
+            <Button
+              key={size}
+              onClick={() => {
+                // Al hacer click en sugerencia, aplicar inmediatamente
+                setInputSizeSearchTerm(size)
+                updateFilter('sizeSearchTerm', size)
+                setShowSizeSuggestions(false)
+              }}
+              variant="ghost"
+              className="w-full justify-between h-auto px-3 py-1.5 text-[11px] font-normal rounded-none hover:bg-gray-50"
+            >
+              <span className="text-gray-900 text-[11px]">{size}</span>
+              <span className="text-[10px] text-gray-500">{count} disponibles</span>
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-2">
+        <p className="text-[10px] text-gray-600 mb-1.5">Medidas populares:</p>
+        <div className="flex flex-wrap gap-1.5">
+          {POPULAR_SIZES.map((size) => {
+            const isActive = selectedWidth === size.width &&
+                            selectedProfile === size.profile &&
+                            selectedDiameter === size.diameter
+            return (
+              <Button
+                key={size.label}
+                onClick={() => applyQuickSize(size.width, size.profile, size.diameter)}
+                variant={isActive ? "default" : "secondary"}
+                size="sm"
+                className={`h-auto px-2.5 py-0.5 text-[10px] rounded-full ${
+                  isActive
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {size.label}
+              </Button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+
+    {/* Search */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Buscar</label>
+      <div className="flex gap-1.5">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Marca, modelo... (Enter para buscar)"
+            value={inputSearchTerm}
+            onChange={(e) => setInputSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSearchSubmit()
+              }
+            }}
+            className="w-full pl-9 pr-9 h-8 text-[11px]"
+          />
+          {inputSearchTerm && (
+            <Button
+              onClick={() => {
+                setInputSearchTerm("")
+                updateFilter('searchTerm', "")
+              }}
+              size="sm"
+              variant="ghost"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        <Button
+          onClick={handleSearchSubmit}
+          size="sm"
+          className="h-8 px-3 bg-black text-white hover:bg-gray-800"
+        >
+          <Search className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+
+    {/* Brand Filter */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Marca</label>
+      <Select value={selectedBrand} onValueChange={(value) => updateFilter('selectedBrand', value)}>
+        <SelectTrigger className="w-full text-[11px] h-8">
+          <SelectValue placeholder="Todas las marcas" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas las marcas</SelectItem>
+          {extractUniqueValues.brands.filter(({ count }) => count > 0).map(({ value, count }) => (
+            <SelectItem key={value} value={value}>
+              <div className="flex justify-between items-center w-full text-[11px]">
+                <span>{value}</span>
+                <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Category Filter */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Categoría</label>
+      <Select value={selectedCategory} onValueChange={(value) => updateFilter('selectedCategory', value)}>
+        <SelectTrigger className="w-full text-[11px] h-8">
+          <SelectValue placeholder="Todas las categorías" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas las categorías</SelectItem>
+          {extractUniqueValues.categories.filter(({ count }) => count > 0).map(({ value, count }) => (
+            <SelectItem key={value} value={value}>
+              <div className="flex justify-between items-center w-full text-[11px]">
+                <span className="capitalize">{value}</span>
+                <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Model Filter */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Modelo</label>
+      <Select value={selectedModel} onValueChange={(value) => updateFilter('selectedModel', value)}>
+        <SelectTrigger className="w-full text-[11px] h-8">
+          <SelectValue placeholder="Todos los modelos" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los modelos</SelectItem>
+          {extractUniqueValues.models.filter(({ count }) => count > 0).map(({ value, count }) => (
+            <SelectItem key={value} value={value}>
+              <div className="flex justify-between items-center w-full text-[11px]">
+                <span>{value}</span>
+                <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Size Filters */}
+    <div className="mb-4 pb-4 border-b border-gray-100">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Medida manual</label>
+
+      <div className="mb-2.5">
+        <label className="text-[10px] font-normal text-gray-600 mb-1 block">Ancho (mm)</label>
+        <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
+          <SelectTrigger className="w-full text-[11px] h-8">
+            <SelectValue placeholder="Ej: 295, 385..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los anchos</SelectItem>
+            {extractUniqueValues.widths.filter(({ count }) => count > 0).map(({ value, count }) => (
+              <SelectItem key={value} value={value}>
+                <div className="flex justify-between items-center w-full text-[11px]">
+                  <span>{value} mm</span>
+                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="mb-2.5">
+        <label className="text-[10px] font-normal text-gray-600 mb-1 block">Perfil (%)</label>
+        <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
+          <SelectTrigger className="w-full text-[11px] h-8">
+            <SelectValue placeholder="Ej: 80, 65..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los perfiles</SelectItem>
+            {extractUniqueValues.profiles.filter(({ count }) => count > 0).map(({ value, count }) => (
+              <SelectItem key={value} value={value}>
+                <div className="flex justify-between items-center w-full text-[11px]">
+                  <span>{value}%</span>
+                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <label className="text-[10px] font-normal text-gray-600 mb-1 block">Rodado (pulgadas)</label>
+        <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
+          <SelectTrigger className="w-full text-[11px] h-8">
+            <SelectValue placeholder="Ej: R22.5, R24..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los rodados</SelectItem>
+            {extractUniqueValues.diameters.filter(({ count }) => count > 0).map(({ value, count }) => (
+              <SelectItem key={value} value={value}>
+                <div className="flex justify-between items-center w-full text-[11px]">
+                  <span>R{value}"</span>
+                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  </>
+)
+
 interface AgroCamionesClientProps {
   products: Product[]
   stats?: {
@@ -85,6 +438,8 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [showSizeSuggestions, setShowSizeSuggestions] = useState(false)
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(filters.searchTerm || "")
+  const [inputSearchTerm, setInputSearchTerm] = useState(filters.searchTerm || "")
+  const [inputSizeSearchTerm, setInputSizeSearchTerm] = useState(filters.sizeSearchTerm || "")
 
   // Extract filter values from URL filters
   const {
@@ -174,10 +529,20 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
     saveFallback(filters)
   }, [filters, isRestoringFilters, saveFallback])
 
+  // Sync inputSearchTerm when searchTerm changes from URL or clear
+  useEffect(() => {
+    setInputSearchTerm(searchTerm)
+  }, [searchTerm])
+
+  // Sync inputSizeSearchTerm when sizeSearchTerm changes from URL or clear
+  useEffect(() => {
+    setInputSizeSearchTerm(sizeSearchTerm)
+  }, [sizeSearchTerm])
+
   // Parse size search
   const parseSizeSearch = useCallback((value: string) => {
     const cleanValue = value.replace(/\s/g, "").toUpperCase()
-    const match = cleanValue.match(/^(\d{2,3})[\/\-](\d{2})[R\/\-]?(\d{2})$/)
+    const match = cleanValue.match(/^(\d{2,3})[-/](\d{2})[-/R]?(\d{2})$/)
 
     if (match) {
       return {
@@ -440,6 +805,16 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
     })
   }, [updateFilters])
 
+  // Handle search submit (on Enter or button click)
+  const handleSearchSubmit = useCallback(() => {
+    updateFilter('searchTerm', inputSearchTerm)
+  }, [inputSearchTerm, updateFilter])
+
+  // Handle size search submit (on Enter or button click)
+  const handleSizeSearchSubmit = useCallback(() => {
+    updateFilter('sizeSearchTerm', inputSizeSearchTerm)
+  }, [inputSizeSearchTerm, updateFilter])
+
   const hasActiveFilters = searchTerm || (selectedBrand !== "all") || (selectedCategory !== "all") || (selectedModel !== "all") || (selectedWidth !== "all") || (selectedProfile !== "all") || (selectedDiameter !== "all")
 
   const activeFiltersCount = [
@@ -451,246 +826,29 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
     selectedDiameter !== "all"
   ].filter(Boolean).length
 
-  // Filters component
-  const FiltersContent = () => (
-    <>
-      {/* Size search */}
-      <div className="mb-4 pb-4 border-b border-gray-100">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">
-          Buscar por medida
-        </label>
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Ej: 295/80R22.5"
-            value={sizeSearchTerm}
-            onChange={(e) => {
-              updateFilter('sizeSearchTerm', e.target.value)
-              setShowSizeSuggestions(true)
-            }}
-            onFocus={() => setShowSizeSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSizeSuggestions(false), 200)}
-            className="w-full h-8 text-[11px]"
-          />
-          {sizeSearchTerm && (
-            <Button
-              onClick={() => {
-                updateFilters({
-                  sizeSearchTerm: "",
-                  selectedWidth: "all",
-                  selectedProfile: "all",
-                  selectedDiameter: "all"
-                })
-              }}
-              size="sm"
-              variant="ghost"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-
-        {showSizeSuggestions && extractUniqueValues.sizeSuggestions.length > 0 && (
-          <div className="mt-2 bg-[#FFFFFF] border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-            {extractUniqueValues.sizeSuggestions.map(({ size, count }) => (
-              <Button
-                key={size}
-                onClick={() => {
-                  updateFilter('sizeSearchTerm', size)
-                  setShowSizeSuggestions(false)
-                }}
-                variant="ghost"
-                className="w-full justify-between h-auto px-3 py-1.5 text-[11px] font-normal rounded-none hover:bg-gray-50"
-              >
-                <span className="text-gray-900 text-[11px]">{size}</span>
-                <span className="text-[10px] text-gray-500">{count} disponibles</span>
-              </Button>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-2">
-          <p className="text-[10px] text-gray-600 mb-1.5">Medidas populares:</p>
-          <div className="flex flex-wrap gap-1.5">
-            {POPULAR_SIZES.map((size) => {
-              const isActive = selectedWidth === size.width &&
-                              selectedProfile === size.profile &&
-                              selectedDiameter === size.diameter
-              return (
-                <Button
-                  key={size.label}
-                  onClick={() => applyQuickSize(size.width, size.profile, size.diameter)}
-                  variant={isActive ? "default" : "secondary"}
-                  size="sm"
-                  className={`h-auto px-2.5 py-0.5 text-[10px] rounded-full ${
-                    isActive
-                      ? "bg-black text-white hover:bg-gray-800"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {size.label}
-                </Button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Buscar</label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Marca, modelo..."
-            value={searchTerm}
-            onChange={(e) => updateFilter('searchTerm', e.target.value)}
-            className="w-full pl-9 pr-9 h-8 text-[11px]"
-          />
-          {searchTerm && (
-            <Button
-              onClick={() => updateFilter('searchTerm', "")}
-              size="sm"
-              variant="ghost"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Brand Filter */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Marca</label>
-        <Select value={selectedBrand} onValueChange={(value) => updateFilter('selectedBrand', value)}>
-          <SelectTrigger className="w-full text-[11px] h-8">
-            <SelectValue placeholder="Todas las marcas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las marcas</SelectItem>
-            {extractUniqueValues.brands.filter(({ count }) => count > 0).map(({ value, count }) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex justify-between items-center w-full text-[11px]">
-                  <span>{value}</span>
-                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Category Filter */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Categoría</label>
-        <Select value={selectedCategory} onValueChange={(value) => updateFilter('selectedCategory', value)}>
-          <SelectTrigger className="w-full text-[11px] h-8">
-            <SelectValue placeholder="Todas las categorías" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las categorías</SelectItem>
-            {extractUniqueValues.categories.filter(({ count }) => count > 0).map(({ value, count }) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex justify-between items-center w-full text-[11px]">
-                  <span className="capitalize">{value}</span>
-                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Model Filter */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Modelo</label>
-        <Select value={selectedModel} onValueChange={(value) => updateFilter('selectedModel', value)}>
-          <SelectTrigger className="w-full text-[11px] h-8">
-            <SelectValue placeholder="Todos los modelos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los modelos</SelectItem>
-            {extractUniqueValues.models.filter(({ count }) => count > 0).map(({ value, count }) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex justify-between items-center w-full text-[11px]">
-                  <span>{value}</span>
-                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Size Filters */}
-      <div className="mb-4 pb-4 border-b border-gray-100">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Medida manual</label>
-
-        <div className="mb-2.5">
-          <label className="text-[10px] font-normal text-gray-600 mb-1 block">Ancho (mm)</label>
-          <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
-            <SelectTrigger className="w-full text-[11px] h-8">
-              <SelectValue placeholder="Ej: 295, 385..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los anchos</SelectItem>
-              {extractUniqueValues.widths.filter(({ count }) => count > 0).map(({ value, count }) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex justify-between items-center w-full text-[11px]">
-                    <span>{value} mm</span>
-                    <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="mb-2.5">
-          <label className="text-[10px] font-normal text-gray-600 mb-1 block">Perfil (%)</label>
-          <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
-            <SelectTrigger className="w-full text-[11px] h-8">
-              <SelectValue placeholder="Ej: 80, 65..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los perfiles</SelectItem>
-              {extractUniqueValues.profiles.filter(({ count }) => count > 0).map(({ value, count }) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex justify-between items-center w-full text-[11px]">
-                    <span>{value}%</span>
-                    <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="text-[10px] font-normal text-gray-600 mb-1 block">Rodado (pulgadas)</label>
-          <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
-            <SelectTrigger className="w-full text-[11px] h-8">
-              <SelectValue placeholder="Ej: R22.5, R24..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los rodados</SelectItem>
-              {extractUniqueValues.diameters.filter(({ count }) => count > 0).map(({ value, count }) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex justify-between items-center w-full text-[11px]">
-                    <span>R{value}"</span>
-                    <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </>
-  )
+  // Props object for FiltersContent component (extracted outside to prevent re-renders)
+  const filtersProps: FiltersContentProps = {
+    sizeSearchTerm,
+    inputSizeSearchTerm,
+    setInputSizeSearchTerm,
+    handleSizeSearchSubmit,
+    searchTerm,
+    inputSearchTerm,
+    setInputSearchTerm,
+    handleSearchSubmit,
+    selectedBrand,
+    selectedCategory,
+    selectedModel,
+    selectedWidth,
+    selectedProfile,
+    selectedDiameter,
+    updateFilter: updateFilter as (key: string, value: string | number) => void,
+    updateFilters: updateFilters as (filters: Record<string, string | number>) => void,
+    showSizeSuggestions,
+    setShowSizeSuggestions,
+    extractUniqueValues,
+    applyQuickSize
+  }
 
   if (isLoading) {
     return <AgroCamionesSkeleton />
@@ -775,7 +933,7 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                 </div>
               </div>
               <div>
-                <FiltersContent />
+                <FiltersContent {...filtersProps} />
               </div>
             </div>
           </aside>
@@ -829,7 +987,7 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                       )}
                     </SheetTitle>
                   </SheetHeader>
-                  <FiltersContent />
+                  <FiltersContent {...filtersProps} />
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <Button
                       onClick={() => setMobileFiltersOpen(false)}
@@ -998,8 +1156,8 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
             ) : (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-                  {paginatedProducts.map((product, index) => {
-                    const priceListFromFeatures = (product.features as Record<string, unknown>)?.price_list as number | undefined
+                  {paginatedProducts.map((product) => {
+                    const priceListFromFeatures = (product.features as ProductFeatures | undefined)?.price_list
                     const listPrice = priceListFromFeatures || product.price_list || Math.round(product.price / 0.75)
                     const discountPercentage = Math.round(((listPrice - product.price) / listPrice) * 100)
 
@@ -1055,9 +1213,9 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                                 {product.model || '\u00A0'}
                               </div>
 
-                              {(product.features as any)?.codigo_proveedor && (
+                              {(product.features as ProductFeatures | undefined)?.codigo_proveedor && (
                                 <div className="text-[10px] text-gray-500 mb-2">
-                                  Cód: {(product.features as any).codigo_proveedor}
+                                  Cód: {(product.features as ProductFeatures).codigo_proveedor}
                                 </div>
                               )}
 
@@ -1132,7 +1290,8 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                                         e.preventDefault();
                                         e.stopPropagation();
                                         const message = `Hola! Me interesa el neumático ${product.brand} ${product.name} ${product.model || ''} (${product.width}/${product.profile}R${product.diameter}). En la web figura sin stock. ¿Cuándo tendrán disponible?`;
-                                        const whatsappUrl = `https://wa.me/5493855946462?text=${encodeURIComponent(message)}`;
+                                        const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493855946462';
+                                        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
                                         window.open(whatsappUrl, '_blank');
                                       }}
                                       className="text-xs text-green-600 hover:text-green-700 underline transition-colors"

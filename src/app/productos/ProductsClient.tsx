@@ -25,6 +25,355 @@ import { useFilterPersistence } from "@/hooks/useFilterPersistence"
 import { generateShareableURL } from "@/lib/products/url-filters"
 import { StockInfoPopup } from "@/components/ui/stock-info-popup"
 
+// Tipos para el componente de filtros
+interface FilterOption {
+  value: string
+  count: number
+}
+
+interface SizeSuggestion {
+  size: string
+  count: number
+}
+
+interface FiltersContentProps {
+  sizeSearchTerm: string
+  inputSizeSearchTerm: string
+  setInputSizeSearchTerm: (value: string) => void
+  handleSizeSearchSubmit: () => void
+  searchTerm: string
+  inputSearchTerm: string
+  setInputSearchTerm: (value: string) => void
+  handleSearchSubmit: () => void
+  selectedBrand: string
+  selectedCategory: string
+  selectedModel: string
+  selectedWidth: string
+  selectedProfile: string
+  selectedDiameter: string
+  updateFilter: (key: string, value: string | number) => void
+  updateFilters: (filters: Record<string, string | number>) => void
+  showSizeSuggestions: boolean
+  setShowSizeSuggestions: (show: boolean) => void
+  extractUniqueValues: {
+    brands: FilterOption[]
+    categories: FilterOption[]
+    models: FilterOption[]
+    widths: FilterOption[]
+    profiles: FilterOption[]
+    diameters: FilterOption[]
+    sizeSuggestions: SizeSuggestion[]
+  }
+  applyQuickSize: (width: string, profile: string, diameter: string) => void
+}
+
+// Componente FiltersContent extraído para evitar pérdida de foco en inputs
+const FiltersContent = ({
+  sizeSearchTerm,
+  inputSizeSearchTerm,
+  setInputSizeSearchTerm,
+  handleSizeSearchSubmit,
+  searchTerm,
+  inputSearchTerm,
+  setInputSearchTerm,
+  handleSearchSubmit,
+  selectedBrand,
+  selectedCategory,
+  selectedModel,
+  selectedWidth,
+  selectedProfile,
+  selectedDiameter,
+  updateFilter,
+  updateFilters,
+  showSizeSuggestions,
+  setShowSizeSuggestions,
+  extractUniqueValues,
+  applyQuickSize
+}: FiltersContentProps) => (
+  <>
+    {/* Búsqueda inteligente de medidas */}
+    <div className="mb-4 pb-4 border-b border-gray-100">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">
+        Buscar por medida
+      </label>
+      <div className="flex gap-1.5">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            placeholder="Ej: 205/55R16 (Enter para buscar)"
+            value={inputSizeSearchTerm}
+            onChange={(e) => {
+              setInputSizeSearchTerm(e.target.value)
+              setShowSizeSuggestions(true)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSizeSearchSubmit()
+                setShowSizeSuggestions(false)
+              }
+            }}
+            onFocus={() => setShowSizeSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSizeSuggestions(false), 200)}
+            className="w-full h-8 text-[11px]"
+          />
+          {inputSizeSearchTerm && (
+            <Button
+              onClick={() => {
+                setInputSizeSearchTerm("")
+                updateFilters({
+                  sizeSearchTerm: "",
+                  selectedWidth: "all",
+                  selectedProfile: "all",
+                  selectedDiameter: "all"
+                })
+              }}
+              size="sm"
+              variant="ghost"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        <Button
+          onClick={() => {
+            handleSizeSearchSubmit()
+            setShowSizeSuggestions(false)
+          }}
+          size="sm"
+          className="h-8 px-3 bg-black text-white hover:bg-gray-800"
+        >
+          <Search className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* Sugerencias */}
+      {showSizeSuggestions && extractUniqueValues.sizeSuggestions.length > 0 && (
+        <div className="mt-2 bg-[#FFFFFF] border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {extractUniqueValues.sizeSuggestions.map(({ size, count }) => (
+            <Button
+              key={size}
+              onClick={() => {
+                // Al hacer click en sugerencia, aplicar inmediatamente
+                setInputSizeSearchTerm(size)
+                updateFilter('sizeSearchTerm', size)
+                setShowSizeSuggestions(false)
+              }}
+              variant="ghost"
+              className="w-full justify-between h-auto px-3 py-1.5 text-[11px] font-normal rounded-none hover:bg-gray-50"
+            >
+              <span className="text-gray-900 text-[11px]">{size}</span>
+              <span className="text-[10px] text-gray-500">{count} disponibles</span>
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {/* Medidas rápidas */}
+      <div className="mt-2">
+        <p className="text-[10px] text-gray-600 mb-1.5">Medidas populares:</p>
+        <div className="flex flex-wrap gap-1.5">
+          {POPULAR_SIZES.map((size) => {
+            const isActive = selectedWidth === size.width &&
+                            selectedProfile === size.profile &&
+                            selectedDiameter === size.diameter
+            return (
+              <Button
+                key={size.label}
+                onClick={() => applyQuickSize(size.width, size.profile, size.diameter)}
+                variant={isActive ? "default" : "secondary"}
+                size="sm"
+                className={`h-auto px-2.5 py-0.5 text-[10px] rounded-full ${
+                  isActive
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {size.label}
+              </Button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+
+    {/* Search */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Buscar</label>
+      <div className="flex gap-1.5">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Marca, modelo... (Enter para buscar)"
+            value={inputSearchTerm}
+            onChange={(e) => setInputSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSearchSubmit()
+              }
+            }}
+            className="w-full pl-9 pr-9 h-8 text-[11px]"
+          />
+          {inputSearchTerm && (
+            <Button
+              onClick={() => {
+                setInputSearchTerm("")
+                updateFilter('searchTerm', "")
+              }}
+              size="sm"
+              variant="ghost"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        <Button
+          onClick={handleSearchSubmit}
+          size="sm"
+          className="h-8 px-3 bg-black text-white hover:bg-gray-800"
+        >
+          <Search className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+
+    {/* Brand Filter */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Marca</label>
+      <Select value={selectedBrand} onValueChange={(value) => updateFilter('selectedBrand', value)}>
+        <SelectTrigger className="w-full text-[11px] h-8">
+          <SelectValue placeholder="Todas las marcas" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas las marcas</SelectItem>
+          {extractUniqueValues.brands.filter(({ count }) => count > 0).map(({ value, count }) => (
+            <SelectItem key={value} value={value}>
+              <div className="flex justify-between items-center w-full text-[11px]">
+                <span>{value}</span>
+                <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Category Filter */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Categoría</label>
+      <Select value={selectedCategory} onValueChange={(value) => updateFilter('selectedCategory', value)}>
+        <SelectTrigger className="w-full text-[11px] h-8">
+          <SelectValue placeholder="Todas las categorías" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas las categorías</SelectItem>
+          {extractUniqueValues.categories.filter(({ count }) => count > 0).map(({ value, count }) => (
+            <SelectItem key={value} value={value}>
+              <div className="flex justify-between items-center w-full text-[11px]">
+                <span className="capitalize">{value}</span>
+                <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Model Filter */}
+    <div className="mb-4">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Modelo</label>
+      <Select value={selectedModel} onValueChange={(value) => updateFilter('selectedModel', value)}>
+        <SelectTrigger className="w-full text-[11px] h-8">
+          <SelectValue placeholder="Todos los modelos" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los modelos</SelectItem>
+          {extractUniqueValues.models.filter(({ count }) => count > 0).map(({ value, count }) => (
+            <SelectItem key={value} value={value}>
+              <div className="flex justify-between items-center w-full text-[11px]">
+                <span>{value}</span>
+                <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Size Filters */}
+    <div className="mb-4 pb-4 border-b border-gray-100">
+      <label className="text-[11px] font-medium text-gray-700 mb-2 block">Medida manual</label>
+
+      {/* Width */}
+      <div className="mb-2.5">
+        <label className="text-[10px] font-normal text-gray-600 mb-1 block">Ancho (mm)</label>
+        <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
+          <SelectTrigger className="w-full text-[11px] h-8">
+            <SelectValue placeholder="Ej: 185, 195, 205..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los anchos</SelectItem>
+            {extractUniqueValues.widths.filter(({ count }) => count > 0).map(({ value, count }) => (
+              <SelectItem key={value} value={value}>
+                <div className="flex justify-between items-center w-full text-[11px]">
+                  <span>{value} mm</span>
+                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Profile */}
+      <div className="mb-2.5">
+        <label className="text-[10px] font-normal text-gray-600 mb-1 block">Perfil (%)</label>
+        <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
+          <SelectTrigger className="w-full text-[11px] h-8">
+            <SelectValue placeholder="Ej: 55, 60, 65..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los perfiles</SelectItem>
+            {extractUniqueValues.profiles.filter(({ count }) => count > 0).map(({ value, count }) => (
+              <SelectItem key={value} value={value}>
+                <div className="flex justify-between items-center w-full text-[11px]">
+                  <span>{value}%</span>
+                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Diameter */}
+      <div>
+        <label className="text-[10px] font-normal text-gray-600 mb-1 block">Rodado (pulgadas)</label>
+        <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
+          <SelectTrigger className="w-full text-[11px] h-8">
+            <SelectValue placeholder="Ej: R15, R16, R17..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los rodados</SelectItem>
+            {extractUniqueValues.diameters.filter(({ count }) => count > 0).map(({ value, count }) => (
+              <SelectItem key={value} value={value}>
+                <div className="flex justify-between items-center w-full text-[11px]">
+                  <span>R{value}"</span>
+                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  </>
+)
+
 interface ProductsClientProps {
   products: Product[]
   stats?: {
@@ -94,6 +443,8 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [showSizeSuggestions, setShowSizeSuggestions] = useState(false)
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(filters.searchTerm || "")
+  const [inputSearchTerm, setInputSearchTerm] = useState(filters.searchTerm || "")
+  const [inputSizeSearchTerm, setInputSizeSearchTerm] = useState(filters.sizeSearchTerm || "")
 
   // Extract filter values from URL filters
   const {
@@ -184,6 +535,16 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     // Save current filters to localStorage
     saveFallback(filters)
   }, [filters, isRestoringFilters, saveFallback])
+
+  // Sync inputSearchTerm when searchTerm changes from URL or clear
+  useEffect(() => {
+    setInputSearchTerm(searchTerm)
+  }, [searchTerm])
+
+  // Sync inputSizeSearchTerm when sizeSearchTerm changes from URL or clear
+  useEffect(() => {
+    setInputSizeSearchTerm(sizeSearchTerm)
+  }, [sizeSearchTerm])
 
   // Parse búsqueda inteligente de medidas (205/55R16 o 205/55/16)
   const parseSizeSearch = useCallback((value: string) => {
@@ -601,6 +962,16 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     })
   }, [updateFilters])
 
+  // Handle search submit (on Enter or button click)
+  const handleSearchSubmit = useCallback(() => {
+    updateFilter('searchTerm', inputSearchTerm)
+  }, [inputSearchTerm, updateFilter])
+
+  // Handle size search submit (on Enter or button click)
+  const handleSizeSearchSubmit = useCallback(() => {
+    updateFilter('sizeSearchTerm', inputSizeSearchTerm)
+  }, [inputSizeSearchTerm, updateFilter])
+
   // Check if any filters are active
   const hasActiveFilters = searchTerm || (selectedBrand !== "all") || (selectedCategory !== "all") || (selectedModel !== "all") || (selectedWidth !== "all") || (selectedProfile !== "all") || (selectedDiameter !== "all")
 
@@ -614,251 +985,29 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     selectedDiameter !== "all"
   ].filter(Boolean).length
 
-  // Filters component (reutilizable para desktop y mobile)
-  const FiltersContent = () => (
-    <>
-      {/* Búsqueda inteligente de medidas */}
-      <div className="mb-4 pb-4 border-b border-gray-100">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">
-          Buscar por medida
-        </label>
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Ej: 205/55R16"
-            value={sizeSearchTerm}
-            onChange={(e) => {
-              updateFilter('sizeSearchTerm', e.target.value)
-              setShowSizeSuggestions(true)
-            }}
-            onFocus={() => setShowSizeSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSizeSuggestions(false), 200)}
-            className="w-full h-8 text-[11px]"
-          />
-          {sizeSearchTerm && (
-            <Button
-              onClick={() => {
-                updateFilters({
-                  sizeSearchTerm: "",
-                  selectedWidth: "all",
-                  selectedProfile: "all",
-                  selectedDiameter: "all"
-                })
-              }}
-              size="sm"
-              variant="ghost"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-
-        {/* Sugerencias */}
-        {showSizeSuggestions && extractUniqueValues.sizeSuggestions.length > 0 && (
-          <div className="mt-2 bg-[#FFFFFF] border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-            {extractUniqueValues.sizeSuggestions.map(({ size, count }) => (
-              <Button
-                key={size}
-                onClick={() => {
-                  updateFilter('sizeSearchTerm', size)
-                  setShowSizeSuggestions(false)
-                }}
-                variant="ghost"
-                className="w-full justify-between h-auto px-3 py-1.5 text-[11px] font-normal rounded-none hover:bg-gray-50"
-              >
-                <span className="text-gray-900 text-[11px]">{size}</span>
-                <span className="text-[10px] text-gray-500">{count} disponibles</span>
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {/* Medidas rápidas */}
-        <div className="mt-2">
-          <p className="text-[10px] text-gray-600 mb-1.5">Medidas populares:</p>
-          <div className="flex flex-wrap gap-1.5">
-            {POPULAR_SIZES.map((size) => {
-              const isActive = selectedWidth === size.width &&
-                              selectedProfile === size.profile &&
-                              selectedDiameter === size.diameter
-              return (
-                <Button
-                  key={size.label}
-                  onClick={() => applyQuickSize(size.width, size.profile, size.diameter)}
-                  variant={isActive ? "default" : "secondary"}
-                  size="sm"
-                  className={`h-auto px-2.5 py-0.5 text-[10px] rounded-full ${
-                    isActive
-                      ? "bg-black text-white hover:bg-gray-800"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {size.label}
-                </Button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Buscar</label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Marca, modelo..."
-            value={searchTerm}
-            onChange={(e) => updateFilter('searchTerm', e.target.value)}
-            className="w-full pl-9 pr-9 h-8 text-[11px]"
-          />
-          {searchTerm && (
-            <Button
-              onClick={() => updateFilter('searchTerm', "")}
-              size="sm"
-              variant="ghost"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Brand Filter */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Marca</label>
-        <Select value={selectedBrand} onValueChange={(value) => updateFilter('selectedBrand', value)}>
-          <SelectTrigger className="w-full text-[11px] h-8">
-            <SelectValue placeholder="Todas las marcas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las marcas</SelectItem>
-            {extractUniqueValues.brands.filter(({ count }) => count > 0).map(({ value, count }) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex justify-between items-center w-full text-[11px]">
-                  <span>{value}</span>
-                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Category Filter */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Categoría</label>
-        <Select value={selectedCategory} onValueChange={(value) => updateFilter('selectedCategory', value)}>
-          <SelectTrigger className="w-full text-[11px] h-8">
-            <SelectValue placeholder="Todas las categorías" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las categorías</SelectItem>
-            {extractUniqueValues.categories.filter(({ count }) => count > 0).map(({ value, count }) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex justify-between items-center w-full text-[11px]">
-                  <span className="capitalize">{value}</span>
-                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Model Filter */}
-      <div className="mb-4">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Modelo</label>
-        <Select value={selectedModel} onValueChange={(value) => updateFilter('selectedModel', value)}>
-          <SelectTrigger className="w-full text-[11px] h-8">
-            <SelectValue placeholder="Todos los modelos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los modelos</SelectItem>
-            {extractUniqueValues.models.filter(({ count }) => count > 0).map(({ value, count }) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex justify-between items-center w-full text-[11px]">
-                  <span>{value}</span>
-                  <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Size Filters */}
-      <div className="mb-4 pb-4 border-b border-gray-100">
-        <label className="text-[11px] font-medium text-gray-700 mb-2 block">Medida manual</label>
-
-        {/* Width */}
-        <div className="mb-2.5">
-          <label className="text-[10px] font-normal text-gray-600 mb-1 block">Ancho (mm)</label>
-          <Select value={selectedWidth} onValueChange={(value) => updateFilter('selectedWidth', value)}>
-            <SelectTrigger className="w-full text-[11px] h-8">
-              <SelectValue placeholder="Ej: 185, 195, 205..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los anchos</SelectItem>
-              {extractUniqueValues.widths.filter(({ count }) => count > 0).map(({ value, count }) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex justify-between items-center w-full text-[11px]">
-                    <span>{value} mm</span>
-                    <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Profile */}
-        <div className="mb-2.5">
-          <label className="text-[10px] font-normal text-gray-600 mb-1 block">Perfil (%)</label>
-          <Select value={selectedProfile} onValueChange={(value) => updateFilter('selectedProfile', value)}>
-            <SelectTrigger className="w-full text-[11px] h-8">
-              <SelectValue placeholder="Ej: 55, 60, 65..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los perfiles</SelectItem>
-              {extractUniqueValues.profiles.filter(({ count }) => count > 0).map(({ value, count }) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex justify-between items-center w-full text-[11px]">
-                    <span>{value}%</span>
-                    <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Diameter */}
-        <div>
-          <label className="text-[10px] font-normal text-gray-600 mb-1 block">Rodado (pulgadas)</label>
-          <Select value={selectedDiameter} onValueChange={(value) => updateFilter('selectedDiameter', value)}>
-            <SelectTrigger className="w-full text-[11px] h-8">
-              <SelectValue placeholder="Ej: R15, R16, R17..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los rodados</SelectItem>
-              {extractUniqueValues.diameters.filter(({ count }) => count > 0).map(({ value, count }) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex justify-between items-center w-full text-[11px]">
-                    <span>R{value}"</span>
-                    <span className="text-[10px] text-gray-500 ml-2">({count})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </>
-  )
+  // Props para el componente FiltersContent
+  const filtersProps: FiltersContentProps = {
+    sizeSearchTerm,
+    inputSizeSearchTerm,
+    setInputSizeSearchTerm,
+    handleSizeSearchSubmit,
+    searchTerm,
+    inputSearchTerm,
+    setInputSearchTerm,
+    handleSearchSubmit,
+    selectedBrand,
+    selectedCategory,
+    selectedModel,
+    selectedWidth,
+    selectedProfile,
+    selectedDiameter,
+    updateFilter: updateFilter as (key: string, value: string | number) => void,
+    updateFilters: updateFilters as (filters: Record<string, string | number>) => void,
+    showSizeSuggestions,
+    setShowSizeSuggestions,
+    extractUniqueValues,
+    applyQuickSize
+  }
 
   // Show loading state
   if (isLoading) {
@@ -962,7 +1111,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                 </div>
               </div>
               <div>
-                <FiltersContent />
+                <FiltersContent {...filtersProps} />
               </div>
             </div>
           </aside>
@@ -1016,7 +1165,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                       )}
                     </SheetTitle>
                   </SheetHeader>
-                  <FiltersContent />
+                  <FiltersContent {...filtersProps} />
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <Button
                       onClick={() => setMobileFiltersOpen(false)}
