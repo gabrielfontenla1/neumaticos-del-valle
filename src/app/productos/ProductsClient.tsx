@@ -221,7 +221,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     // Filtrar productos según selecciones actuales
     let baseProducts = [...products]
 
-    if (debouncedSearchTerm) {
+    if (debouncedSearchTerm && typeof debouncedSearchTerm === 'string') {
       const search = debouncedSearchTerm.toLowerCase()
       baseProducts = baseProducts.filter(p =>
         p.name?.toLowerCase().includes(search) ||
@@ -243,7 +243,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
     // Filtros dependientes para brands (no aplicar el filtro de brand)
     let brandsProducts = [...products]
-    if (debouncedSearchTerm) {
+    if (debouncedSearchTerm && typeof debouncedSearchTerm === 'string') {
       const search = debouncedSearchTerm.toLowerCase()
       brandsProducts = brandsProducts.filter(p =>
         p.name?.toLowerCase().includes(search) ||
@@ -268,7 +268,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
     // Filtros dependientes para categories (no aplicar el filtro de category)
     let categoriesProducts = [...products]
-    if (debouncedSearchTerm) {
+    if (debouncedSearchTerm && typeof debouncedSearchTerm === 'string') {
       const search = debouncedSearchTerm.toLowerCase()
       categoriesProducts = categoriesProducts.filter(p =>
         p.name?.toLowerCase().includes(search) ||
@@ -308,7 +308,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
     // Filtros dependientes para models (no aplicar el filtro de model)
     let modelsProducts = [...products]
-    if (debouncedSearchTerm) {
+    if (debouncedSearchTerm && typeof debouncedSearchTerm === 'string') {
       const search = debouncedSearchTerm.toLowerCase()
       modelsProducts = modelsProducts.filter(p =>
         p.name?.toLowerCase().includes(search) ||
@@ -415,7 +415,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
+      setDebouncedSearchTerm(searchTerm || "")
     }, 300)
     return () => clearTimeout(timer)
   }, [searchTerm])
@@ -441,7 +441,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     }
 
     // Search filter
-    if (debouncedSearchTerm) {
+    if (debouncedSearchTerm && typeof debouncedSearchTerm === 'string') {
       const search = debouncedSearchTerm.toLowerCase()
       filtered = filtered.filter(p =>
         p.name?.toLowerCase().includes(search) ||
