@@ -3,6 +3,8 @@
  * Incluye todas las normalizaciones y casos especiales
  */
 
+import { getTireImage } from '@/config/tire-image-mapping'
+
 // Columnas que representan stock por sucursal
 const BRANCH_STOCK_COLUMNS = [
   'BELGRANO',
@@ -367,8 +369,9 @@ export function convertToProduct(row: Record<string, any>) {
   const finalPrice = priceSale || (priceList ? priceList * 0.75 : 100000)
   const finalPriceList = priceList || (priceSale ? priceSale / 0.75 : 0)
 
-  // Determinar la imagen del producto basada en el modelo (para Pirelli)
-  const imageUrl = mapPirelliModelToImage(brand, modelNormalized, description)
+  // Determinar la imagen del producto basada en el modelo y marca
+  // Usa el sistema centralizado de mapeo de imágenes
+  const imageUrl = getTireImage(name, brand)
 
   return {
     name: name.substring(0, 200),
@@ -397,63 +400,16 @@ export function convertToProduct(row: Record<string, any>) {
 }
 
 /**
+ * @deprecated Usar getTireImage() de '@/config/tire-image-mapping' en su lugar.
+ * Esta función se mantiene por compatibilidad pero será eliminada en futuras versiones.
+ *
  * Mapea un modelo de producto Pirelli a su imagen correspondiente
  */
 export function mapPirelliModelToImage(brand: string, model: string, description: string): string {
-  // Solo aplicar mapeo para productos Pirelli
-  if (brand.toUpperCase() !== 'PIRELLI') {
-    return '/mock-tire.png'
-  }
-
-  // Mapeo de modelos a imágenes
-  const imageMap: Record<string, string> = {
-    'CINTURATO P1': '/Cinturato-P1-Verde-1505470090255.webp',
-    'CINTURATO P7': '/cinturato-p7-4505517104514.webp',
-    'SCORPION HT': '/Scorpion-HT-4505525112686.webp',
-    'SCORPION VERDE ALL SEASON': '/Pirelli-Scorpion-Verde-All-Season-off-low-01-1505470075906.webp',
-    'SCORPION VERDE': '/Scorpion-Verde-1505470074533.webp',
-    'SCORPION ZERO ALL SEASON': '/Scorpion-Zero-All-Season-1505470086399.webp',
-    'SCORPION ZERO ASIMMETRICO': '/Scorpion-Zero-Asimmetrico-1505470076172.webp',
-    'SCORPION ZERO': '/Scorpion-Zero-1505470088294.webp',
-    'SCORPION ATR': '/Scorpion-Atr-1505470067539.webp',
-    'SCORPION MTR': '/Scorpion-MTR-1505470071047.webp',
-    'SCORPION ALL TERRAIN PLUS': '/Scorpion-All-Terrain-Plus-4505483375619.webp',
-    'SCORPION': '/Scorpion-4505525112390.webp',
-    'P ZERO CORSA SYSTEM': '/Pzero-Corsa-System-Direzionale-1505470088408.webp',
-    'P ZERO CORSA': '/Pzero-Corsa-PZC4-1505470090635.webp',
-    'P ZERO': '/Pzero-Nuovo-1505470072726.webp',
-    'P400 EVO': '/P400Evo_review_3-4.webp',
-    'CHRONO': '/Chrono-1505470062195.webp'
-  }
-
-  // Combinar modelo y descripción para buscar coincidencias
-  const searchText = `${model} ${description}`.toUpperCase()
-
-  // Buscar coincidencia en el mapa
-  for (const [modelKey, imagePath] of Object.entries(imageMap)) {
-    const patterns = [
-      modelKey.toUpperCase(),
-      modelKey.toUpperCase().replace(' ', '-'),
-      modelKey.toUpperCase().replace(' ', ''),
-      modelKey.toUpperCase().replace('P ZERO', 'PZERO'),
-      modelKey.toUpperCase().replace('P ZERO', 'P-ZERO')
-    ]
-
-    for (const pattern of patterns) {
-      if (searchText.includes(pattern)) {
-        return imagePath
-      }
-    }
-  }
-
-  // Caso especial para Scorpion genérico
-  if (searchText.includes('SCORPION')) {
-    return '/Scorpion-4505525112390.webp'
-  }
-
-  // Imagen por defecto para Pirelli
-  return '/mock-tire.png'
+  // Redirigir al nuevo sistema centralizado
+  return getTireImage(`${model} ${description}`, brand)
 }
+
 
 /**
  * Detecta si el Excel tiene formato de columnas por sucursal
