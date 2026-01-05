@@ -531,6 +531,7 @@ export function useFilterPersistence(
 
   /**
    * Load from session storage
+   * Sanitizes stored filters to ensure no null values override defaults
    */
   const loadFromSession = useCallback((): FilterState | null => {
     try {
@@ -538,7 +539,17 @@ export function useFilterPersistence(
       if (!stored) return null
 
       const parsed = JSON.parse(stored)
-      return parsed.filters || null
+      if (!parsed.filters) return null
+
+      // Sanitize filters - filter out null/undefined values before merging with defaults
+      const sanitizedFilters = Object.fromEntries(
+        Object.entries(parsed.filters).filter(([_, v]) => v !== null && v !== undefined)
+      )
+
+      return {
+        ...DEFAULT_FILTER_STATE,
+        ...sanitizedFilters
+      }
     } catch (error) {
       console.error('Failed to load from session:', error)
       if (onError && error instanceof Error) {
@@ -584,6 +595,7 @@ export function useFilterPersistence(
 
   /**
    * Load from localStorage fallback
+   * Sanitizes stored filters to ensure no null values override defaults
    */
   const loadFallback = useCallback((): FilterState | null => {
     try {
@@ -591,7 +603,18 @@ export function useFilterPersistence(
       if (!stored) return null
 
       const parsed = JSON.parse(stored)
-      return parsed.filters || null
+      if (!parsed.filters) return null
+
+      // Sanitize filters - filter out null/undefined values before merging with defaults
+      // This prevents corrupted localStorage data from causing crashes
+      const sanitizedFilters = Object.fromEntries(
+        Object.entries(parsed.filters).filter(([_, v]) => v !== null && v !== undefined)
+      )
+
+      return {
+        ...DEFAULT_FILTER_STATE,
+        ...sanitizedFilters
+      }
     } catch (error) {
       console.error('Failed to load fallback:', error)
       if (onError && error instanceof Error) {
@@ -634,9 +657,19 @@ export function useFilterPersistence(
           if (!event.newValue) return
 
           const parsed = JSON.parse(event.newValue)
-          const syncedFilters = parsed.filters
+          if (!parsed.filters) return
 
-          if (syncedFilters && onSync) {
+          // Sanitize synced filters - filter out null/undefined values
+          const sanitizedFilters = Object.fromEntries(
+            Object.entries(parsed.filters).filter(([_, v]) => v !== null && v !== undefined)
+          )
+
+          const syncedFilters = {
+            ...DEFAULT_FILTER_STATE,
+            ...sanitizedFilters
+          }
+
+          if (onSync) {
             onSync(syncedFilters)
           }
         } catch (error) {
