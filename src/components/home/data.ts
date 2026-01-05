@@ -43,7 +43,7 @@ export const tireModels: TireModel[] = [
     id: 1,
     name: 'Scorpion Verde',
     category: 'SUV & Camionetas',
-    image: '/Scorpion-Verde-1505470074533 (1).webp',
+    image: '/pirelli-scorpion-verde.webp',
     description: 'Máximo rendimiento para SUVs de alta gama',
     price: 'Consultar',
     features: ['Todo terreno', 'Bajo ruido', 'Eco-friendly']
@@ -52,7 +52,7 @@ export const tireModels: TireModel[] = [
     id: 2,
     name: 'P Zero',
     category: 'Alta Performance',
-    image: '/Pzero-Nuovo-1505470072726.webp',
+    image: '/pirelli-pzero.webp',
     description: 'El neumático elegido por los mejores autos deportivos',
     price: 'Consultar',
     features: ['Ultra High Performance', 'Máxima adherencia', 'Control preciso']
@@ -61,7 +61,7 @@ export const tireModels: TireModel[] = [
     id: 3,
     name: 'Cinturato P7',
     category: 'Autos Premium',
-    image: '/Cinturato-P1-Verde-1505470090255.webp',
+    image: '/pirelli-cinturato-p7.webp',
     description: 'Confort, seguridad y eficiencia para tu auto',
     price: 'Consultar',
     features: ['Bajo consumo', 'Gran durabilidad', 'Confort acústico']
@@ -70,7 +70,7 @@ export const tireModels: TireModel[] = [
     id: 4,
     name: 'Scorpion HT',
     category: 'Pick-ups & Camionetas',
-    image: '/Scorpion-HT-4505525112686.webp',
+    image: '/pirelli-scorpion-ht.webp',
     description: 'Perfectos para camionetas y uso mixto on/off road',
     price: 'Consultar',
     features: ['Durabilidad extrema', 'Tracción superior', 'Bajo desgaste']
@@ -176,24 +176,24 @@ export const performanceStats: Stat[] = [
 
 export const tireImages = {
   column1: [
-    '/Scorpion-Verde-1505470074533 (1).webp',
-    '/Scorpion-HT-4505525112686.webp',
-    '/Scorpion-4505525112390.webp',
-    '/Scorpion-All-Terrain-Plus-4505483375619.webp',
-    '/Scorpion-Atr-1505470067539.webp',
-    '/Scorpion-MTR-1505470071047.webp',
-    '/Scorpion-Zero-1505470088294.webp',
-    '/Scorpion-Zero-All-Season-1505470086399.webp',
+    '/pirelli-scorpion-verde.webp',
+    '/pirelli-scorpion-ht.webp',
+    '/pirelli-scorpion.webp',
+    '/pirelli-scorpion-at-plus.webp',
+    '/pirelli-scorpion-atr.webp',
+    '/pirelli-scorpion-mtr.webp',
+    '/pirelli-scorpion-zero.webp',
+    '/pirelli-scorpion-zero-all-season.webp',
   ],
   column2: [
-    '/Cinturato-P1-Verde-1505470090255.webp',
-    '/Cinturato-P7-1505470083092.webp',
-    '/cinturato-p7-4505517104514.webp',
-    '/Pzero-Nuovo-1505470072726.webp',
-    '/Pzero-Corsa-PZC4-1505470090635.webp',
-    '/Pzero-Corsa-System-Direzionale-1505470088408.webp',
-    '/Pzero-vecchio-1505470066413.webp',
-    '/Chrono-1505470062195.webp',
+    '/pirelli-cinturato-p1.webp',
+    '/pirelli-cinturato-p7.webp',
+    '/pirelli-pzero.webp',
+    '/pirelli-pzero-corsa.webp',
+    '/pirelli-pzero-corsa-system.webp',
+    '/pirelli-scorpion-zero-asimmetrico.webp',
+    '/pirelli-scorpion-verde-all-season.webp',
+    '/pirelli-chrono.webp',
   ]
 }
 
