@@ -355,8 +355,8 @@ export function convertToProduct(row: Record<string, any>) {
   }
 
   // Limpiar códigos
-  const codigoPropio = String(row.codigo_propio || row.CODIGO_PROPIO || '').replace(/[\[\]]/g, '').trim()
-  const codigoProveedor = String(row.codigo_proveedor || row.CODIGO_PROVEEDOR || '').replace(/[\[\]]/g, '').trim()
+  const codigoPropio = String(row.codigo_propio || row.CODIGO_PROPIO || '').replace(/[[\]]/g, '').trim()
+  const codigoProveedor = String(row.codigo_proveedor || row.CODIGO_PROVEEDOR || '').replace(/[[\]]/g, '').trim()
 
   // Obtener marca
   const brand = String(row.marca || row.MARCA || row.brand || 'PIRELLI').toUpperCase()
