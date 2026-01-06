@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdminAuth } from '@/lib/auth/admin-check'
 import type { ListOrdersResponse, Order, OrderFilters, OrderItem, CreateOrderResponse } from '@/features/orders/types'
 import { OrderStatus, PaymentStatus, OrderSource } from '@/features/orders/types'
 import {
@@ -53,6 +54,12 @@ function buildWhereFilters(filters: OrderFilters): string[] {
  */
 export async function GET(request: Request): Promise<NextResponse<ListOrdersResponse>> {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response as NextResponse<ListOrdersResponse>
+    }
+
     const { searchParams } = new URL(request.url)
 
     // Parse query parameters
@@ -178,6 +185,12 @@ export async function GET(request: Request): Promise<NextResponse<ListOrdersResp
  */
 export async function POST(request: Request): Promise<NextResponse<CreateOrderResponse>> {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response as NextResponse<CreateOrderResponse>
+    }
+
     // Validate request body with Zod
     const validation = await parseRequestBody(request, adminCreateOrderSchema)
 

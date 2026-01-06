@@ -26,7 +26,10 @@ import {
   type LucideIcon,
   ChevronRight,
   Bot,
-  RefreshCw
+  RefreshCw,
+  MessageCircle,
+  Settings,
+  GitBranch,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import dynamic from 'next/dynamic'
@@ -71,14 +74,17 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { href: '/admin', label: 'Dashboard', Icon: LayoutDashboard },
+  { href: '/admin/chats', label: 'Chats WhatsApp', Icon: MessageCircle },
   { href: '/admin/products', label: 'Productos', Icon: Package },
   { href: '/admin/orders', label: 'Pedidos', Icon: ShoppingCart },
   { href: '/admin/turnos', label: 'Turnos', Icon: Calendar },
   { href: '/admin/vouchers', label: 'Vouchers', Icon: Ticket },
   { href: '/admin/usuarios', label: 'Usuarios', Icon: Users },
   { href: '/admin/ia', label: 'Asistente IA', Icon: Bot },
+  { href: '/admin/ia/automatizaciones', label: 'Flujos IA', Icon: GitBranch },
   { href: '/admin/stock/import', label: 'Importar Stock', Icon: Import },
   { href: '/admin/stock/update', label: 'Actualizar Stock', Icon: RefreshCw },
+  { href: '/admin/configuracion', label: 'Configuración', Icon: Settings },
 ]
 
 // Memoized navigation component to prevent re-renders

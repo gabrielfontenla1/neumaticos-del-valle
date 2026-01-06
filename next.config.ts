@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // ESLint - use separate npm run lint (we have our own config)
+  // ESLint - disabled during builds (many pre-existing warnings)
+  // Run 'npm run lint' manually to check for issues
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -245,6 +245,8 @@ export type ConversationStatus = 'active' | 'resolved' | 'escalated'
 
 export type MessageRole = 'user' | 'assistant' | 'system'
 
+export type MessageProvider = 'kommo' | 'twilio' | 'meta'
+
 export type MessageIntent =
   | 'greeting'
   | 'product_inquiry'
@@ -258,13 +260,15 @@ export type MessageIntent =
 
 export interface Conversation {
   id: string
-  kommo_chat_id: string
+  provider: MessageProvider // New: messaging provider
+  kommo_chat_id: string | null // Now nullable for Twilio/Meta
   kommo_contact_id?: string
   phone?: string
   contact_name?: string
   status: ConversationStatus
   message_count: number
   last_message_at?: Date
+  last_user_message_at?: Date | null // New: for 24h window tracking
   escalated_at?: Date
   escalation_reason?: string
   metadata: Record<string, unknown>
@@ -275,14 +279,17 @@ export interface Conversation {
 export interface Message {
   id: string
   conversation_id: string
+  provider: MessageProvider // New: messaging provider
   kommo_message_id?: string
   role: MessageRole
   content: string
+  message_type?: 'text' | 'image' | 'file' | 'location' // New: message type
   intent?: MessageIntent
   products_referenced?: string[]
   ai_model?: string
   tokens_used?: number
   response_time_ms?: number
+  metadata?: Record<string, unknown> // New: flexible metadata
   created_at: Date
 }
 
@@ -313,6 +320,9 @@ export interface ProcessMessageResult {
     price: number
   }>
   error?: string
+  // Appointment flow fields
+  appointmentCreated?: boolean
+  appointmentId?: string
 }
 
 // ============================================================================
@@ -349,4 +359,63 @@ export interface ParsedWebhookEvent {
   accountId?: string
   subdomain?: string
   timestamp: Date
+}
+
+// ============================================================================
+// TWILIO WHATSAPP INTEGRATION
+// ============================================================================
+
+export interface TwilioWebhookPayload {
+  MessageSid: string
+  AccountSid: string
+  From: string // Format: whatsapp:+1234567890
+  To: string // Format: whatsapp:+1234567890
+  Body: string
+  NumMedia?: string
+  MediaContentType0?: string
+  MediaUrl0?: string
+  ProfileName?: string
+  WaId?: string // WhatsApp ID
+}
+
+export interface TwilioMessageRequest {
+  to: string // Format: whatsapp:+1234567890
+  from: string // Format: whatsapp:+1234567890
+  body: string
+  mediaUrl?: string[]
+}
+
+export interface TwilioMessageResponse {
+  sid: string
+  status: 'queued' | 'sending' | 'sent' | 'delivered' | 'undelivered' | 'failed'
+  error_code?: number
+  error_message?: string
+}
+
+// Helper type for unified message processing
+export interface UnifiedMessageInput {
+  provider: MessageProvider
+  phone: string
+  contactName?: string
+  messageText: string
+  messageId: string
+  timestamp: number
+  metadata?: Record<string, unknown>
+}
+
+// 24-hour window helper
+export interface WhatsAppWindowStatus {
+  canSendProactive: boolean
+  lastUserMessageAt: Date | null
+  windowExpiresAt: Date | null
+  minutesRemaining: number | null
+}
+
+// Provider statistics from view
+export interface ProviderStatistics {
+  provider: MessageProvider
+  total: number
+  active: number
+  escalated: number
+  within_24h: number
 }

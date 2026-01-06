@@ -94,6 +94,8 @@ describe('Cart API', () => {
         price: 45000,
         stock: 5,
         category: 'car',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
       })
 
       const result = await addToCart(sessionId, productId, 1)
@@ -141,6 +143,8 @@ describe('Cart API', () => {
         price: 50000,
         stock: 10,
         category: 'car',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
       })
 
       const result = await addToCart(sessionId, productId, 3)
@@ -175,6 +179,8 @@ describe('Cart API', () => {
         price: 30000,
         stock: 2,
         category: 'car',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
       })
 
       const result = await addToCart(sessionId, productId, 5)
@@ -228,6 +234,8 @@ describe('Cart API', () => {
         price: 50000,
         stock: 10,
         category: 'car',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
       })
 
       const result = await updateCartItemQuantity(sessionId, 'item-1', 5)

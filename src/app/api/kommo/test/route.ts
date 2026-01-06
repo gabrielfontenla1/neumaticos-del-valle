@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Endpoint de prueba para simular un webhook de Kommo
 export async function GET(request: NextRequest) {
+  // Block test endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Test endpoint not available in production' },
+      { status: 404 }
+    )
+  }
+
   const testPayload = {
     event: "message_received",
     timestamp: new Date().toISOString(),

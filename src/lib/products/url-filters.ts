@@ -242,7 +242,7 @@ export function parseTireSize(sizeString: string): {
   }
 
   // Match formats: 205/55R16, 205/55/16, 205-55-16
-  const match = sizeString.match(/^(\d{3})[\/\-](\d{2})[R\/\-]?(\d{2})$/i)
+  const match = sizeString.match(/^(\d{3})[-/](\d{2})[-/R]?(\d{2})$/i)
 
   if (!match) {
     return null

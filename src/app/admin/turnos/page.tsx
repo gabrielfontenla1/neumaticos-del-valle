@@ -108,7 +108,7 @@ export default function TurnosPage() {
       .order('appointment_date')
       .order('appointment_time')
 
-    if (appointmentsData) setAppointments(appointmentsData as any)
+    if (appointmentsData) setAppointments(appointmentsData as Appointment[])
 
     setIsLoading(false)
   }

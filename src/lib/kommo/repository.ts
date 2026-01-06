@@ -13,7 +13,8 @@ import type {
   Message,
   ConversationStatus,
   MessageRole,
-  MessageIntent
+  MessageIntent,
+  MessageProvider
 } from './types'
 
 // Cliente Supabase sin tipos estrictos para tablas nuevas
@@ -29,7 +30,8 @@ const db = createClient<any>(supabaseUrl, supabaseServiceKey)
 
 interface DbConversation {
   id: string
-  kommo_chat_id: string
+  provider: MessageProvider
+  kommo_chat_id: string | null
   kommo_contact_id: string | null
   kommo_lead_id: string | null
   phone: string | null
@@ -41,6 +43,7 @@ interface DbConversation {
   user_message_count: number
   last_message_at: string | null
   last_bot_response_at: string | null
+  last_user_message_at: string | null
   escalated_at: string | null
   resolved_at: string | null
   escalation_reason: string | null
@@ -55,6 +58,7 @@ interface DbConversation {
 interface DbMessage {
   id: string
   conversation_id: string
+  provider: MessageProvider
   kommo_message_id: string | null
   role: MessageRole
   content: string
@@ -127,6 +131,37 @@ export async function findConversationByPhone(
 }
 
 /**
+ * Busca una conversación por número de teléfono y proveedor
+ * Used primarily for Twilio/Meta providers where phone is the primary identifier
+ */
+export async function findConversationByPhoneAndProvider(
+  phone: string,
+  provider: MessageProvider
+): Promise<Conversation | null> {
+  // Normalizar número de teléfono
+  const normalizedPhone = normalizePhoneNumber(phone)
+
+  const { data, error } = await db
+    .from('kommo_conversations')
+    .select('*')
+    .eq('phone', normalizedPhone)
+    .eq('provider', provider)
+    .order('last_message_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null
+    }
+    console.error('[KommoRepository] Error finding conversation by phone and provider:', error)
+    throw error
+  }
+
+  return mapDbToConversation(data)
+}
+
+/**
  * Crea una nueva conversación
  */
 export async function createConversation(input: {
@@ -136,10 +171,14 @@ export async function createConversation(input: {
   contactName?: string
   channel?: string
   metadata?: Record<string, unknown>
+  provider?: MessageProvider
 }): Promise<Conversation> {
+  const provider = input.provider || 'kommo'
+
   const { data, error } = await db
     .from('kommo_conversations')
     .insert({
+      provider,
       kommo_chat_id: input.kommoChatId,
       kommo_contact_id: input.kommoContactId || null,
       phone: input.phone ? normalizePhoneNumber(input.phone) : null,
@@ -156,7 +195,7 @@ export async function createConversation(input: {
     throw error
   }
 
-  console.log('[KommoRepository] Created conversation:', data.id)
+  console.log('[KommoRepository] Created conversation:', data.id, 'provider:', provider)
   return mapDbToConversation(data)
 }
 
@@ -169,6 +208,7 @@ export async function getOrCreateConversation(input: {
   phone?: string
   contactName?: string
   channel?: string
+  provider?: MessageProvider
 }): Promise<Conversation> {
   // Intentar encontrar por chat ID
   const existing = await findConversationByChatId(input.kommoChatId)
@@ -274,11 +314,15 @@ export async function addMessage(input: {
   tokensUsed?: number
   responseTimeMs?: number
   metadata?: Record<string, unknown>
+  provider?: MessageProvider
 }): Promise<Message> {
+  const provider = input.provider || 'kommo'
+
   const { data, error } = await db
     .from('kommo_messages')
     .insert({
       conversation_id: input.conversationId,
+      provider,
       kommo_message_id: input.kommoMessageId || null,
       role: input.role,
       content: input.content,
@@ -423,6 +467,7 @@ function normalizePhoneNumber(phone: string): string {
 function mapDbToConversation(db: DbConversation): Conversation {
   return {
     id: db.id,
+    provider: db.provider,
     kommo_chat_id: db.kommo_chat_id,
     kommo_contact_id: db.kommo_contact_id || undefined,
     phone: db.phone || undefined,
@@ -430,6 +475,7 @@ function mapDbToConversation(db: DbConversation): Conversation {
     status: db.status,
     message_count: db.message_count,
     last_message_at: db.last_message_at ? new Date(db.last_message_at) : undefined,
+    last_user_message_at: db.last_user_message_at ? new Date(db.last_user_message_at) : null,
     escalated_at: db.escalated_at ? new Date(db.escalated_at) : undefined,
     escalation_reason: db.escalation_reason || undefined,
     metadata: db.metadata,
@@ -442,6 +488,7 @@ function mapDbToMessage(db: DbMessage): Message {
   return {
     id: db.id,
     conversation_id: db.conversation_id,
+    provider: db.provider,
     kommo_message_id: db.kommo_message_id || undefined,
     role: db.role,
     content: db.content,

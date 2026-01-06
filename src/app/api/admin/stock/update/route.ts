@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdminAuth } from '@/lib/auth/admin-check'
 
 // Create untyped admin client for flexible updates
 const supabaseAdmin = createClient(
@@ -230,6 +231,12 @@ export async function GET() {
 // POST: Analyze or Update
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     const action = formData.get('action') as string || 'analyze'

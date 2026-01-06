@@ -20,26 +20,26 @@ interface Branch {
 const branches: Branch[] = [
   {
     id: 'catamarca-belgrano',
-    name: 'Catamarca - Av Belgrano',
-    address: 'Av Belgrano 938, San Fernando del Valle de Catamarca',
+    name: 'Catamarca - Av. Belgrano',
+    address: 'Av. Belgrano 938, San Fernando del Valle de Catamarca',
     province: 'Catamarca',
-    phone: '0383-443-5555',
-    whatsapp: '5493855946462',
+    phone: '0383 419-7501',
+    whatsapp: '5493834197501',
     hours: {
-      weekdays: '08:30 - 19:00',
-      saturday: '08:30 - 13:00'
+      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
+      saturday: '08:30 - 12:30'
     }
   },
   {
     id: 'catamarca-alem',
-    name: 'Catamarca - Alem',
-    address: 'Alem 1118, San Fernando del Valle de Catamarca',
+    name: 'Catamarca - Av. Alem',
+    address: 'Av. Alem 1118, San Fernando del Valle de Catamarca',
     province: 'Catamarca',
-    phone: '0383-443-6666',
-    whatsapp: '5493855946462',
+    phone: '03832 68-8634',
+    whatsapp: '5493832688634',
     hours: {
-      weekdays: '08:30 - 19:00',
-      saturday: '08:30 - 13:00'
+      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
+      saturday: '08:00 - 12:30'
     }
   },
   {
@@ -47,47 +47,47 @@ const branches: Branch[] = [
     name: 'Santiago del Estero - La Banda',
     address: 'República del Líbano Sur 866, La Banda',
     province: 'Santiago del Estero',
-    phone: '0385-427-7777',
-    whatsapp: '5493855946462',
+    phone: '0385 601-1304',
+    whatsapp: '5493856011304',
     hours: {
-      weekdays: '08:30 - 19:00',
-      saturday: '08:30 - 13:00'
+      weekdays: '08:00 - 12:30 y 15:00 - 19:00',
+      saturday: '08:00 - 12:30'
     }
   },
   {
     id: 'santiago-belgrano',
     name: 'Santiago del Estero - Belgrano',
-    address: 'Avenida Belgrano Sur 2834, Santiago del Estero',
+    address: 'Av. Belgrano Sur 2834, Santiago del Estero',
     province: 'Santiago del Estero',
-    phone: '0385-421-9999',
-    whatsapp: '5493855946462',
+    phone: '0385 677-1265',
+    whatsapp: '5493856771265',
     hours: {
-      weekdays: '08:30 - 19:00',
-      saturday: '08:30 - 13:00'
+      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
+      saturday: '08:00 - 12:30'
     }
   },
   {
     id: 'salta',
     name: 'Salta',
-    address: 'Jujuy 330, Salta',
+    address: 'Av. Jujuy 330, Salta',
     province: 'Salta',
-    phone: '0387-431-8888',
-    whatsapp: '5493855946462',
+    phone: '0387 685-8577',
+    whatsapp: '5493876858577',
     hours: {
-      weekdays: '08:30 - 19:00',
+      weekdays: '08:30 - 18:00',
       saturday: '08:30 - 13:00'
     }
   },
   {
     id: 'tucuman',
     name: 'Tucumán',
-    address: 'Avenida Gobernador del Campo 436, San Miguel de Tucumán',
+    address: 'Av. Gdor. del Campo 436, San Miguel de Tucumán',
     province: 'Tucumán',
-    phone: '0381-422-5555',
-    whatsapp: '5493855946462',
+    phone: '0381 483-4520',
+    whatsapp: '5493814834520',
     hours: {
-      weekdays: '08:30 - 19:00',
-      saturday: '08:30 - 13:00'
+      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
+      saturday: '08:00 - 12:30'
     }
   }
 ];

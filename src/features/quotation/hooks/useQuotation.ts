@@ -84,9 +84,10 @@ export function useQuotation() {
         return quotationData.selectedTire !== null;
       case 3:
         return true; // Services are optional
-      case 4:
+      case 4: {
         const { fullName, email, phone } = quotationData.contact;
         return fullName.trim() !== '' && email.trim() !== '' && phone.trim() !== '';
+      }
       default:
         return false;
     }

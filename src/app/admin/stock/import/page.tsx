@@ -277,7 +277,7 @@ export default function StockImportPage() {
               }
               break
 
-            case 'warning':
+            case 'warning': {
               const warningMsg = `⚠️ Advertencia Fila ${data.row} - ${data.sku}: ${data.warning}`
               addLog('warning', warningMsg)
               setLiveWarnings(prev => [...prev, {
@@ -286,6 +286,7 @@ export default function StockImportPage() {
                 warning: data.warning
               }])
               break
+            }
 
             case 'complete':
               setProgress(100)

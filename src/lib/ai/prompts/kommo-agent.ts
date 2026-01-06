@@ -242,7 +242,7 @@ export function extractTireSize(message: string): {
 } | null {
   // Patrón: 185/65R14, 205/55 R16, 225-45-17, etc.
   const patterns = [
-    /(\d{3})\s*[\/\-]\s*(\d{2})\s*[rR]?\s*(\d{2})/,
+    /(\d{3})\s*[-/]\s*(\d{2})\s*[rR]?\s*(\d{2})/,
     /(\d{3})\s+(\d{2})\s+(\d{2})/
   ]
 

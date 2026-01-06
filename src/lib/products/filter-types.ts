@@ -98,7 +98,7 @@ export interface ValidationResult<T> {
  * Tire size format validation regex
  * Matches formats: 205/55R16, 205/55/16, 205-55-16
  */
-export const TIRE_SIZE_REGEX = /^(\d{3})[\/\-](\d{2})[R\/\-]?(\d{2})$/i
+export const TIRE_SIZE_REGEX = /^(\d{3})[-/](\d{2})[-/R]?(\d{2})$/i
 
 /**
  * Validates a sort option

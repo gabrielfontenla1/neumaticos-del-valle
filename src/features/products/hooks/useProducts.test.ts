@@ -22,6 +22,8 @@ const mockProducts = [
     diameter: 16,
     stock: 10,
     category: 'car',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
   },
   {
     id: '2',
@@ -34,6 +36,8 @@ const mockProducts = [
     diameter: 17,
     stock: 5,
     category: 'car',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
   },
 ]
 
