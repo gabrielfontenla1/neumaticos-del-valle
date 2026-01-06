@@ -213,7 +213,7 @@ const FiltersContent = ({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
           <Input
             type="text"
-            placeholder="Marca, modelo... (Enter para buscar)"
+            placeholder=""
             value={inputSearchTerm}
             onChange={(e) => setInputSearchTerm(e.target.value)}
             onKeyDown={(e) => {
@@ -806,9 +806,21 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
   }, [updateFilters])
 
   // Handle search submit (on Enter or button click)
+  // Each search is independent - clears all other filters
   const handleSearchSubmit = useCallback(() => {
-    updateFilter('searchTerm', inputSearchTerm)
-  }, [inputSearchTerm, updateFilter])
+    // Clear all other filters and only apply the search term
+    setInputSizeSearchTerm("")
+    updateFilters({
+      searchTerm: inputSearchTerm,
+      selectedBrand: "all",
+      selectedCategory: "all",
+      selectedModel: "all",
+      selectedWidth: "all",
+      selectedProfile: "all",
+      selectedDiameter: "all",
+      sizeSearchTerm: ""
+    })
+  }, [inputSearchTerm, updateFilters])
 
   // Handle size search submit (on Enter or button click)
   const handleSizeSearchSubmit = useCallback(() => {
