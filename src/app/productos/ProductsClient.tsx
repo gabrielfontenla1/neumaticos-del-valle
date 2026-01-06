@@ -100,7 +100,7 @@ const FiltersContent = ({
         <div className="relative flex-1">
           <Input
             type="text"
-            placeholder="Ej: 205/55R16 (Enter para buscar)"
+            placeholder=""
             value={inputSizeSearchTerm}
             onChange={(e) => {
               setInputSizeSearchTerm(e.target.value)
