@@ -17,8 +17,19 @@ export async function validateTwilioSignature(
     return false
   }
 
-  // Get the full URL
-  const url = request.url
+  // Use the public URL for signature validation (Twilio signs with the public URL)
+  // In production behind a proxy, request.url might be internal (localhost)
+  const publicBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_URL
+  const webhookPath = '/api/twilio/webhook'
+
+  let url: string
+  if (publicBaseUrl) {
+    // Use the configured public URL
+    url = publicBaseUrl.replace(/\/$/, '') + webhookPath
+  } else {
+    // Fallback to request URL (works in development)
+    url = request.url
+  }
 
   // Clone request to read body without consuming it
   const cloned = request.clone()
@@ -32,7 +43,7 @@ export async function validateTwilioSignature(
   const isValid = validateRequest(token, signature, url, params)
 
   if (!isValid) {
-    console.warn('[TwilioSignature] Invalid signature')
+    console.warn('[TwilioSignature] Invalid signature for URL:', url)
   }
 
   return isValid
