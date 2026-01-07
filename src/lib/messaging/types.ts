@@ -1,9 +1,9 @@
 /**
  * Multi-provider messaging abstraction types
- * Supports Kommo, Twilio, and Meta (WhatsApp Business API)
+ * Supports Twilio and Meta (WhatsApp Business API)
  */
 
-export type ProviderType = 'kommo' | 'twilio' | 'meta'
+export type ProviderType = 'twilio' | 'meta'
 
 /**
  * Normalized incoming message format

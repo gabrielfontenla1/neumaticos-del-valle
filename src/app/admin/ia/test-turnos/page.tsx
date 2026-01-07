@@ -56,18 +56,19 @@ export default function TestTurnosPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/kommo/test-appointment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          messageText: input.trim(),
-          senderName: 'Usuario de Prueba',
-          senderPhone: '+5491123456789',
-        }),
-      });
+      // TODO: Re-implement appointment test endpoint with new WhatsApp repository
+      // For now, show a placeholder message
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = {
+        ok: true,
+        json: async () => ({
+          responseText: 'El simulador de turnos está siendo actualizado. Por favor, prueba directamente via WhatsApp.',
+          intent: 'maintenance',
+          appointmentCreated: false,
+          appointmentId: null,
+          error: null,
+        })
+      };
 
       const result = await response.json();
 

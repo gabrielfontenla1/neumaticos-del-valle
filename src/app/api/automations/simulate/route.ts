@@ -1,22 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { emitWorkflowEvent, createExecutionId } from '@/lib/automations/event-emitter'
 
-// Node sequence for Kommo workflow
-const kommoNodes = [
-  'trigger-webhook',
-  'verify-signature',
-  'extract-message',
-  'db-conversation',
-  'ai-intent',
-  'db-save-user',
-  'condition-appointment',
-  'ai-search-products',
-  'ai-generate',
-  'db-save-response',
-  'http-send',
-  'end'
-]
-
 // Node sequence for Twilio workflow
 const twilioNodes = [
   'trigger-webhook',
@@ -31,7 +15,6 @@ const twilioNodes = [
 ]
 
 const workflows: Record<string, string[]> = {
-  'kommo-webhook': kommoNodes,
   'twilio-webhook': twilioNodes,
 }
 
@@ -42,7 +25,7 @@ const workflows: Record<string, string[]> = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { workflowId = 'kommo-webhook', delayMs = 500 } = body
+    const { workflowId = 'twilio-webhook', delayMs = 500 } = body
 
     const nodes = workflows[workflowId]
     if (!nodes) {

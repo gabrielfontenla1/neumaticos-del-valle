@@ -3,17 +3,16 @@
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  Webhook,
   Phone,
   CalendarClock,
   CircleDot,
+  Workflow,
 } from 'lucide-react'
 import { useWorkflowStore } from '../hooks/useWorkflowStore'
 import { workflowList } from '../definitions'
 import type { WorkflowDefinition } from '../types'
 
 const workflowIcons: Record<string, React.ElementType> = {
-  'kommo-webhook': Webhook,
   'twilio-webhook': Phone,
   'appointment-flow': CalendarClock,
 }
@@ -49,7 +48,7 @@ export function WorkflowSelector() {
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
           {workflowList.map((workflow) => {
-            const Icon = workflowIcons[workflow.id] || Webhook
+            const Icon = workflowIcons[workflow.id] || Workflow
             const isActive = activeWorkflow?.id === workflow.id
             const nodeCount = workflow.nodes.length
 

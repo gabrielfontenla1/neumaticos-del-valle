@@ -1,6 +1,6 @@
 /**
  * Messaging provider interface and utilities
- * All messaging providers (Kommo, Twilio, Meta) must implement this interface
+ * All messaging providers (Twilio, Meta) must implement this interface
  */
 
 import type { IncomingMessage, OutgoingMessage, SendResult, ProviderType } from './types'

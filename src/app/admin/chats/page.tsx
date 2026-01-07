@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -19,41 +20,48 @@ import {
   Bot,
   Phone,
   Clock,
-  AlertTriangle,
   RefreshCw,
   Search,
-  ChevronLeft
+  ChevronLeft,
+  Pause,
+  Play,
+  Send,
+  UserCheck
 } from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
 
+// Types
 interface Conversation {
   id: string
-  provider: 'kommo' | 'twilio' | 'meta'
-  phone: string | null
+  phone: string
   contact_name: string | null
-  status: 'active' | 'escalated' | 'resolved'
+  status: 'active' | 'resolved' | 'archived'
+  is_paused: boolean
+  paused_at: string | null
+  paused_by: string | null
+  pause_reason: string | null
   message_count: number
   last_message_at: string | null
-  escalated_at: string | null
-  escalation_reason: string | null
-  channel: string
   created_at: string
-  lastMessage: {
-    content: string
-    role: 'user' | 'assistant'
-    createdAt: string
-  } | null
+  updated_at: string
 }
 
 interface Message {
   id: string
-  role: 'user' | 'assistant' | 'system'
+  conversation_id: string
+  role: 'user' | 'assistant'
   content: string
+  sent_by_human: boolean
+  sent_by_user_id: string | null
   intent: string | null
-  ai_model: string | null
   response_time_ms: number | null
   created_at: string
-  provider: string
 }
+
+// Supabase client for realtime
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function ChatsPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -61,62 +69,197 @@ export default function ChatsPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
-  const [providerFilter, setProviderFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [pauseFilter, setPauseFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [messageInput, setMessageInput] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [isPausing, setIsPausing] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Fetch conversations
-  const fetchConversations = async () => {
+  // Fetch conversations from new WhatsApp endpoint
+  const fetchConversations = useCallback(async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
-      if (providerFilter !== 'all') params.set('provider', providerFilter)
       if (statusFilter !== 'all') params.set('status', statusFilter)
+      if (pauseFilter !== 'all') params.set('is_paused', pauseFilter === 'paused' ? 'true' : 'false')
 
-      const response = await fetch(`/api/admin/conversations?${params}`)
+      const response = await fetch(`/api/admin/whatsapp/conversations?${params}`)
       const data = await response.json()
 
-      if (data.conversations) {
-        setConversations(data.conversations)
+      if (data.success && data.data) {
+        setConversations(data.data)
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [statusFilter, pauseFilter])
 
   // Fetch messages for selected conversation
-  const fetchMessages = async (conversationId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string) => {
     setIsLoadingMessages(true)
     try {
-      const response = await fetch(`/api/admin/conversations?id=${conversationId}`)
+      const response = await fetch(`/api/admin/whatsapp/conversations/${conversationId}`)
       const data = await response.json()
 
-      if (data.messages) {
-        setMessages(data.messages)
+      if (data.success && data.data) {
+        setMessages(data.data.messages || [])
+        // Update selected conversation with latest data
+        const { messages: _, ...convData } = data.data
+        setSelectedConversation(prev => prev ? { ...prev, ...convData } : prev)
       }
     } catch (error) {
       console.error('Error fetching messages:', error)
     } finally {
       setIsLoadingMessages(false)
     }
+  }, [])
+
+  // Pause conversation (human takeover)
+  const handlePauseConversation = async () => {
+    if (!selectedConversation) return
+
+    setIsPausing(true)
+    try {
+      const response = await fetch(`/api/admin/whatsapp/conversations/${selectedConversation.id}/pause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paused_by: 'admin', // TODO: Get actual user ID
+          reason: 'Human takeover from dashboard'
+        })
+      })
+
+      if (response.ok) {
+        setSelectedConversation(prev => prev ? { ...prev, is_paused: true } : prev)
+        fetchConversations()
+      }
+    } catch (error) {
+      console.error('Error pausing conversation:', error)
+    } finally {
+      setIsPausing(false)
+    }
   }
 
+  // Resume conversation (bot takeover)
+  const handleResumeConversation = async () => {
+    if (!selectedConversation) return
+
+    setIsPausing(true)
+    try {
+      const response = await fetch(`/api/admin/whatsapp/conversations/${selectedConversation.id}/pause`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setSelectedConversation(prev => prev ? { ...prev, is_paused: false } : prev)
+        fetchConversations()
+      }
+    } catch (error) {
+      console.error('Error resuming conversation:', error)
+    } finally {
+      setIsPausing(false)
+    }
+  }
+
+  // Send message (human intervention)
+  const handleSendMessage = async () => {
+    if (!selectedConversation || !messageInput.trim()) return
+
+    setIsSending(true)
+    try {
+      const response = await fetch(`/api/admin/whatsapp/conversations/${selectedConversation.id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: messageInput.trim(),
+          user_id: 'admin' // TODO: Get actual user ID
+        })
+      })
+
+      if (response.ok) {
+        setMessageInput('')
+        // Refresh messages
+        fetchMessages(selectedConversation.id)
+      } else {
+        const errorData = await response.json()
+        console.error('Error sending message:', errorData.error)
+        alert('Error al enviar mensaje: ' + (errorData.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      alert('Error al enviar mensaje')
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  // Initial load
   useEffect(() => {
     fetchConversations()
-  }, [providerFilter, statusFilter])
+  }, [fetchConversations])
 
+  // Load messages when conversation selected
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation.id)
     }
-  }, [selectedConversation])
+  }, [selectedConversation?.id, fetchMessages])
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Supabase Realtime subscription for new messages
+  useEffect(() => {
+    const channel = supabase
+      .channel('whatsapp-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'whatsapp_messages'
+        },
+        (payload) => {
+          const newMessage = payload.new as Message
+          // If this message belongs to the selected conversation, add it
+          if (selectedConversation && newMessage.conversation_id === selectedConversation.id) {
+            setMessages(prev => [...prev, newMessage])
+          }
+          // Refresh conversation list to update last_message_at
+          fetchConversations()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'whatsapp_conversations'
+        },
+        (payload) => {
+          const updated = payload.new as Conversation
+          // Update in list
+          setConversations(prev =>
+            prev.map(c => c.id === updated.id ? updated : c)
+          )
+          // Update selected if it's the same
+          if (selectedConversation?.id === updated.id) {
+            setSelectedConversation(updated)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedConversation?.id, fetchConversations])
 
   // Filter conversations by search term
   const filteredConversations = conversations.filter(conv => {
@@ -124,8 +267,7 @@ export default function ChatsPage() {
     const search = searchTerm.toLowerCase()
     return (
       conv.contact_name?.toLowerCase().includes(search) ||
-      conv.phone?.includes(search) ||
-      conv.lastMessage?.content.toLowerCase().includes(search)
+      conv.phone?.includes(search)
     )
   })
 
@@ -155,27 +297,24 @@ export default function ChatsPage() {
     })
   }
 
-  const getProviderBadge = (provider: string) => {
-    const colors: Record<string, string> = {
-      kommo: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      twilio: 'bg-green-500/20 text-green-400 border-green-500/30',
-      meta: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+  const getStatusBadge = (conv: Conversation) => {
+    if (conv.is_paused) {
+      return {
+        style: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+        label: 'Pausado'
+      }
     }
-    return colors[provider] || 'bg-gray-500/20 text-gray-400'
-  }
-
-  const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      escalated: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-      resolved: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+      resolved: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+      archived: 'bg-gray-600/20 text-gray-500 border-gray-600/30'
     }
     const labels: Record<string, string> = {
-      active: 'Activo',
-      escalated: 'Escalado',
-      resolved: 'Resuelto'
+      active: 'Bot Activo',
+      resolved: 'Resuelto',
+      archived: 'Archivado'
     }
-    return { style: styles[status] || '', label: labels[status] || status }
+    return { style: styles[conv.status] || '', label: labels[conv.status] || conv.status }
   }
 
   return (
@@ -187,7 +326,7 @@ export default function ChatsPage() {
           Chats WhatsApp
         </h1>
         <p className="text-gray-400">
-          Visualiza las conversaciones de WhatsApp (Kommo y Twilio)
+          Conversaciones de WhatsApp con control de bot/humano
         </p>
       </div>
 
@@ -207,14 +346,14 @@ export default function ChatsPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Select value={providerFilter} onValueChange={setProviderFilter}>
+              <Select value={pauseFilter} onValueChange={setPauseFilter}>
                 <SelectTrigger className="bg-[#1a1a18] border-[#3a3a37] text-gray-100">
-                  <SelectValue placeholder="Proveedor" />
+                  <SelectValue placeholder="Estado Bot" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#262624] border-[#3a3a37]">
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="kommo">Kommo</SelectItem>
-                  <SelectItem value="twilio">Twilio</SelectItem>
+                  <SelectItem value="active">Bot Activo</SelectItem>
+                  <SelectItem value="paused">Pausados</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -224,7 +363,6 @@ export default function ChatsPage() {
                 <SelectContent className="bg-[#262624] border-[#3a3a37]">
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="escalated">Escalados</SelectItem>
                   <SelectItem value="resolved">Resueltos</SelectItem>
                 </SelectContent>
               </Select>
@@ -254,7 +392,7 @@ export default function ChatsPage() {
             ) : (
               <div className="divide-y divide-[#3a3a37]">
                 {filteredConversations.map((conv) => {
-                  const statusBadge = getStatusBadge(conv.status)
+                  const statusBadge = getStatusBadge(conv)
                   return (
                     <button
                       key={conv.id}
@@ -269,30 +407,22 @@ export default function ChatsPage() {
                             <span className="font-medium text-white truncate">
                               {conv.contact_name || 'Sin nombre'}
                             </span>
-                            {conv.status === 'escalated' && (
-                              <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                            {conv.is_paused && (
+                              <Pause className="h-4 w-4 text-amber-400 flex-shrink-0" />
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
                             <Phone className="h-3 w-3" />
                             <span className="truncate">{conv.phone || 'Sin teléfono'}</span>
                           </div>
-                          {conv.lastMessage && (
-                            <p className="text-sm text-gray-400 truncate">
-                              {conv.lastMessage.role === 'assistant' && '🤖 '}
-                              {conv.lastMessage.content}
-                            </p>
-                          )}
+                          <div className="text-xs text-gray-500">
+                            {conv.message_count} mensajes
+                          </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           <span className="text-xs text-gray-500">
                             {formatDate(conv.last_message_at)}
                           </span>
-                          <div className="flex gap-1">
-                            <Badge variant="outline" className={`text-xs ${getProviderBadge(conv.provider)}`}>
-                              {conv.provider}
-                            </Badge>
-                          </div>
                           <Badge variant="outline" className={`text-xs ${statusBadge.style}`}>
                             {statusBadge.label}
                           </Badge>
@@ -335,12 +465,41 @@ export default function ChatsPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <Phone className="h-3 w-3" />
                     {selectedConversation.phone || 'Sin teléfono'}
-                    <span className="text-gray-600">•</span>
-                    <Badge variant="outline" className={`text-xs ${getProviderBadge(selectedConversation.provider)}`}>
-                      {selectedConversation.provider}
-                    </Badge>
                   </div>
                 </div>
+
+                {/* Pause/Resume Button */}
+                <div className="flex items-center gap-2">
+                  {selectedConversation.is_paused ? (
+                    <Button
+                      onClick={handleResumeConversation}
+                      disabled={isPausing}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      {isPausing ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      Activar Bot
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handlePauseConversation}
+                      disabled={isPausing}
+                      variant="outline"
+                      className="border-amber-500 text-amber-400 hover:bg-amber-500/20"
+                    >
+                      {isPausing ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Pause className="h-4 w-4 mr-2" />
+                      )}
+                      Tomar Control
+                    </Button>
+                  )}
+                </div>
+
                 <div className="text-right text-xs text-gray-500">
                   <div>{selectedConversation.message_count} mensajes</div>
                   <div className="flex items-center gap-1 justify-end">
@@ -350,11 +509,11 @@ export default function ChatsPage() {
                 </div>
               </div>
 
-              {/* Escalation Warning */}
-              {selectedConversation.status === 'escalated' && (
+              {/* Paused Warning */}
+              {selectedConversation.is_paused && (
                 <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center gap-2 text-amber-400 text-sm">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span>Escalado: {selectedConversation.escalation_reason || 'Sin razón especificada'}</span>
+                  <UserCheck className="h-4 w-4" />
+                  <span>Bot pausado - Control humano activo. El bot no responderá hasta que actives nuevamente.</span>
                 </div>
               )}
 
@@ -388,11 +547,15 @@ export default function ChatsPage() {
                             className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                               message.role === 'user'
                                 ? 'bg-[#d97757] text-white'
-                                : 'bg-[#3a3a37] text-gray-300'
+                                : message.sent_by_human
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-[#3a3a37] text-gray-300'
                             }`}
                           >
                             {message.role === 'user' ? (
                               <User className="h-4 w-4" />
+                            ) : message.sent_by_human ? (
+                              <UserCheck className="h-4 w-4" />
                             ) : (
                               <Bot className="h-4 w-4" />
                             )}
@@ -401,7 +564,9 @@ export default function ChatsPage() {
                             className={`rounded-lg px-4 py-2 ${
                               message.role === 'user'
                                 ? 'bg-[#d97757] text-white'
-                                : 'bg-[#2a2a28] text-gray-100 border border-[#3a3a37]'
+                                : message.sent_by_human
+                                  ? 'bg-blue-600/20 text-blue-100 border border-blue-500/30'
+                                  : 'bg-[#2a2a28] text-gray-100 border border-[#3a3a37]'
                             }`}
                           >
                             <div className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -411,13 +576,13 @@ export default function ChatsPage() {
                               message.role === 'user' ? 'text-white/60' : 'text-gray-500'
                             }`}>
                               <span>{formatFullDate(message.created_at)}</span>
-                              {message.intent && (
+                              {message.sent_by_human && (
                                 <>
                                   <span>•</span>
-                                  <span className="italic">{message.intent}</span>
+                                  <span className="text-blue-400">Humano</span>
                                 </>
                               )}
-                              {message.response_time_ms && (
+                              {message.response_time_ms && !message.sent_by_human && (
                                 <>
                                   <span>•</span>
                                   <span>{message.response_time_ms}ms</span>
@@ -433,10 +598,44 @@ export default function ChatsPage() {
                 )}
               </ScrollArea>
 
+              {/* Message Input (only when paused) */}
+              {selectedConversation.is_paused && (
+                <div className="p-4 border-t border-[#3a3a37] bg-[#262624]">
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Escribe un mensaje..."
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
+                      className="flex-1 bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[60px] resize-none"
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={isSending || !messageInput.trim()}
+                      className="bg-[#d97757] hover:bg-[#c86646] text-white self-end"
+                    >
+                      {isSending ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Presiona Enter para enviar. Shift+Enter para nueva línea.
+                  </p>
+                </div>
+              )}
+
               {/* Footer Info */}
               <div className="p-3 border-t border-[#3a3a37] text-xs text-gray-500 flex justify-between">
                 <span>Conversación: {selectedConversation.id.slice(0, 8)}...</span>
-                <span>Canal: {selectedConversation.channel}</span>
+                <span>WhatsApp via Twilio</span>
               </div>
             </>
           ) : (

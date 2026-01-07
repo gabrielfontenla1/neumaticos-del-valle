@@ -14,7 +14,7 @@ export const twilioWebhookFlow: WorkflowDefinition = {
       icon: 'webhook',
       position: { x: 50, y: 150 },
       details: {
-        longDescription: 'Punto de entrada del flujo. Recibe una solicitud HTTP POST desde Twilio cuando un cliente envía un mensaje de WhatsApp. A diferencia de Kommo, Twilio envía los datos como FormData (application/x-www-form-urlencoded) en lugar de JSON.',
+        longDescription: 'Punto de entrada del flujo. Recibe una solicitud HTTP POST desde Twilio cuando un cliente envía un mensaje de WhatsApp. Twilio envía los datos como FormData (application/x-www-form-urlencoded).',
         inputs: [
           { name: 'request', type: 'NextRequest', description: 'Solicitud HTTP entrante de Twilio', example: 'POST /api/twilio/webhook' },
           { name: 'headers', type: 'Headers', description: 'Headers HTTP incluyendo X-Twilio-Signature', example: 'X-Twilio-Signature: abc123...' },
@@ -237,7 +237,7 @@ export const twilioWebhookFlow: WorkflowDefinition = {
       icon: 'check',
       position: { x: 1810, y: 150 },
       details: {
-        longDescription: 'Finaliza el flujo respondiendo con un TwiML vacío a Twilio. A diferencia de la API de Kommo que espera JSON, Twilio espera una respuesta TwiML (XML). Un TwiML vacío indica que el mensaje fue procesado sin necesidad de respuesta síncrona.',
+        longDescription: 'Finaliza el flujo respondiendo con un TwiML vacío a Twilio. Twilio espera una respuesta TwiML (XML). Un TwiML vacío indica que el mensaje fue procesado sin necesidad de respuesta síncrona.',
         inputs: [
           { name: 'success', type: 'boolean', description: 'Si el flujo completó exitosamente' },
           { name: 'processingTime', type: 'number', description: 'Tiempo total de procesamiento en ms' }

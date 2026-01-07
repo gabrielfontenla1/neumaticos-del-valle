@@ -308,7 +308,7 @@ export const appointmentFlow: WorkflowDefinition = {
           { name: 'messageSent', type: 'boolean', description: 'Si el mensaje fue enviado', example: 'true' },
           { name: 'messageId', type: 'string', description: 'ID del mensaje enviado' }
         ],
-        technology: { name: 'Kommo/Twilio API', endpoint: 'messages', method: 'POST' },
+        technology: { name: 'Twilio API', endpoint: 'messages', method: 'POST' },
         typicalDuration: '200-500ms',
         errorCases: [
           { code: 'SEND_FAILED', description: 'Error al enviar mensaje', handling: 'Retry, el turno sigue creado' }

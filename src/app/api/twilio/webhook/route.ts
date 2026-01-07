@@ -4,6 +4,38 @@ import { TwilioClient, validateTwilioSignature, parseTwilioWebhook } from '@/lib
 import { openai, models, temperatures } from '@/lib/ai/openai'
 import { PRODUCT_AGENT_PROMPT, formatSystemPrompt } from '@/lib/ai/prompts/system'
 import { searchFAQs } from '@/lib/ai/embeddings'
+import {
+  getOrCreateConversation as getOrCreateConv,
+  addMessage,
+  getMessageHistoryForLLM,
+  updateConversation
+} from '@/lib/whatsapp/repository'
+import type { WhatsAppConversation, PendingTireSearch } from '@/lib/whatsapp/types'
+
+// Stock location flow services
+import {
+  detectCityFromMessage,
+  getBranchCodeFromCity,
+  getBranchByCode
+} from '@/lib/whatsapp/services/location-service'
+import {
+  searchProductsWithStock,
+  findBranchesWithStock,
+  groupProductsByAvailability
+} from '@/lib/whatsapp/services/stock-service'
+import { findEquivalentsWithStock } from '@/lib/whatsapp/services/equivalence-service'
+import * as templates from '@/lib/whatsapp/templates/stock-responses'
+
+// Appointment flow handler
+import {
+  detectAppointmentIntent,
+  isAppointmentState,
+  startAppointmentFlow,
+  handleAppointmentState
+} from '@/lib/whatsapp/handlers/appointment-handler'
+
+// OpenAI Function Calling handler
+import { processWithFunctionCalling } from '@/lib/whatsapp/ai/function-handler'
 
 // ============================================================================
 // CONFIGURATION
@@ -33,17 +65,9 @@ interface TwilioWebhookPayload {
   WaId?: string
 }
 
-interface Conversation {
-  id: string
-  phone: string
-  contact_name: string | null
-  created_at: string
-}
-
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
+// Conversation and Message types now in @/lib/whatsapp/types
+// Simple message type for LLM context
+type Message = { role: 'user' | 'assistant'; content: string }
 
 interface ProductResult {
   id?: string
@@ -109,7 +133,7 @@ function parseTireSize(query: string): ParsedSize | null {
   const patterns = [
     /(\d{3})\s*[/-]\s*(\d{2})\s*[rR]?\s*(\d{2})/,   // 205/55R16, 205-55-16, 205 55 R 16
     /(\d{3})\s*(\d{2})\s*[rR]?\s*(\d{2})/,          // 2055516 (no separators)
-    /(\d{3})[\/\-\s](\d{2})[\/\-\s]?[rR]?(\d{2})/,  // More flexible
+    /(\d{3})[-/\s](\d{2})[-/\s]?[rR]?(\d{2})/,      // More flexible
   ]
 
   for (const pattern of patterns) {
@@ -454,21 +478,81 @@ async function processMessageAsync(params: {
   const { phoneNumber, profileName, messageText, startTime } = params
 
   try {
-    // 1. Get or create conversation
-    const conversation = await getOrCreateConversation(phoneNumber, profileName)
-    console.log('[Twilio] Conversation:', conversation.id)
+    // 1. Get or create conversation using the new repository
+    const conversation = await getOrCreateConv(phoneNumber, profileName)
+    console.log('[Twilio] Conversation:', conversation.id, 'State:', conversation.conversation_state)
 
     // 2. Save user message
-    await saveMessage(conversation.id, 'user', messageText)
+    await addMessage({
+      conversationId: conversation.id,
+      role: 'user',
+      content: messageText
+    })
 
-    // 3. Get conversation history
-    const history = await getConversationHistory(conversation.id)
+    // 3. CHECK IF CONVERSATION IS PAUSED (human takeover)
+    if (conversation.is_paused) {
+      console.log('[Twilio] Conversation is PAUSED - skipping AI response (human takeover)')
+      return
+    }
 
-    // 4. Search for relevant products (multi-tier with fallbacks)
+    // 4. CONVERSATION STATE FLOW - Handle based on conversation state
+    // (For active flows like appointment or stock location)
+    const stateResult = await handleConversationState(conversation, messageText, phoneNumber, startTime)
+    if (stateResult.handled) {
+      console.log('[Twilio] Handled by state machine:', stateResult.state)
+      return
+    }
+
+    // 5. OPENAI FUNCTION CALLING - Primary handler for idle state
+    // Uses AI to intelligently route to appointments, stock, help, etc.
+    if (conversation.conversation_state === 'idle') {
+      console.log('[Twilio] Using OpenAI function calling...')
+      const history = await getMessageHistoryForLLM(conversation.id, MAX_HISTORY_MESSAGES)
+
+      try {
+        const functionResult = await processWithFunctionCalling(
+          conversation,
+          messageText,
+          phoneNumber,
+          history
+        )
+
+        if (functionResult.handled) {
+          console.log('[Twilio] Handled by function calling:', functionResult.functionName)
+          await saveAndSendResponse(conversation.id, functionResult.response, phoneNumber, startTime)
+          return
+        }
+      } catch (error) {
+        console.error('[Twilio] Function calling error, falling back:', error)
+        // Continue to fallback handlers
+      }
+    }
+
+    // 6. LEGACY: Keyword-based appointment detection (backup)
+    if (conversation.conversation_state === 'idle' && detectAppointmentIntent(messageText)) {
+      console.log('[Twilio] Appointment intent detected (legacy), starting flow')
+      const result = await startAppointmentFlow(conversation, phoneNumber)
+      if (result.handled && result.response) {
+        await saveAndSendResponse(conversation.id, result.response, phoneNumber, startTime)
+        return
+      }
+    }
+
+    // 7. Check for tire size in message - trigger stock flow
+    const parsedSize = parseTireSize(messageText)
+    if (parsedSize) {
+      const stockFlowResult = await handleTireSizeQuery(conversation, parsedSize, messageText, phoneNumber, startTime)
+      if (stockFlowResult.handled) {
+        console.log('[Twilio] Handled by stock flow')
+        return
+      }
+    }
+
+    // 8. FALLBACK: Original AI flow for non-product queries
+    const history = await getMessageHistoryForLLM(conversation.id, MAX_HISTORY_MESSAGES)
     const products = await searchProducts(messageText)
     console.log('[Twilio] Products found:', products.length)
 
-    // 5. Search FAQs (optional, don't fail if error)
     let faqs: Array<{ question: string; answer: string }> = []
     try {
       faqs = await searchFAQs(messageText, 3)
@@ -476,7 +560,6 @@ async function processMessageAsync(params: {
       console.log('[Twilio] FAQ search skipped')
     }
 
-    // 6. Generate AI response
     const responseText = await generateAIResponse({
       message: messageText,
       products,
@@ -487,17 +570,19 @@ async function processMessageAsync(params: {
     const responseTime = Date.now() - startTime
     console.log(`[Twilio] Response generated in ${responseTime}ms`)
 
-    // 7. Save bot response
-    await saveMessage(conversation.id, 'assistant', responseText)
+    await addMessage({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: responseText,
+      responseTimeMs: responseTime
+    })
 
-    // 8. Send response via Twilio
     await sendTwilioResponse(phoneNumber, responseText)
     console.log('[Twilio] Message sent successfully')
 
   } catch (error) {
     console.error('[Twilio] Error processing message:', error)
 
-    // Send fallback response on error
     try {
       await sendTwilioResponse(
         params.phoneNumber,
@@ -507,6 +592,285 @@ async function processMessageAsync(params: {
       console.error('[Twilio] Failed to send error response:', e)
     }
   }
+}
+
+// ============================================================================
+// STOCK LOCATION FLOW HANDLERS
+// ============================================================================
+
+interface StateResult {
+  handled: boolean
+  state?: string
+}
+
+/**
+ * Handle conversation based on its current state
+ */
+async function handleConversationState(
+  conversation: WhatsAppConversation,
+  messageText: string,
+  phoneNumber: string,
+  startTime: number
+): Promise<StateResult> {
+  // Handle appointment flow states
+  if (isAppointmentState(conversation.conversation_state)) {
+    const result = await handleAppointmentState(conversation, messageText, phoneNumber, startTime)
+    if (result.handled && result.response) {
+      await saveAndSendResponse(conversation.id, result.response, phoneNumber, startTime)
+      return { handled: true, state: result.newState || conversation.conversation_state }
+    }
+    return { handled: result.handled }
+  }
+
+  // Handle stock flow states
+  switch (conversation.conversation_state) {
+    case 'awaiting_location':
+      return handleLocationResponse(conversation, messageText, phoneNumber, startTime)
+
+    case 'awaiting_transfer_confirm':
+      return handleTransferConfirmation(conversation, messageText, phoneNumber, startTime)
+
+    case 'idle':
+    case 'showing_results':
+    default:
+      return { handled: false }
+  }
+}
+
+/**
+ * Handle location response from user
+ */
+async function handleLocationResponse(
+  conversation: WhatsAppConversation,
+  messageText: string,
+  phoneNumber: string,
+  startTime: number
+): Promise<StateResult> {
+  console.log('[Twilio] Processing location response:', messageText)
+
+  // Try to detect city from message
+  const detectedCity = detectCityFromMessage(messageText)
+
+  if (!detectedCity) {
+    // Location not recognized
+    const responseText = templates.locationNotRecognized()
+    await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+    return { handled: true, state: 'awaiting_location' }
+  }
+
+  // Get branch info
+  const branchCode = getBranchCodeFromCity(detectedCity)
+  if (!branchCode) {
+    const responseText = templates.locationNotRecognized()
+    await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+    return { handled: true, state: 'awaiting_location' }
+  }
+
+  const branch = await getBranchByCode(branchCode)
+  if (!branch) {
+    const responseText = templates.locationNotRecognized()
+    await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+    return { handled: true, state: 'awaiting_location' }
+  }
+
+  // Update conversation with location
+  await updateConversation(conversation.id, {
+    user_city: detectedCity,
+    preferred_branch_id: branch.id,
+    conversation_state: 'showing_results'
+  })
+
+  // Now search with the pending tire search
+  const pendingSearch = conversation.pending_tire_search
+  if (!pendingSearch) {
+    console.error('[Twilio] No pending search found after location')
+    await updateConversation(conversation.id, { conversation_state: 'idle' })
+    return { handled: false }
+  }
+
+  // Confirm branch and search for products
+  let responseText = templates.confirmBranch(branchCode) + '\n\n'
+  responseText += await generateStockResponse(pendingSearch, branchCode, branch.id)
+
+  // Clear pending search and set state
+  await updateConversation(conversation.id, {
+    pending_tire_search: null,
+    conversation_state: 'idle'
+  })
+
+  await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+  return { handled: true, state: 'showing_results' }
+}
+
+/**
+ * Handle tire size query - trigger location flow if needed
+ */
+async function handleTireSizeQuery(
+  conversation: WhatsAppConversation,
+  parsedSize: ParsedSize,
+  messageText: string,
+  phoneNumber: string,
+  startTime: number
+): Promise<StateResult> {
+  const sizeDisplay = `${parsedSize.width}/${parsedSize.profile}R${parsedSize.diameter}`
+  console.log('[Twilio] Tire size detected:', sizeDisplay)
+
+  // If user has a preferred branch, search directly
+  if (conversation.preferred_branch_id && conversation.user_city) {
+    const branchCode = getBranchCodeFromCity(conversation.user_city)
+    if (branchCode) {
+      const responseText = await generateStockResponse(
+        { width: parsedSize.width, profile: parsedSize.profile, diameter: parsedSize.diameter, originalMessage: messageText },
+        branchCode,
+        conversation.preferred_branch_id
+      )
+      await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+      return { handled: true, state: 'showing_results' }
+    }
+  }
+
+  // No location - ask for it
+  const pendingSearch: PendingTireSearch = {
+    width: parsedSize.width,
+    profile: parsedSize.profile,
+    diameter: parsedSize.diameter,
+    originalMessage: messageText
+  }
+
+  await updateConversation(conversation.id, {
+    conversation_state: 'awaiting_location',
+    pending_tire_search: pendingSearch
+  })
+
+  const responseText = templates.askLocation()
+  await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+  return { handled: true, state: 'awaiting_location' }
+}
+
+/**
+ * Handle transfer confirmation
+ */
+async function handleTransferConfirmation(
+  conversation: WhatsAppConversation,
+  messageText: string,
+  phoneNumber: string,
+  startTime: number
+): Promise<StateResult> {
+  const lowerMessage = messageText.toLowerCase()
+  const affirmatives = ['si', 'sí', 'dale', 'ok', 'bueno', 'quiero', 'traeme', 'traelo', 'hacelo']
+  const negatives = ['no', 'nah', 'mejor no', 'despues', 'después', 'otro dia']
+
+  if (affirmatives.some(a => lowerMessage.includes(a))) {
+    // User confirmed transfer
+    const responseText = `Perfecto, un asesor te va a contactar para coordinar el envío entre sucursales.
+
+¿Hay algo más en lo que te pueda ayudar?`
+
+    await updateConversation(conversation.id, { conversation_state: 'idle' })
+    await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+    return { handled: true, state: 'transfer_confirmed' }
+  }
+
+  if (negatives.some(n => lowerMessage.includes(n))) {
+    const responseText = `Sin problema. ¿Hay algo más en lo que te pueda ayudar?`
+    await updateConversation(conversation.id, { conversation_state: 'idle' })
+    await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+    return { handled: true, state: 'transfer_cancelled' }
+  }
+
+  // Unclear response
+  const responseText = `¿Querés que te lo traigamos desde otra sucursal? Respondé "sí" o "no".`
+  await saveAndSendResponse(conversation.id, responseText, phoneNumber, startTime)
+  return { handled: true, state: 'awaiting_transfer_confirm' }
+}
+
+/**
+ * Generate stock response based on availability
+ */
+async function generateStockResponse(
+  search: PendingTireSearch,
+  branchCode: string,
+  _branchId: string
+): Promise<string> {
+  const sizeDisplay = `${search.width}/${search.profile}R${search.diameter}`
+  const size = { width: search.width, profile: search.profile, diameter: search.diameter }
+
+  try {
+    // Search products with stock at the branch
+    const products = await searchProductsWithStock(size, branchCode)
+    const groups = groupProductsByAvailability(products)
+
+    console.log('[Twilio] Stock search results:', {
+      available: groups.available.length,
+      lastUnits: groups.lastUnits.length,
+      singleUnit: groups.singleUnit.length,
+      unavailable: groups.unavailable.length
+    })
+
+    // CASE 1: Products available (4+ units)
+    if (groups.available.length > 0) {
+      return templates.availableProducts(groups.available, branchCode, sizeDisplay)
+    }
+
+    // CASE 2: Last units (2-3 units)
+    if (groups.lastUnits.length > 0) {
+      return templates.lastUnitsProducts(groups.lastUnits, branchCode, sizeDisplay)
+    }
+
+    // CASE 3: Single unit warning
+    if (groups.singleUnit.length > 0) {
+      const product = groups.singleUnit[0]
+      const equivalents = await findEquivalentsWithStock(size, branchCode)
+      const productIds = products.map(p => p.product_id)
+      const otherBranches = await findBranchesWithStock(productIds, 2)
+
+      return templates.singleUnitWarning(product, branchCode, equivalents, otherBranches)
+    }
+
+    // CASE 4: No stock - check equivalents
+    const equivalents = await findEquivalentsWithStock(size, branchCode)
+    if (equivalents.length > 0) {
+      return templates.noStockWithEquivalents(sizeDisplay, branchCode, equivalents)
+    }
+
+    // CASE 5: No stock locally - check other branches
+    const allProducts = await searchProductsWithStock(size) // Without branch filter
+    const productIds = allProducts.map(p => p.product_id)
+    const otherBranches = await findBranchesWithStock(productIds, 2)
+
+    if (otherBranches.length > 0) {
+      return templates.availableInOtherBranch(sizeDisplay, branchCode, otherBranches)
+    }
+
+    // CASE 6: No stock anywhere
+    return templates.noStockAnywhere(sizeDisplay)
+
+  } catch (error) {
+    console.error('[Twilio] Error generating stock response:', error)
+    return templates.errorResponse()
+  }
+}
+
+/**
+ * Helper to save message and send response
+ */
+async function saveAndSendResponse(
+  conversationId: string,
+  responseText: string,
+  phoneNumber: string,
+  startTime: number
+): Promise<void> {
+  const responseTime = Date.now() - startTime
+
+  await addMessage({
+    conversationId,
+    role: 'assistant',
+    content: responseText,
+    responseTimeMs: responseTime
+  })
+
+  await sendTwilioResponse(phoneNumber, responseText)
+  console.log(`[Twilio] Response sent in ${responseTime}ms`)
 }
 
 // ============================================================================
@@ -576,86 +940,8 @@ async function generateAIResponse(context: {
 }
 
 // ============================================================================
-// DATABASE OPERATIONS
+// DATABASE OPERATIONS - Now handled by @/lib/whatsapp/repository
 // ============================================================================
-
-async function getOrCreateConversation(phone: string, contactName: string): Promise<Conversation> {
-  const normalizedPhone = phone.replace(/\D/g, '')
-
-  // Try to find existing conversation
-  const { data: existing } = await db
-    .from('whatsapp_conversations')
-    .select('*')
-    .eq('phone', normalizedPhone)
-    .single()
-
-  if (existing) {
-    // Update contact name if changed
-    if (contactName && existing.contact_name !== contactName) {
-      await db.from('whatsapp_conversations')
-        .update({ contact_name: contactName })
-        .eq('id', existing.id)
-    }
-    return existing
-  }
-
-  // Create new conversation
-  const { data: created, error } = await db
-    .from('whatsapp_conversations')
-    .insert({
-      phone: normalizedPhone,
-      contact_name: contactName
-    })
-    .select()
-    .single()
-
-  if (error) {
-    console.error('[Twilio] Error creating conversation:', error)
-    return {
-      id: 'temp-' + Date.now(),
-      phone: normalizedPhone,
-      contact_name: contactName,
-      created_at: new Date().toISOString()
-    }
-  }
-
-  return created
-}
-
-async function saveMessage(conversationId: string, role: 'user' | 'assistant', content: string): Promise<void> {
-  if (conversationId.startsWith('temp-')) return
-
-  try {
-    await db.from('whatsapp_messages').insert({
-      conversation_id: conversationId,
-      role,
-      content
-    })
-  } catch (error) {
-    console.error('[Twilio] Error saving message:', error)
-  }
-}
-
-async function getConversationHistory(conversationId: string): Promise<Message[]> {
-  if (conversationId.startsWith('temp-')) return []
-
-  try {
-    const { data } = await db
-      .from('whatsapp_messages')
-      .select('role, content')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: false })
-      .limit(MAX_HISTORY_MESSAGES)
-
-    return (data || []).reverse().map(m => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content
-    }))
-  } catch (error) {
-    console.error('[Twilio] Error getting history:', error)
-    return []
-  }
-}
 
 // ============================================================================
 // TWILIO RESPONSE

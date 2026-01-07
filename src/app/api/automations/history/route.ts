@@ -20,7 +20,6 @@ interface MessageRow {
   intent: string | null
   response_time_ms: number | null
   created_at: string
-  provider: string | null
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -31,26 +30,18 @@ export async function GET(request: Request): Promise<Response> {
 
     // Get recent messages to infer executions
     // Each user message followed by assistant message = 1 execution
-    let query = supabaseAdmin
-      .from('kommo_messages')
+    const query = supabaseAdmin
+      .from('whatsapp_messages')
       .select(`
         id,
         conversation_id,
         role,
         intent,
         response_time_ms,
-        created_at,
-        provider
+        created_at
       `)
       .order('created_at', { ascending: false })
       .limit(limit * 2) // Get more to pair user/assistant messages
-
-    // Filter by workflow (provider)
-    if (workflowId === 'kommo-webhook') {
-      query = query.eq('provider', 'kommo')
-    } else if (workflowId === 'twilio-webhook') {
-      query = query.eq('provider', 'twilio')
-    }
 
     const { data, error } = await query
 
@@ -81,7 +72,7 @@ export async function GET(request: Request): Promise<Response> {
 
           executions.push({
             id: `exec_${message.id}`,
-            workflowId: message.provider === 'twilio' ? 'twilio-webhook' : 'kommo-webhook',
+            workflowId: 'twilio-webhook',
             status: 'completed',
             startedAt: startTime.toISOString(),
             completedAt: endTime.toISOString(),
