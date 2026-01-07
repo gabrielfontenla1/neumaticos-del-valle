@@ -10,8 +10,9 @@ import type { MessageIntent } from './types'
 // ============================================================================
 
 const CONFIG = {
-  // Número máximo de mensajes sin resolver antes de escalar
-  maxUnresolvedMessages: 5,
+  // Número máximo de mensajes del usuario sin respuesta satisfactoria antes de escalar
+  // Aumentado a 15 para dar más oportunidad al bot de resolver consultas
+  maxUnresolvedMessages: 15,
 
   // Palabras clave que disparan escalación inmediata
   immediateEscalationKeywords: [
