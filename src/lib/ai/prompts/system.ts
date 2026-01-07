@@ -196,8 +196,11 @@ export const formatSystemPrompt = (basePrompt: string, context?: PromptContext):
       prompt += '\n';
     });
   } else {
-    prompt += `\n\n⚠️ NO HAY PRODUCTOS DISPONIBLES PARA ESTA CONSULTA\n`;
-    prompt += `Debes responder: "No tenemos esa medida específica en este momento, pero podemos conseguirla. ¿Te interesa que te la cotice?"\n`;
+    prompt += `\n\n⚠️ NO SE ENCONTRARON PRODUCTOS PARA LA BÚSQUEDA EXACTA\n`;
+    prompt += `OPCIONES DE RESPUESTA (elegí UNA según el contexto):\n`;
+    prompt += `1. Si preguntó por medida específica: "No encontré esa medida exacta en stock. ¿Querés que te la cotice? O puedo mostrarte medidas similares."\n`;
+    prompt += `2. Si preguntó algo general sin medida: "¿Qué medida de neumático necesitás? La podés ver en el costado, es algo como 185/60R15"\n`;
+    prompt += `3. NUNCA digas solo "no tenemos" - SIEMPRE ofrecé alternativa (cotizar, medidas similares, o preguntar medida)\n`;
   }
 
   // Add FAQ information if available
