@@ -106,6 +106,17 @@ export async function findEquivalentTires(
         diameter: product.diameter
       }
 
+      // IMPORTANTE: Excluir productos con la MISMA MEDIDA EXACTA
+      // Estos se muestran en el grid principal, no en equivalencias
+      const isExactSameSize =
+        product.width === originalSize.width &&
+        product.profile === originalSize.profile &&
+        product.diameter === originalSize.diameter
+
+      if (isExactSameSize) {
+        continue // Saltar - ya se muestra en el grid principal
+      }
+
       // IMPORTANTE: Verificar compatibilidad del rodado primero
       // Por defecto, solo permitir el mismo rodado (a menos que se especifique lo contrario)
       const rimCompatible = allowDifferentRim ?
