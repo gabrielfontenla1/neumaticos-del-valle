@@ -7,6 +7,7 @@ import { CheckCircle, Sparkles, Star, MapPin, Calendar, Clock, Wrench } from 'lu
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import QRCode from 'react-qr-code'
+import { WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 
 interface AppointmentSuccessProps {
   appointmentId: string
@@ -108,7 +109,7 @@ export function AppointmentSuccess({ appointmentId, appointmentDetails }: Appoin
       `• ID de Reserva: #${appointmentId.slice(0, 8).toUpperCase()}\n\n` +
       `Muchas gracias!`
     )
-    const whatsappUrl = `https://wa.me/5493855946462?text=${message}`
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBERS.default}?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
 
