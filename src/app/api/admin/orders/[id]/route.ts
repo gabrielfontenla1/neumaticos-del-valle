@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import type { UpdateOrderRequest, UpdateOrderResponse, Order } from '@/features/orders/types'
 import { OrderStatus, PaymentStatus } from '@/features/orders/types'
+import { requireAdminAuth } from '@/lib/auth/admin-check'
 
 /**
  * Validate order status transitions
@@ -29,6 +30,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<{ success: boolean; order?: unknown; history?: unknown[]; error?: string }>> {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response as NextResponse<{ success: boolean; order?: unknown; history?: unknown[]; error?: string }>
+    }
+
     const { id } = await params
 
     // Validate UUID format
@@ -104,6 +111,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<UpdateOrderResponse>> {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response as NextResponse<UpdateOrderResponse>
+    }
+
     const { id } = await params
     const body: UpdateOrderRequest = await request.json()
 
@@ -295,6 +308,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<UpdateOrderResponse>> {
   try {
+    // Verify admin authentication
+    const authResult = await requireAdminAuth()
+    if (!authResult.authorized) {
+      return authResult.response as NextResponse<UpdateOrderResponse>
+    }
+
     const { id } = await params
 
     // Validate UUID format
@@ -425,4 +444,17 @@ export async function DELETE(
       { status: 500 }
     )
   }
+}
+
+/**
+ * PATCH /api/admin/orders/[id]
+ * Partial update for an order (delegated to PUT for consistency)
+ * This method exists for REST API compliance with frontend expectations
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse<UpdateOrderResponse>> {
+  // Delegate to PUT handler - both do partial updates in this implementation
+  return PUT(request, { params })
 }
