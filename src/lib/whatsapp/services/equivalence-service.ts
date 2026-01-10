@@ -79,7 +79,6 @@ export async function findEquivalentsWithStock(
     .not('width', 'is', null)
     .not('aspect_ratio', 'is', null)
     .not('rim_diameter', 'is', null)
-    .eq('is_active', true)
 
   if (error) {
     console.error('[EquivalenceService] Error fetching products:', error)

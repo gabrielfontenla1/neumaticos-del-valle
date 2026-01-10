@@ -131,7 +131,6 @@ export async function searchProductsWithStock(
     .eq('width', size.width)
     .eq('aspect_ratio', size.profile)
     .eq('rim_diameter', size.diameter)
-    .eq('is_active', true)
 
   const { data, error } = await query
 
