@@ -1,9 +1,14 @@
 'use client'
 
 import { useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { ShoppingCart, AlertCircle } from 'lucide-react'
 import { useOrders } from '@/features/orders/hooks/useOrders'
 import { OrderFilters } from '@/features/orders/components/OrderFilters'
 import { OrdersTable } from '@/features/orders/components/OrdersTable'
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton'
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { OrderFilters as OrderFiltersType, OrderStatus } from '@/features/orders/types'
 
 export default function AdminOrdersPage() {
@@ -35,75 +40,55 @@ export default function AdminOrdersPage() {
     await updateOrderStatus(orderId, status)
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Órdenes</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Administra todas las órdenes del sistema
-          </p>
-          {total > 0 && (
-            <p className="mt-1 text-sm text-gray-500">
-              {total} orden{total !== 1 ? 'es' : ''} en total
-            </p>
-          )}
-        </div>
+  if (loading && orders.length === 0) {
+    return (
+      <div className="p-6 bg-[#30302e] min-h-screen">
+        <TableSkeleton rows={8} columns={6} />
+      </div>
+    )
+  }
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error al cargar las órdenes</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-                {error.includes('Failed to fetch orders') && (
-                  <div className="mt-3 space-y-2 text-xs text-red-600">
-                    <p className="font-semibold">Posibles soluciones:</p>
-                    <ol className="list-decimal list-inside space-y-1">
-                      <li>Verifica que la tabla 'orders' existe en Supabase</li>
-                      <li>Ejecuta el script SQL en: src/database/migrations/create_orders_tables_fixed.sql</li>
-                      <li>Configura las políticas RLS para permitir lectura</li>
-                      <li>Ejecuta: <code className="bg-red-100 px-1 rounded">node src/scripts/diagnose-orders.mjs</code></li>
-                    </ol>
-                    <p className="mt-2">
-                      📖 Ver instrucciones completas en: <code className="bg-red-100 px-1 rounded">FIX_ORDERS_DASHBOARD.md</code>
-                    </p>
-                  </div>
-                )}
-              </div>
+  return (
+    <main className="p-6 space-y-6 bg-[#30302e] min-h-screen">
+      {/* Header Card */}
+      <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-[#d97757]/20 border border-[#d97757]/30">
+              <ShoppingCart className="w-8 h-8 text-[#d97757]" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl text-[#fafafa]">Gestión de Órdenes</CardTitle>
+              <CardDescription className="text-[#888888]">
+                {total > 0 ? `${total} orden${total !== 1 ? 'es' : ''} en total` : 'Administra todas las órdenes del sistema'}
+              </CardDescription>
             </div>
           </div>
-        )}
+        </CardHeader>
+      </Card>
 
-        {/* Filters */}
-        <OrderFilters onFilterChange={handleFilterChange} loading={loading} />
+      {/* Error Message */}
+      {error && (
+        <Alert variant="destructive" className="bg-red-950/50 border-red-900 text-red-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Error al cargar las órdenes:</strong> {error}
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Orders Table */}
-        <OrdersTable
-          orders={orders}
-          loading={loading}
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          onStatusChange={handleStatusChange}
-        />
-      </div>
-    </div>
+      {/* Filters */}
+      <OrderFilters onFilterChange={handleFilterChange} loading={loading} />
+
+      {/* Orders Table */}
+      <OrdersTable
+        orders={orders}
+        loading={loading}
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        onStatusChange={handleStatusChange}
+      />
+    </main>
   )
 }

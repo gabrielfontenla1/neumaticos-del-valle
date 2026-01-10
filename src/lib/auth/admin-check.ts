@@ -28,6 +28,22 @@ type RequireAdminAuthResult = AuthResult | UnauthorizedResult
  * }
  */
 export async function requireAdminAuth(): Promise<RequireAdminAuthResult> {
+  // DEV MODE: Bypass authentication in development environment
+  const isDevelopment = process.env.NODE_ENV === 'development'
+
+  if (isDevelopment) {
+    console.log('[DEV] Bypassing admin auth check in development mode')
+    // Create a mock session for development
+    const mockSession: Session = {
+      user: {
+        email: 'dev@neumaticoselvalle.com',
+        name: 'Dev Admin',
+      },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }
+    return { authorized: true, session: mockSession }
+  }
+
   const session = await auth()
 
   if (!session?.user) {

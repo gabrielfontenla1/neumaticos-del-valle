@@ -1,7 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { Search, X } from 'lucide-react'
 import { OrderStatus, OrderSource, PaymentStatus, type OrderFilters } from '@/features/orders/types'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface OrderFiltersProps {
   onFilterChange: (filters: OrderFilters) => void
@@ -51,7 +62,7 @@ export function OrderFilters({ onFilterChange, loading }: OrderFiltersProps) {
     const newFilters = {
       ...filters,
       [key]: value || undefined,
-      page: 1, // Reset to first page when filters change
+      page: 1,
     }
     setFilters(newFilters)
     onFilterChange(newFilters)
@@ -83,127 +94,106 @@ export function OrderFilters({ onFilterChange, loading }: OrderFiltersProps) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow mb-6">
-      <h2 className="text-lg font-semibold mb-4">Filtros</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    <Card className="p-4 bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Search */}
-        <div>
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-            Buscar
-          </label>
-          <input
+        <div className="relative">
+          <Input
             type="text"
-            id="search"
-            placeholder="Cliente, email o teléfono..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Buscar por cliente, email o teléfono..."
             value={filters.search || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
             disabled={loading}
+            className="pl-10 bg-[#262626] border-[#3a3a38] text-[#fafafa] placeholder:text-[#888888] focus:border-[#d97757] focus-visible:ring-1 focus-visible:ring-[#d97757]"
           />
+          <Search className="absolute left-3 top-2.5 w-5 h-5 text-[#888888]" />
         </div>
 
         {/* Status */}
-        <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-            Estado
-          </label>
-          <select
-            id="status"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={filters.status || ''}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            disabled={loading}
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+        <Select
+          value={filters.status || undefined}
+          onValueChange={(value) => handleFilterChange('status', value)}
+          disabled={loading}
+        >
+          <SelectTrigger className="bg-[#262626] border-[#3a3a38] text-[#fafafa] [&>span]:text-[#888888] data-[placeholder]:text-[#888888] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]">
+            <SelectValue placeholder="Todos los estados" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+            {STATUS_OPTIONS.filter(opt => opt.value).map((option) => (
+              <SelectItem key={option.value} value={option.value} className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa] cursor-pointer">
                 {option.label}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-        </div>
+          </SelectContent>
+        </Select>
 
         {/* Payment Status */}
-        <div>
-          <label htmlFor="payment_status" className="block text-sm font-medium text-gray-700 mb-1">
-            Estado de Pago
-          </label>
-          <select
-            id="payment_status"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={filters.payment_status || ''}
-            onChange={(e) => handleFilterChange('payment_status', e.target.value)}
-            disabled={loading}
-          >
-            {PAYMENT_STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+        <Select
+          value={filters.payment_status || undefined}
+          onValueChange={(value) => handleFilterChange('payment_status', value)}
+          disabled={loading}
+        >
+          <SelectTrigger className="bg-[#262626] border-[#3a3a38] text-[#fafafa] [&>span]:text-[#888888] data-[placeholder]:text-[#888888] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]">
+            <SelectValue placeholder="Todos los pagos" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+            {PAYMENT_STATUS_OPTIONS.filter(opt => opt.value).map((option) => (
+              <SelectItem key={option.value} value={option.value} className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa] cursor-pointer">
                 {option.label}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-        </div>
+          </SelectContent>
+        </Select>
 
         {/* Source */}
-        <div>
-          <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-1">
-            Fuente
-          </label>
-          <select
-            id="source"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={filters.source || ''}
-            onChange={(e) => handleFilterChange('source', e.target.value)}
-            disabled={loading}
-          >
-            {SOURCE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+        <Select
+          value={filters.source || undefined}
+          onValueChange={(value) => handleFilterChange('source', value)}
+          disabled={loading}
+        >
+          <SelectTrigger className="bg-[#262626] border-[#3a3a38] text-[#fafafa] [&>span]:text-[#888888] data-[placeholder]:text-[#888888] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]">
+            <SelectValue placeholder="Todas las fuentes" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+            {SOURCE_OPTIONS.filter(opt => opt.value).map((option) => (
+              <SelectItem key={option.value} value={option.value} className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa] cursor-pointer">
                 {option.label}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-        </div>
+          </SelectContent>
+        </Select>
 
         {/* Date From */}
-        <div>
-          <label htmlFor="date_from" className="block text-sm font-medium text-gray-700 mb-1">
-            Desde
-          </label>
-          <input
-            type="date"
-            id="date_from"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={filters.date_from || ''}
-            onChange={(e) => handleFilterChange('date_from', e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        <Input
+          type="date"
+          value={filters.date_from || ''}
+          onChange={(e) => handleFilterChange('date_from', e.target.value)}
+          disabled={loading}
+          className="bg-[#262626] border-[#3a3a38] text-[#fafafa] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert focus:border-[#d97757] focus-visible:ring-1 focus-visible:ring-[#d97757]"
+        />
 
         {/* Date To */}
-        <div>
-          <label htmlFor="date_to" className="block text-sm font-medium text-gray-700 mb-1">
-            Hasta
-          </label>
-          <input
-            type="date"
-            id="date_to"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={filters.date_to || ''}
-            onChange={(e) => handleFilterChange('date_to', e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        <Input
+          type="date"
+          value={filters.date_to || ''}
+          onChange={(e) => handleFilterChange('date_to', e.target.value)}
+          disabled={loading}
+          className="bg-[#262626] border-[#3a3a38] text-[#fafafa] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert focus:border-[#d97757] focus-visible:ring-1 focus-visible:ring-[#d97757]"
+        />
       </div>
 
       {/* Reset Button */}
-      <div className="flex justify-end">
-        <button
+      <div className="flex justify-end mt-4">
+        <Button
           onClick={handleReset}
           disabled={loading}
-          className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="secondary"
+          className="gap-2 bg-[#262626] border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38] hover:border-[#d97757] transition-all"
         >
+          <X className="w-4 h-4" />
           Limpiar Filtros
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   )
 }
