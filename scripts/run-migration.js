@@ -1,65 +1,64 @@
+/**
+ * Script to run migration directly via Supabase
+ */
+
+const { createClient } = require('@supabase/supabase-js')
 const fs = require('fs')
 const path = require('path')
 
-const SUPABASE_URL = 'https://oyiwyzmaxgnzyhmmkstr.supabase.co'
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95aXd5em1heGduenlobW1rc3RyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDI4MjM3OSwiZXhwIjoyMDc1ODU4Mzc5fQ.i6FMnZo-QsCYH6oQUQcrLtK6naPu5HdE-_3FXhwgWbM'
+// Load environment variables
+require('dotenv').config({ path: '.env.local' })
 
-async function runMigration() {
-  try {
-    const migrationPath = path.join(__dirname, '../supabase/migrations/005_make_contact_optional.sql')
-    const sql = fs.readFileSync(migrationPath, 'utf8')
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    console.log('📝 Running migration...\n')
-    console.log(sql)
-    console.log('\n')
-
-    // Split by semicolon and execute each statement
-    const statements = sql.split(';').filter(s => s.trim().length > 0)
-
-    for (const statement of statements) {
-      const trimmed = statement.trim()
-      if (!trimmed || trimmed.startsWith('--')) continue
-
-      console.log(`Executing: ${trimmed.substring(0, 60)}...`)
-
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
-        },
-        body: JSON.stringify({ query: trimmed })
-      })
-
-      if (!response.ok) {
-        // Try direct SQL execution via postgres REST API
-        const directResponse = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SERVICE_ROLE_KEY,
-            'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify({ query: trimmed })
-        })
-
-        if (!directResponse.ok) {
-          console.error('❌ Failed to execute statement')
-          console.error('Response:', await directResponse.text())
-          continue
-        }
-      }
-
-      console.log('✅ Success')
-    }
-
-    console.log('\n✅ Migration completed!')
-  } catch (error) {
-    console.error('❌ Migration failed:', error.message)
-    process.exit(1)
-  }
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase credentials in .env.local')
+  process.exit(1)
 }
 
-runMigration()
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+async function runMigration() {
+  console.log('🚀 Running AI config migration...\n')
+
+  // Read migration file
+  const migrationPath = path.join(__dirname, '../supabase/migrations/20260121_ai_config_settings.sql')
+  const sql = fs.readFileSync(migrationPath, 'utf8')
+
+  console.log('📝 Migration file loaded\n')
+  console.log('⚠️  Note: This script will insert seed data into app_settings')
+  console.log('⚠️  For table creation, please use Supabase Dashboard SQL Editor\n')
+
+  // Verify seed data
+  const { data: settings, error: settingsError } = await supabase
+    .from('app_settings')
+    .select('key')
+    .in('key', [
+      'ai_models_config',
+      'whatsapp_bot_config',
+      'ai_prompts_config',
+      'whatsapp_function_tools',
+      'services_config'
+    ])
+
+  if (settingsError) {
+    console.log('⚠️  Error checking existing data:', settingsError.message)
+  } else {
+    console.log(`✅ Found ${settings.length}/5 existing configuration entries`)
+    if (settings.length > 0) {
+      settings.forEach(s => console.log(`   - ${s.key}`))
+      console.log('\n⚠️  Some configs already exist. Migration will skip duplicates.')
+    }
+  }
+
+  console.log('\n🎉 Please run the full SQL migration in Supabase Dashboard:\n')
+  console.log('1. Go to: https://supabase.com/dashboard/project/oyiwyzmaxgnzyhmmkstr/sql')
+  console.log('2. Copy the contents of: supabase/migrations/20260121_ai_config_settings.sql')
+  console.log('3. Paste and run in the SQL Editor\n')
+}
+
+runMigration().catch(err => {
+  console.error('💥 Error:', err)
+  process.exit(1)
+})

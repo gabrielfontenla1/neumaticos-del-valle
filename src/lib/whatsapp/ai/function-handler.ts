@@ -8,6 +8,8 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat/completio
 import {
   whatsappTools,
   WHATSAPP_SYSTEM_PROMPT,
+  getWhatsAppSystemPromptDynamic,
+  getWhatsAppToolsDynamic,
   type BookAppointmentArgs,
   type ConfirmAppointmentArgs,
   type CheckStockArgs,
@@ -68,9 +70,13 @@ export async function processWithFunctionCalling(
   messageHistory: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<FunctionCallResult> {
   try {
+    // Load dynamic configuration
+    const systemPrompt = await buildSystemPromptDynamic(conversation)
+    const tools = await getWhatsAppToolsDynamic()
+
     // Build messages array with context
     const messages: ChatCompletionMessageParam[] = [
-      { role: 'system', content: buildSystemPrompt(conversation) },
+      { role: 'system', content: systemPrompt },
       ...messageHistory.map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content
@@ -82,7 +88,7 @@ export async function processWithFunctionCalling(
     const response = await openai.chat.completions.create({
       model: models.chat,
       messages,
-      tools: whatsappTools,
+      tools,
       tool_choice: 'auto',
       temperature: temperatures.balanced,
       max_tokens: 500
@@ -134,7 +140,68 @@ export async function processWithFunctionCalling(
 }
 
 /**
- * Build system prompt with current context
+ * Build system prompt with current context (async, loads from config)
+ */
+async function buildSystemPromptDynamic(conversation: WhatsAppConversation): Promise<string> {
+  // Load base prompt from configuration
+  let prompt = await getWhatsAppSystemPromptDynamic()
+
+  // Add pending appointment context if exists
+  if (conversation.pending_appointment) {
+    const pending = conversation.pending_appointment
+    prompt += `\n\nCONTEXTO ACTUAL - TURNO EN PROGRESO:`
+
+    if (pending.province) {
+      prompt += `\n- Provincia: ${pending.province}`
+    }
+    if (pending.branch_name) {
+      prompt += `\n- Sucursal: ${pending.branch_name}`
+    }
+    if (pending.selected_services.length > 0) {
+      const serviceNames = pending.selected_services.map(id => {
+        const s = getServiceById(id)
+        return s?.name || id
+      }).join(', ')
+      prompt += `\n- Servicios: ${serviceNames}`
+    }
+    if (pending.preferred_date) {
+      prompt += `\n- Fecha: ${pending.preferred_date}`
+    }
+    if (pending.preferred_time) {
+      prompt += `\n- Hora: ${pending.preferred_time}`
+    }
+    if (pending.customer_name) {
+      prompt += `\n- Nombre: ${pending.customer_name}`
+    }
+
+    // Determine what's missing
+    const missing: string[] = []
+    if (!pending.province) missing.push('provincia')
+    if (!pending.branch_id) missing.push('sucursal')
+    if (pending.selected_services.length === 0) missing.push('servicios')
+    if (!pending.preferred_date) missing.push('fecha')
+    if (!pending.preferred_time) missing.push('hora')
+    if (!pending.customer_name) missing.push('nombre')
+
+    if (missing.length > 0) {
+      prompt += `\n\nFALTA: ${missing.join(', ')}`
+      prompt += `\nPreguntá por lo que falta de forma natural.`
+    } else {
+      prompt += `\n\nTODO COMPLETO - Mostrá el resumen y pedí confirmación con confirm_appointment`
+    }
+  }
+
+  // Add location context
+  if (conversation.user_city) {
+    prompt += `\n\nUbicación del usuario: ${conversation.user_city}`
+  }
+
+  return prompt
+}
+
+/**
+ * Build system prompt with current context (legacy sync version, deprecated)
+ * @deprecated Use buildSystemPromptDynamic instead
  */
 function buildSystemPrompt(conversation: WhatsAppConversation): string {
   let prompt = WHATSAPP_SYSTEM_PROMPT

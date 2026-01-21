@@ -1,9 +1,16 @@
 /**
  * OpenAI Function Tools for WhatsApp Bot
  * Defines all available functions the AI can call
+ *
+ * NOTE: Now supports dynamic configuration from database
+ * Use async getters for dynamic loading, or static exports for fallback
  */
 
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
+import {
+  getWhatsAppSystemPrompt as getPromptFromConfig,
+  getWhatsAppTools as getToolsFromConfig,
+} from '@/lib/ai/config-service'
 
 // ============================================================================
 // TOOL DEFINITIONS
@@ -297,3 +304,48 @@ export type ToolCallArgs =
   | { name: 'go_back'; args: Record<string, never> }
   | { name: 'show_help'; args: ShowHelpArgs }
   | { name: 'request_human'; args: RequestHumanArgs }
+
+// ============================================================================
+// DYNAMIC CONFIGURATION LOADERS (Database-backed)
+// ============================================================================
+
+/**
+ * Get WhatsApp system prompt from database configuration
+ * Falls back to WHATSAPP_SYSTEM_PROMPT if database unavailable
+ */
+export async function getWhatsAppSystemPromptDynamic(): Promise<string> {
+  try {
+    return await getPromptFromConfig()
+  } catch (error) {
+    console.warn('[WhatsApp Tools] Failed to load dynamic system prompt, using fallback:', error)
+    return WHATSAPP_SYSTEM_PROMPT
+  }
+}
+
+/**
+ * Get WhatsApp function tools from database configuration
+ * Falls back to whatsappTools if database unavailable
+ */
+export async function getWhatsAppToolsDynamic(): Promise<ChatCompletionTool[]> {
+  try {
+    const config = await getToolsFromConfig()
+
+    // Convert config format to ChatCompletionTool format
+    // Only include enabled tools
+    const tools: ChatCompletionTool[] = config.tools
+      .filter((tool) => tool.enabled)
+      .map((tool) => ({
+        type: 'function' as const,
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters,
+        },
+      }))
+
+    return tools
+  } catch (error) {
+    console.warn('[WhatsApp Tools] Failed to load dynamic tools, using fallback:', error)
+    return whatsappTools
+  }
+}

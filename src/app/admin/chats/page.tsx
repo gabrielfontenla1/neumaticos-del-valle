@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
@@ -26,10 +27,12 @@ import {
   Pause,
   Play,
   Send,
-  UserCheck
+  UserCheck,
+  Settings
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
+import { AIConfigPanel } from '@/components/admin/ai-config/AIConfigPanel'
 
 // Types
 interface Conversation {
@@ -333,12 +336,31 @@ export default function ChatsPage() {
           Chats WhatsApp
         </h1>
         <p className="text-gray-400">
-          Conversaciones de WhatsApp con control de bot/humano
+          Conversaciones de WhatsApp y configuración de IA
         </p>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex gap-4 min-h-0">
+      {/* Tabs */}
+      <Tabs defaultValue="conversations" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="bg-[#262624] border-[#3a3a37] mb-4">
+          <TabsTrigger
+            value="conversations"
+            className="data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Conversaciones
+          </TabsTrigger>
+          <TabsTrigger
+            value="ai-config"
+            className="data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Configuración IA
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Conversations Tab */}
+        <TabsContent value="conversations" className="flex-1 flex gap-4 min-h-0 mt-0">
         {/* Conversation List */}
         <Card className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-96 bg-[#262624] border-[#3a3a37]`}>
           {/* Filters */}
@@ -647,7 +669,13 @@ export default function ChatsPage() {
             </div>
           )}
         </Card>
-      </div>
+        </TabsContent>
+
+        {/* AI Configuration Tab */}
+        <TabsContent value="ai-config" className="flex-1 flex flex-col min-h-0 mt-0">
+          <AIConfigPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
