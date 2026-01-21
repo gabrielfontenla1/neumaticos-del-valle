@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ORDER_STATUS_STYLES } from '@/lib/constants/admin-theme'
 
 interface OrdersTableProps {
   orders: Order[]
@@ -32,13 +33,13 @@ interface OrdersTableProps {
   onStatusChange: (orderId: string, status: OrderStatus) => Promise<void>
 }
 
-const STATUS_COLORS: Record<OrderStatus, { bg: string; text: string }> = {
-  [OrderStatus.PENDING]: { bg: '#fef3c7', text: '#92400e' },
-  [OrderStatus.CONFIRMED]: { bg: '#dbeafe', text: '#1e3a8a' },
-  [OrderStatus.PROCESSING]: { bg: '#f3e8ff', text: '#581c87' },
-  [OrderStatus.SHIPPED]: { bg: '#e0e7ff', text: '#3730a3' },
-  [OrderStatus.DELIVERED]: { bg: '#d1fae5', text: '#065f46' },
-  [OrderStatus.CANCELLED]: { bg: '#fee2e2', text: '#991b1b' },
+const STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
+  [OrderStatus.PENDING]: ORDER_STATUS_STYLES.pending.badge,
+  [OrderStatus.CONFIRMED]: ORDER_STATUS_STYLES.confirmed.badge,
+  [OrderStatus.PROCESSING]: ORDER_STATUS_STYLES.processing.badge,
+  [OrderStatus.SHIPPED]: ORDER_STATUS_STYLES.shipped.badge,
+  [OrderStatus.DELIVERED]: ORDER_STATUS_STYLES.delivered.badge,
+  [OrderStatus.CANCELLED]: ORDER_STATUS_STYLES.cancelled.badge,
 }
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -166,22 +167,30 @@ export function OrdersTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <select
+                  <Select
                     value={order.status}
-                    onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                    onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
                     disabled={updatingOrderId === order.id}
-                    className="px-3 py-1 rounded-full text-xs font-semibold border-none outline-none cursor-pointer disabled:opacity-50"
-                    style={{
-                      backgroundColor: STATUS_COLORS[order.status].bg,
-                      color: STATUS_COLORS[order.status].text,
-                    }}
                   >
-                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      className={`w-[140px] h-auto px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_BADGE_CLASSES[order.status]} hover:opacity-80 transition-opacity`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#262624] border-[#3a3a38]">
+                      {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                        <SelectItem
+                          key={value}
+                          value={value}
+                          className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa] cursor-pointer"
+                        >
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_BADGE_CLASSES[value as OrderStatus]}`}>
+                            {label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm font-medium text-[#fafafa]">

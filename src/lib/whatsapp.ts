@@ -2,7 +2,7 @@ import { CartItem, CartTotals, CustomerData, VoucherData } from '@/features/cart
 
 // WhatsApp numbers for each store
 export const WHATSAPP_NUMBERS = {
-  main: '5493855854741', // Número principal
+  main: '5493855854741', // Número principal - Sucursal Catamarca Av Belgrano
   santiago: '5493855854741', // Mismo número para todas las sucursales
   default: '5493855854741' // Número por defecto
 }
@@ -15,11 +15,11 @@ export function isMobileDevice(): boolean {
   return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
 }
 
-// Format price in Chilean pesos
+// Format price in Argentine pesos
 export function formatPrice(amount: number): string {
-  return new Intl.NumberFormat('es-CL', {
+  return new Intl.NumberFormat('es-AR', {
     style: 'currency',
-    currency: 'CLP',
+    currency: 'ARS',
     minimumFractionDigits: 0
   }).format(amount)
 }
@@ -87,7 +87,7 @@ export function generateWhatsAppMessage(voucher: VoucherData, orderNumber?: stri
   // Add footer
   lines.push(
     ``,
-    `_Este presupuesto es válido hasta el ${new Date(voucher.valid_until).toLocaleDateString('es-CL')}_`,
+    `_Este presupuesto es válido hasta el ${new Date(voucher.valid_until).toLocaleDateString('es-AR')}_`,
     `_Favor confirmar disponibilidad de stock_`
   )
 

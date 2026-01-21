@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Order, OrderHistory, OrderStatus } from '@/features/orders/types'
+import { ORDER_STATUS_STYLES } from '@/lib/constants/admin-theme'
 
 interface OrderDetailProps {
   order: Order & { history?: OrderHistory[] }
@@ -10,12 +11,12 @@ interface OrderDetailProps {
 }
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  processing: 'bg-purple-100 text-purple-800',
-  shipped: 'bg-indigo-100 text-indigo-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  pending: ORDER_STATUS_STYLES.pending.badge,
+  confirmed: ORDER_STATUS_STYLES.confirmed.badge,
+  processing: ORDER_STATUS_STYLES.processing.badge,
+  shipped: ORDER_STATUS_STYLES.shipped.badge,
+  delivered: ORDER_STATUS_STYLES.delivered.badge,
+  cancelled: ORDER_STATUS_STYLES.cancelled.badge,
 }
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -71,24 +72,24 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orden {order.order_number}</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-[#fafafa]">Orden {order.order_number}</h1>
+            <p className="mt-1 text-sm text-[#888888]">
               Creada el {formatDate(order.created_at)}
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex space-x-3">
             <Link
               href="/admin/orders"
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-[#fafafa] bg-[#3a3a38] border border-[#444442] rounded-md hover:bg-[#444442] transition-colors"
             >
               Volver a la Lista
             </Link>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-[#fafafa] bg-[#3a3a38] border border-[#444442] rounded-md hover:bg-[#444442] transition-colors"
             >
               Imprimir
             </button>
@@ -100,31 +101,31 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Products */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
+          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#3a3a38]">
+              <h2 className="text-lg font-semibold text-[#fafafa]">Productos</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-[#3a3a38]">
+                <thead className="bg-[#1e1e1c]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
                       Producto
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
                       Cantidad
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
                       Precio Unit.
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
                       Total
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-[#262624] divide-y divide-[#3a3a38]">
                   {order.items.map((item, index) => (
-                    <tr key={index}>
+                    <tr key={index} className="hover:bg-[#2a2a28] transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           {item.image_url && (
@@ -135,66 +136,66 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
                             />
                           )}
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-[#fafafa]">
                               {item.product_name}
                             </div>
                             {item.sku && (
-                              <div className="text-xs text-gray-500">SKU: {item.sku}</div>
+                              <div className="text-xs text-[#888888]">SKU: {item.sku}</div>
                             )}
                             {(item.brand || item.model) && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-[#888888]">
                                 {item.brand} {item.model}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#fafafa]">
                         {item.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#fafafa]">
                         {formatCurrency(item.unit_price)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#fafafa]">
                         {formatCurrency(item.total_price)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-50">
+                <tfoot className="bg-[#1e1e1c]">
                   <tr>
-                    <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-gray-700">
+                    <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-[#888888]">
                       Subtotal:
                     </td>
-                    <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                    <td className="px-6 py-3 text-sm font-medium text-[#fafafa]">
                       {formatCurrency(order.subtotal)}
                     </td>
                   </tr>
                   {order.tax > 0 && (
                     <tr>
-                      <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-gray-700">
+                      <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-[#888888]">
                         Impuestos:
                       </td>
-                      <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                      <td className="px-6 py-3 text-sm font-medium text-[#fafafa]">
                         {formatCurrency(order.tax)}
                       </td>
                     </tr>
                   )}
                   {order.shipping > 0 && (
                     <tr>
-                      <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-gray-700">
+                      <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-[#888888]">
                         Envío:
                       </td>
-                      <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                      <td className="px-6 py-3 text-sm font-medium text-[#fafafa]">
                         {formatCurrency(order.shipping)}
                       </td>
                     </tr>
                   )}
-                  <tr className="border-t-2 border-gray-200">
-                    <td colSpan={3} className="px-6 py-3 text-right text-base font-bold text-gray-900">
+                  <tr className="border-t-2 border-[#3a3a38]">
+                    <td colSpan={3} className="px-6 py-3 text-right text-base font-bold text-[#fafafa]">
                       Total:
                     </td>
-                    <td className="px-6 py-3 text-base font-bold text-gray-900">
+                    <td className="px-6 py-3 text-base font-bold text-[#d97757]">
                       {formatCurrency(order.total_amount)}
                     </td>
                   </tr>
@@ -205,9 +206,9 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
 
           {/* Order History */}
           {order.history && order.history.length > 0 && (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Historial de Cambios</h2>
+            <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 overflow-hidden">
+              <div className="px-6 py-4 border-b border-[#3a3a38]">
+                <h2 className="text-lg font-semibold text-[#fafafa]">Historial de Cambios</h2>
               </div>
               <div className="px-6 py-4">
                 <div className="flow-root">
@@ -217,13 +218,13 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
                         <div className="relative pb-8">
                           {index !== order.history!.length - 1 && (
                             <span
-                              className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                              className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-[#3a3a38]"
                               aria-hidden="true"
                             />
                           )}
                           <div className="relative flex space-x-3">
                             <div>
-                              <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                              <span className="h-8 w-8 rounded-full bg-[#3b82f6] flex items-center justify-center ring-8 ring-[#262624]">
                                 <svg
                                   className="h-5 w-5 text-white"
                                   xmlns="http://www.w3.org/2000/svg"
@@ -240,16 +241,16 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{entry.action}</p>
-                                <p className="mt-0.5 text-sm text-gray-500">{entry.description}</p>
+                                <p className="text-sm font-medium text-[#fafafa]">{entry.action}</p>
+                                <p className="mt-0.5 text-sm text-[#888888]">{entry.description}</p>
                                 {entry.previous_status && entry.new_status && (
-                                  <p className="mt-1 text-xs text-gray-500">
+                                  <p className="mt-1 text-xs text-[#888888]">
                                     {STATUS_LABELS[entry.previous_status]} →{' '}
                                     {STATUS_LABELS[entry.new_status]}
                                   </p>
                                 )}
                               </div>
-                              <div className="mt-2 text-xs text-gray-500">
+                              <div className="mt-2 text-xs text-[#666666]">
                                 {formatDate(entry.created_at)}
                               </div>
                             </div>
@@ -267,30 +268,30 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Customer Information */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Información del Cliente</h2>
+          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
+            <h2 className="text-lg font-semibold text-[#fafafa] mb-4">Información del Cliente</h2>
             <dl className="space-y-3">
               <div>
-                <dt className="text-xs font-medium text-gray-500">Nombre</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.customer_name}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Nombre</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{order.customer_name}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium text-gray-500">Email</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.customer_email}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Email</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{order.customer_email}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium text-gray-500">Teléfono</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.customer_phone}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Teléfono</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{order.customer_phone}</dd>
               </div>
             </dl>
           </div>
 
           {/* Order Status */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Estado de la Orden</h2>
+          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
+            <h2 className="text-lg font-semibold text-[#fafafa] mb-4">Estado de la Orden</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">
+                <label className="block text-xs font-medium text-[#888888] mb-2">
                   Estado Actual
                 </label>
                 <span
@@ -302,13 +303,13 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
                 </span>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">
+                <label className="block text-xs font-medium text-[#888888] mb-2">
                   Cambiar Estado
                 </label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-[#1e1e1c] border border-[#3a3a38] text-[#fafafa] rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97757] focus:border-transparent"
                 >
                   {Object.values(OrderStatus).map((status) => (
                     <option key={status} value={status}>
@@ -320,7 +321,7 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
               <button
                 onClick={handleStatusUpdate}
                 disabled={updatingStatus || selectedStatus === order.status}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-[#d97757] rounded-md hover:bg-[#c56647] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {updatingStatus ? 'Actualizando...' : 'Actualizar Estado'}
               </button>
@@ -328,36 +329,36 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
           </div>
 
           {/* Order Information */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Información de la Orden</h2>
+          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
+            <h2 className="text-lg font-semibold text-[#fafafa] mb-4">Información de la Orden</h2>
             <dl className="space-y-3">
               <div>
-                <dt className="text-xs font-medium text-gray-500">Método de Pago</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.payment_method}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Método de Pago</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{order.payment_method}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium text-gray-500">Estado de Pago</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.payment_status}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Estado de Pago</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{order.payment_status}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium text-gray-500">Fuente</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.source}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Fuente</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{order.source}</dd>
               </div>
               {order.voucher_code && (
                 <div>
-                  <dt className="text-xs font-medium text-gray-500">Código de Cupón</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{order.voucher_code}</dd>
+                  <dt className="text-xs font-medium text-[#888888]">Código de Cupón</dt>
+                  <dd className="mt-1 text-sm text-[#fafafa]">{order.voucher_code}</dd>
                 </div>
               )}
               {order.notes && (
                 <div>
-                  <dt className="text-xs font-medium text-gray-500">Notas</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{order.notes}</dd>
+                  <dt className="text-xs font-medium text-[#888888]">Notas</dt>
+                  <dd className="mt-1 text-sm text-[#fafafa]">{order.notes}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-xs font-medium text-gray-500">Última Actualización</dt>
-                <dd className="mt-1 text-sm text-gray-900">{formatDate(order.updated_at)}</dd>
+                <dt className="text-xs font-medium text-[#888888]">Última Actualización</dt>
+                <dd className="mt-1 text-sm text-[#fafafa]">{formatDate(order.updated_at)}</dd>
               </div>
             </dl>
           </div>

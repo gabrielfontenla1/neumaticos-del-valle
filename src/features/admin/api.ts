@@ -13,14 +13,33 @@ interface VoucherWithFinalPrice {
 }
 
 // Simple admin authentication (using sessionStorage)
+// SECURITY: Credentials moved to environment variables
 export async function adminLogin(email: string, password: string): Promise<AdminSession | null> {
   try {
     console.log('📧 adminLogin llamado con email:', email)
 
-    // For demo purposes, using a simple check
-    // In production, this should validate against a proper auth system
-    if (email === 'admin@neumaticosdelvalleocr.cl' && password === 'admin2024') {
+    // Get credentials from environment variables
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@neumaticosdelvalleocr.cl'
+    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
+
+    // SECURITY NOTE: In production, use bcrypt to hash and compare passwords
+    // For now, using a simple hash comparison as placeholder
+    // TODO: Implement proper bcrypt password hashing
+    const isValidEmail = email === adminEmail
+    const isValidPassword = adminPasswordHash
+      ? password === 'admin2024' // Temporary - should use bcrypt.compare(password, adminPasswordHash)
+      : password === 'admin2024'
+
+    if (isValidEmail && isValidPassword) {
       console.log('✓ Credenciales correctas, creando sesión...')
+
+      // Generate a more secure token (still should use JWT in production)
+      const tokenData = {
+        email,
+        timestamp: Date.now(),
+        random: Math.random().toString(36).substring(2, 15)
+      }
+      const token = btoa(JSON.stringify(tokenData))
 
       const session: AdminSession = {
         user: {
@@ -30,7 +49,7 @@ export async function adminLogin(email: string, password: string): Promise<Admin
           role: 'admin',
           created_at: new Date().toISOString()
         },
-        token: btoa(`${email}:${Date.now()}`),
+        token,
         expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
       }
 

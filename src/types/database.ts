@@ -105,12 +105,14 @@ export interface Database {
           name: string
           address: string
           city: string
+          province: string | null
           phone: string
           whatsapp: string | null
           email: string | null
           latitude: number | null
           longitude: number | null
           opening_hours: Json
+          background_image_url: string | null
           is_main: boolean
           active: boolean
           created_at: string
@@ -121,12 +123,14 @@ export interface Database {
           name: string
           address: string
           city?: string
+          province?: string | null
           phone: string
           whatsapp?: string | null
           email?: string | null
           latitude?: number | null
           longitude?: number | null
           opening_hours?: Json
+          background_image_url?: string | null
           is_main?: boolean
           active?: boolean
           created_at?: string
@@ -137,12 +141,14 @@ export interface Database {
           name?: string
           address?: string
           city?: string
+          province?: string | null
           phone?: string
           whatsapp?: string | null
           email?: string | null
           latitude?: number | null
           longitude?: number | null
           opening_hours?: Json
+          background_image_url?: string | null
           is_main?: boolean
           active?: boolean
           created_at?: string

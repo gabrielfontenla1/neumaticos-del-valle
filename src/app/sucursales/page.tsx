@@ -1,98 +1,40 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Clock, MessageCircle, Navigation } from 'lucide-react';
+import { MapPin, Phone, Clock, MessageCircle, Navigation, AlertCircle, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
-
-interface Branch {
-  id: string;
-  name: string;
-  address: string;
-  province: string;
-  phone: string;
-  whatsapp: string;
-  hours: {
-    weekdays: string;
-    saturday: string;
-  };
-}
-
-const branches: Branch[] = [
-  {
-    id: 'catamarca-belgrano',
-    name: 'Catamarca - Av. Belgrano',
-    address: 'Av. Belgrano 938, San Fernando del Valle de Catamarca',
-    province: 'Catamarca',
-    phone: '0383 419-7501',
-    whatsapp: '5493834197501',
-    hours: {
-      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
-      saturday: '08:30 - 12:30'
-    }
-  },
-  {
-    id: 'catamarca-alem',
-    name: 'Catamarca - Av. Alem',
-    address: 'Av. Alem 1118, San Fernando del Valle de Catamarca',
-    province: 'Catamarca',
-    phone: '03832 68-8634',
-    whatsapp: '5493832688634',
-    hours: {
-      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
-      saturday: '08:00 - 12:30'
-    }
-  },
-  {
-    id: 'santiago-labanda',
-    name: 'Santiago del Estero - La Banda',
-    address: 'República del Líbano Sur 866, La Banda',
-    province: 'Santiago del Estero',
-    phone: '0385 601-1304',
-    whatsapp: '5493856011304',
-    hours: {
-      weekdays: '08:00 - 12:30 y 15:00 - 19:00',
-      saturday: '08:00 - 12:30'
-    }
-  },
-  {
-    id: 'santiago-belgrano',
-    name: 'Santiago del Estero - Belgrano',
-    address: 'Av. Belgrano Sur 2834, Santiago del Estero',
-    province: 'Santiago del Estero',
-    phone: '0385 677-1265',
-    whatsapp: '5493856771265',
-    hours: {
-      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
-      saturday: '08:00 - 12:30'
-    }
-  },
-  {
-    id: 'salta',
-    name: 'Salta',
-    address: 'Av. Jujuy 330, Salta',
-    province: 'Salta',
-    phone: '0387 685-8577',
-    whatsapp: '5493876858577',
-    hours: {
-      weekdays: '08:30 - 18:00',
-      saturday: '08:30 - 13:00'
-    }
-  },
-  {
-    id: 'tucuman',
-    name: 'Tucumán',
-    address: 'Av. Gdor. del Campo 436, San Miguel de Tucumán',
-    province: 'Tucumán',
-    phone: '0381 483-4520',
-    whatsapp: '5493814834520',
-    hours: {
-      weekdays: '08:00 - 12:30 y 16:00 - 20:00',
-      saturday: '08:00 - 12:30'
-    }
-  }
-];
+import type { Branch } from '@/types/branch';
 
 export default function SucursalesPage() {
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  const fetchBranches = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/branches');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setBranches(data.branches || []);
+      } else {
+        setError('Error al cargar sucursales');
+      }
+    } catch (err) {
+      console.error('Error fetching branches:', err);
+      setError('Error al cargar sucursales');
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleWhatsApp = (number: string) => {
     window.open(`https://wa.me/${number}`, '_blank');
   };
@@ -115,9 +57,38 @@ export default function SucursalesPage() {
           </p>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <RefreshCw className="w-12 h-12 text-[#FEE004] animate-spin mb-4" />
+            <p className="text-gray-400">Cargando sucursales...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 max-w-md">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-6 h-6 text-red-400" />
+                <h3 className="text-lg font-semibold text-red-400">Error</h3>
+              </div>
+              <p className="text-gray-300 mb-4">{error}</p>
+              <button
+                onClick={fetchBranches}
+                className="bg-[#FEE004] hover:bg-[#FEE004]/90 text-black py-2 px-4 rounded-lg font-medium flex items-center gap-2 transition-all duration-300"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Reintentar
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Branch Cards - Flyer Style */}
-        <div className="space-y-6">
-          {branches.map((branch, index) => (
+        {!loading && !error && (
+          <div className="space-y-6">
+            {branches.map((branch, index) => (
             <motion.div
               key={branch.id}
               initial={{ opacity: 0, x: -20 }}
@@ -128,11 +99,12 @@ export default function SucursalesPage() {
               {/* Background Image */}
               <div className="absolute inset-0">
                 <Image
-                  src="/tire.webp"
+                  src={branch.background_image_url || '/tire.webp'}
                   alt={branch.name}
                   fill
                   className="object-cover"
                   priority={index < 2}
+                  unoptimized={!!branch.background_image_url}
                 />
                 {/* Gradient Overlay - Left to Right */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/50 to-black" />
@@ -177,7 +149,7 @@ export default function SucursalesPage() {
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-[#FEE004]" />
                       <div className="text-xs text-gray-400">
-                        <span className="text-gray-300">Lun-Vie:</span> {branch.hours.weekdays} • <span className="text-gray-300">Sáb:</span> {branch.hours.saturday}
+                        <span className="text-gray-300">Lun-Vie:</span> {branch.opening_hours.weekdays} • <span className="text-gray-300">Sáb:</span> {branch.opening_hours.saturday}
                       </div>
                     </div>
                   </div>
@@ -206,8 +178,9 @@ export default function SucursalesPage() {
               {/* Hover effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#FEE004]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

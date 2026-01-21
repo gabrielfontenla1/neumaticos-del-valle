@@ -47,27 +47,27 @@ export function Footer() {
             <h4 className="text-xs md:text-sm font-semibold text-white mb-3 md:mb-4">Contacto</h4>
             <div className="space-y-2 md:space-y-2.5">
               <a
-                href="tel:+5493855946462"
+                href="tel:+5493855854741"
                 className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-white transition-colors"
               >
                 <Phone className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
-                <span className="truncate">(299) 504-4430</span>
+                <span className="truncate">+54 9 385 585-4741</span>
               </a>
               <a
-                href="https://wa.me/5493855946462"
+                href="https://wa.me/5493855854741"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-green-400 transition-colors"
               >
                 <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
-                <span>WhatsApp</span>
+                <span>+54 9 385 585-4741</span>
               </a>
               <a
-                href="#sucursales"
+                href="/sucursales"
                 className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-gray-400 hover:text-white transition-colors"
               >
                 <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
-                <span>6 Sucursales</span>
+                <span>9 Sucursales</span>
               </a>
             </div>
           </div>

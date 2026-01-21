@@ -1302,7 +1302,7 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                                         e.preventDefault();
                                         e.stopPropagation();
                                         const message = `Hola! Me interesa el neumático ${product.brand} ${product.name} ${product.model || ''} (${product.width}/${product.profile}R${product.diameter}). En la web figura sin stock. ¿Cuándo tendrán disponible?`;
-                                        const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493855946462';
+                                        const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493855854741';
                                         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
                                         window.open(whatsappUrl, '_blank');
                                       }}

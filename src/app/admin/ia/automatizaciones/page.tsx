@@ -4,7 +4,7 @@ import { AutomationCanvas } from '@/features/automations/components/AutomationCa
 
 export default function AutomatizacionesPage() {
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+    <div className="h-full w-full overflow-hidden">
       <AutomationCanvas />
     </div>
   )

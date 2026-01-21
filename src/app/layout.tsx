@@ -8,6 +8,7 @@ import { ThemeManager } from '@/components/layout/ThemeManager';
 import { SessionProvider } from '@/features/auth/components/SessionProvider';
 import { WhatsAppBubble } from '@/components/marketing/WhatsAppBubble';
 import { Toaster } from '@/components/ui/sonner';
+import { ToastProvider } from '@/providers/ToastProvider';
 
 // Inter is very similar to Proxima Nova (Mercado Libre's font)
 const inter = Inter({
@@ -96,6 +97,7 @@ export default function RootLayout({
               </ConditionalLayout>
               <WhatsAppBubble />
               <Toaster />
+              <ToastProvider />
             </CartProvider>
           </NotificationProvider>
         </SessionProvider>

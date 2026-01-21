@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, Search, Heart, User, Menu, X, Phone, MapPin, ShoppingCart } from 'lucide-react'
+import { Calendar, User, Menu, X, Phone, MapPin, ShoppingCart } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { isAuthenticated } from '@/features/admin/api'
@@ -51,7 +51,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0 py-2">
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0 py-2 mr-12">
             <Image
               src="/NDV_Logo.svg"
               alt="Neumáticos del Valle"
@@ -166,24 +166,6 @@ export function Navbar() {
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <button
-              className="p-2 text-white hover:text-[#FEE004] transition-all duration-300 ease-out rounded-lg hover:bg-white/5"
-              aria-label="Buscar"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-            <Link
-              href="/favoritos"
-              className={`p-2 rounded-lg flex items-center gap-2 transition-all duration-300 ease-out ${
-                isLinkActive('/favoritos')
-                  ? 'text-[#FEE004] bg-white/10'
-                  : 'text-white hover:text-[#FEE004] hover:bg-white/5'
-              }`}
-            >
-              <Heart className="w-5 h-5" />
-              <span className="text-sm font-medium">Favoritos</span>
-            </Link>
-
             {/* Cart Button */}
             <Link
               href="/carrito"
@@ -326,18 +308,6 @@ export function Navbar() {
             Turnos
           </Link>
           <div className="border-t border-white/10 pt-3 space-y-2">
-            <Link
-              href="/favoritos"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium ${
-                isLinkActive('/favoritos')
-                  ? 'text-[#FEE004] bg-white/10'
-                  : 'text-white hover:text-[#FEE004] hover:bg-white/5'
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Heart className="w-4 h-4" />
-              Favoritos
-            </Link>
             <Link
               href="/carrito"
               className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-out text-sm font-medium text-white hover:text-[#FEE004] hover:bg-white/5 w-full text-left relative"

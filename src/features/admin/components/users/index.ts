@@ -1,0 +1,10 @@
+// Barrel export for user components
+export { UserRoleBadge } from './UserRoleBadge'
+export { UsersHeader } from './UsersHeader'
+export { UsersStatsCards } from './UsersStatsCards'
+export { UsersFilters } from './UsersFilters'
+export { UserRow } from './UserRow'
+export { UsersTable } from './UsersTable'
+export { UsersFooter } from './UsersFooter'
+export { CreateUserDialog } from './CreateUserDialog'
+export { ChangeRoleDialog } from './ChangeRoleDialog'

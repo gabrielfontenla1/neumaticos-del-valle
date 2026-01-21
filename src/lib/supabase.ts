@@ -96,7 +96,8 @@ export const handleSupabaseError = (error: unknown) => {
 export const STORAGE_BUCKETS = {
   products: 'products',
   reviews: 'reviews',
-  vouchers: 'vouchers'
+  vouchers: 'vouchers',
+  branches: 'branches'
 } as const
 
 export const getPublicUrl = (bucket: keyof typeof STORAGE_BUCKETS, path: string) => {

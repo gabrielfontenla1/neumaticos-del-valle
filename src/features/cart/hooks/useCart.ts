@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
 import { CartItem, CartTotals, CartSession } from '../types'
 import {
   generateSessionId,
@@ -126,8 +127,10 @@ export function useCart(): UseCartReturn {
         console.log('🟢 [useCart] Recargando carrito...')
         await loadCart()
         console.log('🟢 [useCart] Carrito recargado exitosamente')
+        toast.success('Producto agregado al carrito')
       } else {
         console.warn('⚠️ [useCart] addToCart retornó false')
+        toast.error('No se pudo agregar el producto. Verifica el stock disponible.')
       }
 
       console.log('🟢 [useCart] addItem FIN - retornando:', success)
@@ -148,10 +151,14 @@ export function useCart(): UseCartReturn {
       const success = await updateCartItemQuantity(sessionId, itemId, quantity)
       if (success) {
         await loadCart()
+        toast.success('Cantidad actualizada')
+      } else {
+        toast.error('No se pudo actualizar la cantidad')
       }
       return success
     } catch (error) {
       console.error('Error updating quantity:', error)
+      toast.error('Error al actualizar la cantidad')
       return false
     }
   }, [getSessionId, loadCart])
@@ -165,10 +172,14 @@ export function useCart(): UseCartReturn {
       const success = await removeFromCart(sessionId, itemId)
       if (success) {
         await loadCart()
+        toast.success('Producto eliminado del carrito')
+      } else {
+        toast.error('No se pudo eliminar el producto')
       }
       return success
     } catch (error) {
       console.error('Error removing item:', error)
+      toast.error('Error al eliminar el producto')
       return false
     }
   }, [getSessionId, loadCart])
@@ -182,10 +193,14 @@ export function useCart(): UseCartReturn {
       const success = await clearCart(sessionId)
       if (success) {
         await loadCart()
+        toast.success('Carrito vaciado correctamente')
+      } else {
+        toast.error('No se pudo vaciar el carrito')
       }
       return success
     } catch (error) {
       console.error('Error clearing cart:', error)
+      toast.error('Error al vaciar el carrito')
       return false
     }
   }, [getSessionId, loadCart])

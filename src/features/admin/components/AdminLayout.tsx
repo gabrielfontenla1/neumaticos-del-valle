@@ -30,6 +30,7 @@ import {
   Settings,
   GitBranch,
   Wrench,
+  Store,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import dynamic from 'next/dynamic'
@@ -85,6 +86,7 @@ const menuItems: MenuItem[] = [
   { href: '/admin/ia/automatizaciones', label: 'Flujos IA', Icon: GitBranch },
   { href: '/admin/stock/update', label: 'Actualizar Stock', Icon: RefreshCw },
   { href: '/admin/configuracion', label: 'Configuración', Icon: Settings },
+  { href: '/admin/configuracion/sucursales', label: 'Sucursales', Icon: Store },
 ]
 
 // Memoized navigation component to prevent re-renders
@@ -334,7 +336,7 @@ function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="mt-20 relative z-10" style={{ marginLeft: '286px' }}>
+      <main className="mt-20 relative z-10 h-[calc(100vh-80px)]" style={{ marginLeft: '286px' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
@@ -342,6 +344,7 @@ function AdminLayout({ children }: AdminLayoutProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="h-full"
           >
             {children}
           </motion.div>

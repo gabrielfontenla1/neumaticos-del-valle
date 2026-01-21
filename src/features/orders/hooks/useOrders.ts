@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { toast } from 'sonner'
 import type {
   Order,
   OrderFilters,
@@ -112,10 +113,12 @@ export function useOrders(): UseOrdersReturn {
           )
         )
 
+        toast.success('Estado de la orden actualizado correctamente')
         return true
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An error occurred'
         setError(errorMessage)
+        toast.error('Error al actualizar el estado de la orden')
         return false
       } finally {
         setLoading(false)

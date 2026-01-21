@@ -60,11 +60,11 @@ export default function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-[#30302e] py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow p-8">
+          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-8">
             <div className="flex justify-center items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d97757]"></div>
             </div>
           </div>
         </div>
@@ -74,13 +74,13 @@ export default function OrderDetailPage() {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-[#30302e] py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="bg-[#262624] border border-[#ef4444]/20 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-5 w-5 text-red-400"
+                  className="h-5 w-5 text-[#ef4444]"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -93,11 +93,11 @@ export default function OrderDetailPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error || 'Orden no encontrada'}</div>
+                <h3 className="text-sm font-medium text-[#fafafa]">Error</h3>
+                <div className="mt-2 text-sm text-[#ef4444]">{error || 'Orden no encontrada'}</div>
                 <button
                   onClick={() => router.push('/admin/orders')}
-                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-[#ef4444] rounded-md hover:bg-[#dc2626]"
                 >
                   Volver a la Lista
                 </button>
@@ -110,7 +110,7 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#30302e] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <OrderDetail order={order} onStatusChange={handleStatusChange} />
       </div>

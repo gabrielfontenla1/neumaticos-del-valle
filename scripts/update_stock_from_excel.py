@@ -27,7 +27,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 def calculate_total_stock(row):
     """Calcula el stock total sumando todas las sucursales"""
     stock_total = 0
-    sucursales = ['BELGRANO', 'CATAMARCA', 'LA_BANDA', 'SALTA', 'TUCUMAN', 'VIRGEN']
+    sucursales = ['CATAMARCA', 'LA_BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN']
 
     for sucursal in sucursales:
         value = row.get(sucursal, 0)
@@ -43,10 +43,10 @@ def get_stock_por_sucursal(row):
     """Obtiene el stock desglosado por sucursal"""
     stock_por_sucursal = {}
     sucursales = {
-        'BELGRANO': 'belgrano',
         'CATAMARCA': 'catamarca',
         'LA_BANDA': 'la_banda',
         'SALTA': 'salta',
+        'SANTIAGO': 'santiago',
         'TUCUMAN': 'tucuman',
         'VIRGEN': 'virgen'
     }
@@ -77,8 +77,8 @@ def update_stock_from_excel(excel_path: str):
         sys.exit(1)
 
     # Verificar columnas necesarias
-    required_cols = ['CODIGO_PROPIO', 'DESCRIPCION', 'BELGRANO', 'CATAMARCA',
-                     'LA_BANDA', 'SALTA', 'TUCUMAN', 'VIRGEN']
+    required_cols = ['CODIGO_PROPIO', 'DESCRIPCION', 'CATAMARCA',
+                     'LA_BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN']
     missing_cols = [col for col in required_cols if col not in df.columns]
 
     if missing_cols:
@@ -90,14 +90,14 @@ def update_stock_from_excel(excel_path: str):
     # Obtener todos los productos de la base de datos
     print("\n📊 Obteniendo productos de la base de datos...")
     try:
-        response = supabase.table('products').select('id, features').execute()
+        response = supabase.table('products').select('id, sku, features').execute()
         products_db = {
-            str(p['features'].get('codigo_propio', '')).strip(): {
+            str(p['sku']).strip(): {
                 'id': p['id'],
-                'features': p['features']
+                'features': p.get('features') or {}
             }
             for p in response.data
-            if p.get('features') and p['features'].get('codigo_propio')
+            if p.get('sku')
         }
         print(f"✅ {len(products_db)} productos encontrados en la base de datos")
     except Exception as e:
@@ -114,8 +114,8 @@ def update_stock_from_excel(excel_path: str):
     print("=" * 80)
 
     for idx, row in df.iterrows():
-        # Limpiar codigo_propio (remover corchetes)
-        codigo_propio = str(row['CODIGO_PROPIO']).replace('[', '').replace(']', '').strip()
+        # Mantener codigo_propio CON corchetes para buscar por SKU
+        codigo_propio = str(row['CODIGO_PROPIO']).strip()
         descripcion = str(row['DESCRIPCION'])[:50]
 
         if not codigo_propio or codigo_propio == 'nan':
@@ -125,7 +125,11 @@ def update_stock_from_excel(excel_path: str):
         stock_total = calculate_total_stock(row)
         stock_por_sucursal = get_stock_por_sucursal(row)
 
-        # Buscar producto en BD
+        # Obtener código de proveedor y proveedor
+        codigo_proveedor = str(row.get('CODIGO_PROVEEDOR', '')).strip() if pd.notna(row.get('CODIGO_PROVEEDOR')) else None
+        proveedor = str(row.get('PROVEEDOR', '')).strip() if pd.notna(row.get('PROVEEDOR')) else None
+
+        # Buscar producto en BD por SKU (que incluye los corchetes)
         product_data = products_db.get(codigo_propio)
 
         if not product_data:
@@ -134,15 +138,19 @@ def update_stock_from_excel(excel_path: str):
                 print(f"⚠️  No encontrado: [{codigo_propio}] - {descripcion}")
             continue
 
-        if stock_total == 0:
-            no_stock += 1
-            continue
-
-        # Actualizar stock y features
+        # Actualizar stock y features (tanto con stock como sin stock)
         try:
-            # Obtener features actuales y agregar stock_por_sucursal
+            # Obtener features actuales y agregar stock_por_sucursal, codigo_proveedor y proveedor
             current_features = product_data['features'] or {}
             current_features['stock_por_sucursal'] = stock_por_sucursal
+
+            # Agregar código de proveedor si existe
+            if codigo_proveedor and codigo_proveedor != 'nan':
+                current_features['codigo_proveedor'] = codigo_proveedor
+
+            # Agregar proveedor si existe
+            if proveedor and proveedor != 'nan':
+                current_features['proveedor'] = proveedor
 
             supabase.table('products').update({
                 'stock': stock_total,
@@ -150,9 +158,12 @@ def update_stock_from_excel(excel_path: str):
             }).eq('id', product_data['id']).execute()
 
             updated += 1
+            if stock_total == 0:
+                no_stock += 1
             if updated <= 10:  # Mostrar solo los primeros 10
-                sucursales_str = ', '.join([f"{k}: {v}" for k, v in stock_por_sucursal.items()])
-                print(f"✅ [{codigo_propio}] {descripcion[:30]:30} → Total: {stock_total} ({sucursales_str})")
+                sucursales_str = ', '.join([f"{k}: {v}" for k, v in stock_por_sucursal.items()]) if stock_por_sucursal else 'Sin stock'
+                proveedor_str = f" | Cód.Prov: {codigo_proveedor}" if codigo_proveedor else ""
+                print(f"✅ [{codigo_propio}] {descripcion[:30]:30} → Total: {stock_total} ({sucursales_str}){proveedor_str}")
 
         except Exception as e:
             errors += 1

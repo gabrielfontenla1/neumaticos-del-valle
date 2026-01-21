@@ -29,6 +29,7 @@ import {
   UserCheck
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
+import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
 
 // Types
 interface Conversation {
@@ -76,6 +77,7 @@ export default function ChatsPage() {
   const [isSending, setIsSending] = useState(false)
   const [isPausing, setIsPausing] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   // Fetch conversations from new WhatsApp endpoint
   const fetchConversations = useCallback(async () => {
@@ -211,7 +213,12 @@ export default function ChatsPage() {
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight
+      }
+    }
   }, [messages])
 
   // Supabase Realtime subscription for new messages
@@ -380,10 +387,7 @@ export default function ChatsPage() {
           {/* Conversation List */}
           <ScrollArea className="flex-1">
             {isLoading ? (
-              <div className="flex items-center justify-center h-32 text-gray-400">
-                <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-                Cargando...
-              </div>
+              <ChatListSkeleton items={5} />
             ) : filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-400">
                 <MessageCircle className="h-8 w-8 mb-2 opacity-50" />
@@ -518,12 +522,9 @@ export default function ChatsPage() {
               )}
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4 bg-[#1a1a18]">
+              <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-[#1a1a18]">
                 {isLoadingMessages ? (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-                    Cargando mensajes...
-                  </div>
+                  <ChatMessagesSkeleton messages={6} />
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-gray-400">
                     <MessageCircle className="h-12 w-12 mb-2 opacity-50" />
@@ -539,7 +540,7 @@ export default function ChatsPage() {
                         }`}
                       >
                         <div
-                          className={`flex gap-3 max-w-[85%] ${
+                          className={`flex gap-3 max-w-[85%] min-w-0 ${
                             message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                           }`}
                         >
@@ -561,7 +562,7 @@ export default function ChatsPage() {
                             )}
                           </div>
                           <div
-                            className={`rounded-lg px-4 py-2 ${
+                            className={`rounded-lg px-4 py-2 min-w-0 ${
                               message.role === 'user'
                                 ? 'bg-[#d97757] text-white'
                                 : message.sent_by_human
@@ -569,7 +570,7 @@ export default function ChatsPage() {
                                   : 'bg-[#2a2a28] text-gray-100 border border-[#3a3a37]'
                             }`}
                           >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
                               {message.content}
                             </div>
                             <div className={`flex items-center gap-2 mt-1 text-xs ${

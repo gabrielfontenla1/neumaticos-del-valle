@@ -1467,7 +1467,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                                       e.preventDefault();
                                       e.stopPropagation();
                                       const message = `Hola! Me interesa el neumático ${product.brand} ${product.name} ${product.model || ''} (${product.width}/${product.profile}R${product.diameter}). En la web figura sin stock. ¿Cuándo tendrán disponible?`;
-                                      const whatsappUrl = `https://wa.me/5493855946462?text=${encodeURIComponent(message)}`;
+                                      const whatsappUrl = `https://wa.me/5493855854741?text=${encodeURIComponent(message)}`;
                                       window.open(whatsappUrl, '_blank');
                                     }}
                                     className="text-xs text-green-600 hover:text-green-700 underline transition-colors"
