@@ -97,17 +97,22 @@ vi.mock('../templates/stock-responses', () => ({
 function createMockConversation(overrides: Partial<WhatsAppConversation> = {}): WhatsAppConversation {
   return {
     id: 'conv-123',
-    phone_number: '+5493834123456',
-    profile_name: 'Test User',
-    conversation_state: 'idle',
+    phone: '+5493834123456',
+    contact_name: 'Test User',
+    status: 'active',
     is_paused: false,
+    paused_at: null,
+    paused_by: null,
+    pause_reason: null,
+    message_count: 0,
+    conversation_state: 'idle',
     pending_tire_search: null,
     pending_appointment: null,
     user_city: null,
     preferred_branch_id: null,
-    last_message_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_message_at: new Date(),
+    created_at: new Date(),
+    updated_at: new Date(),
     ...overrides
   }
 }
