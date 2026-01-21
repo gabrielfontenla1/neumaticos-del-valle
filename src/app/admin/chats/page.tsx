@@ -328,9 +328,9 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6">
+    <div className="h-full flex flex-col p-6 overflow-hidden">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6 flex-shrink-0">
         <h1 className="text-3xl font-bold mb-2 text-white flex items-center gap-3">
           <MessageCircle className="h-8 w-8 text-[#d97757]" />
           Chats WhatsApp
@@ -672,7 +672,7 @@ export default function ChatsPage() {
         </TabsContent>
 
         {/* AI Configuration Tab */}
-        <TabsContent value="ai-config" className="flex-1 flex flex-col min-h-0 mt-0">
+        <TabsContent value="ai-config" className="flex-1 flex flex-col min-h-0 mt-0 h-full overflow-hidden">
           <AIConfigPanel />
         </TabsContent>
       </Tabs>

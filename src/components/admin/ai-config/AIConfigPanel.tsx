@@ -8,7 +8,6 @@
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   MessageSquare,
@@ -251,9 +250,9 @@ export function AIConfigPanel() {
   }
 
   return (
-    <div className="flex flex-1 gap-6 min-h-0">
+    <div className="flex gap-6 h-full items-start">
       {/* Sidebar Navigation */}
-      <Card className="w-64 bg-[#262624] border-[#3a3a37] p-4 flex-shrink-0 flex flex-col">
+      <Card className="w-64 bg-[#262624] border-[#3a3a37] p-4 flex-shrink-0 flex flex-col self-stretch">
         <div className="space-y-2 flex-shrink-0">
           {sections.map((section) => {
             const Icon = section.icon
@@ -294,7 +293,7 @@ export function AIConfigPanel() {
       </Card>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 self-stretch overflow-hidden">
         {error && (
           <Alert className="bg-red-500/10 border-red-500/30 mb-4">
             <AlertCircle className="h-4 w-4 text-red-400" />
@@ -302,7 +301,7 @@ export function AIConfigPanel() {
           </Alert>
         )}
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto pr-4">
           {activeSection === 'prompts' && (
             <PromptsSection
               config={promptsConfig}
@@ -350,7 +349,7 @@ export function AIConfigPanel() {
               isSaving={isSaving}
             />
           )}
-        </ScrollArea>
+        </div>
       </div>
     </div>
   )
