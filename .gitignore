@@ -69,3 +69,27 @@ logs
 
 # Archive (cleanup backups)
 archive/
+
+# Temporary test files
+test-*.sh
+test-*.png
+*-test-*.png
+*-test.png
+
+# Temporary reports and data
+*-report.json
+*_report.json
+import_report.json
+missing-products-report.json
+price-list-reference.json
+sample_*.json
+sku-mapping-reference.json
+
+# Setup files (one-time use)
+*_setup.sql
+auth_setup.sql
+supabase_setup.sql
+
+# Development env files (keep only examples)
+.env.development
+.env.kommo
