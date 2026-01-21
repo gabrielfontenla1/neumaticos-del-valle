@@ -33,6 +33,7 @@ interface ProductDetailProps {
 interface ProductFeatures {
   price_list?: number
   proveedor?: string
+  codigo_proveedor?: string
   stock_by_branch?: Record<string, number>
   stock_por_sucursal?: Record<string, number>  // Legacy field
   [key: string]: unknown
@@ -351,11 +352,10 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                 <div className="text-sm lg:text-xs text-gray-700 mb-2">
                   3 cuotas sin interés de ${Math.floor(product.price / 3).toLocaleString('es-AR')}
                 </div>
-                {/* Código de proveedor */}
-                {features?.proveedor && (
+                {features?.codigo_proveedor && (
                   <div className="mb-2">
-                    <p className="text-xs text-gray-700 border border-gray-300 bg-gray-50 rounded px-2 py-1 inline-block">
-                      Código: {features.proveedor}
+                    <p className="text-xs text-gray-700 border border-gray-300 bg-gray-50 rounded px-2 py-1 inline-block font-mono">
+                      ID: {features.codigo_proveedor}
                     </p>
                   </div>
                 )}
@@ -494,7 +494,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                 <div className="space-y-2">
                   {(() => {
                     const sucursales = [
-                      { key: 'belgrano', name: 'Santiago del Estero - Capital' },
+                      { key: 'santiago', name: 'Santiago del Estero - Capital' },
                       { key: 'catamarca', name: 'Catamarca - Capital ( Alem )' },
                       { key: 'la_banda', name: 'Santiago del Estero - La Banda' },
                       { key: 'salta', name: 'Salta' },
@@ -508,7 +508,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                     const getStockDisplay = (stock: number) => {
                       if (stock === 1) return 'Última unidad'
                       if (stock <= 10) return `${stock} unidades`
-                      if (stock <= 50) return '+10 unidades'
+                      if (stock <= 50) return `${stock} unidades`
                       if (stock <= 100) return '+50 unidades'
                       return '+100 unidades'
                     }
@@ -637,6 +637,12 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <span className="text-sm text-gray-600">Modelo:</span>
                   <span className="text-sm font-semibold text-gray-900">{product.model}</span>
+                </div>
+              )}
+              {features?.codigo_proveedor && (
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-gray-600">ID del Producto:</span>
+                  <span className="text-sm font-semibold text-gray-900 font-mono">{features.codigo_proveedor}</span>
                 </div>
               )}
             </div>

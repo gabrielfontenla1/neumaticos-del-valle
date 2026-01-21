@@ -26,6 +26,7 @@ const CORVEN_CATEGORY_MAP: Record<string, string> = {
 interface ExcelRow {
   CODIGO_PROPIO?: string
   'CODIGO PROPIO'?: string
+  CODIGO_PROVEEDOR?: string | number
   DESCRIPCION?: string
   PUBLICO?: number
   CONTADO?: number
@@ -441,6 +442,14 @@ export async function POST(request: NextRequest) {
           delete features.stock_por_sucursal
         }
         result.stockUpdates++
+      }
+
+      // Save codigo_proveedor if available (for all sources)
+      if (row.CODIGO_PROVEEDOR) {
+        const codigoProveedor = String(row.CODIGO_PROVEEDOR).trim()
+        if (codigoProveedor && codigoProveedor !== 'nan' && codigoProveedor !== '') {
+          features.codigo_proveedor = codigoProveedor
+        }
       }
 
       // For Corven: update category and brand from Excel

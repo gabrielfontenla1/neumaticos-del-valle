@@ -1386,10 +1386,10 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                               {product.model || '\u00A0'}
                             </div>
 
-                            {/* Código de proveedor */}
+                            {/* Código de producto */}
                             {(product.features as any)?.codigo_proveedor && (
-                              <div className="text-[10px] text-gray-500 mb-2">
-                                Cód: {(product.features as any).codigo_proveedor}
+                              <div className="text-[10px] text-gray-500 mb-2 font-mono">
+                                ID: {(product.features as any).codigo_proveedor}
                               </div>
                             )}
 
@@ -1405,9 +1405,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                                     Stock: {(() => {
                                       if (product.stock === 1) return 'Última unidad'
                                       if (product.stock <= 10) return `${product.stock} unidades`
-                                      if (product.stock <= 50) return '+10 unidades'
-                                      if (product.stock <= 100) return '+50 unidades'
-                                      return '+100 unidades'
+                                      return '+10 unidades'
                                     })()}
                                   </span>
                                   {product.stock > 15 && (

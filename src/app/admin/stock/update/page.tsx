@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from 'react'
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, RefreshCw, ArrowLeft, DollarSign, Package, AlertTriangle, Truck, Car } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -17,7 +17,7 @@ const colors = {
   card: '#262624',
   primary: '#d97757',
   mutedForeground: '#a1a1aa',
-  border: '#262626',
+  border: '#3a3a38',
   secondary: '#262626',
 }
 
@@ -236,163 +236,161 @@ export default function StockUpdatePage() {
   }
 
   return (
-    <main className="p-6 space-y-6">
-      {/* Header */}
-      <motion.div
-        className="rounded-lg shadow-xl p-6"
-        style={{ backgroundColor: colors.card }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="flex items-center gap-4 mb-2">
-          <Link href="/admin/stock/import">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Importación Completa
-            </Button>
-          </Link>
-        </div>
-        <h1 className="text-2xl font-bold" style={{ color: colors.foreground }}>
-          Actualización Rápida de Stock/Precios
-        </h1>
-        <p className="text-sm mt-1" style={{ color: colors.mutedForeground }}>
-          Actualiza precios y/o stock sin borrar productos existentes. Soporta Excel de Pirelli y Corven.
-        </p>
-      </motion.div>
-
-      {/* Source Selector */}
-      <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-        <h2 className="text-lg font-semibold mb-4" style={{ color: colors.foreground }}>
-          1. Selecciona el origen del Excel
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => handleSourceChange('pirelli')}
-            className={`p-6 rounded-xl border-2 transition-all ${
-              source === 'pirelli'
-                ? 'border-orange-500 bg-orange-500/10'
-                : 'border-gray-600 hover:border-gray-500'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-full ${source === 'pirelli' ? 'bg-orange-500' : 'bg-gray-600'}`}>
-                <Car className="h-8 w-8 text-white" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-bold" style={{ color: colors.foreground }}>
-                  Pirelli
-                </h3>
-                <p className="text-sm" style={{ color: colors.mutedForeground }}>
-                  Neumáticos de autos y camionetas
-                </p>
-                <p className="text-xs mt-1" style={{ color: colors.mutedForeground }}>
-                  Excel sin columna CATEGORIA
-                </p>
-              </div>
+    <main className="p-6 space-y-6 bg-[#30302e] min-h-screen">
+      {/* Header Card */}
+      <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-[#d97757]/20 border border-[#d97757]/30">
+              <Upload className="w-8 h-8 text-[#d97757]" />
             </div>
-            {source === 'pirelli' && (
-              <Badge className="mt-3 bg-orange-500">Seleccionado</Badge>
-            )}
-          </button>
-
-          <button
-            onClick={() => handleSourceChange('corven')}
-            className={`p-6 rounded-xl border-2 transition-all ${
-              source === 'corven'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-gray-600 hover:border-gray-500'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-full ${source === 'corven' ? 'bg-blue-500' : 'bg-gray-600'}`}>
-                <Truck className="h-8 w-8 text-white" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-bold" style={{ color: colors.foreground }}>
-                  Corven
-                </h3>
-                <p className="text-sm" style={{ color: colors.mutedForeground }}>
-                  Agro, camiones e industrial
-                </p>
-                <p className="text-xs mt-1" style={{ color: colors.mutedForeground }}>
-                  Excel con columna CATEGORIA (AGR, CMO, VI)
-                </p>
-              </div>
+            <div>
+              <CardTitle className="text-2xl text-[#fafafa]">Actualización de Stock y Precios</CardTitle>
+              <CardDescription className="text-[#888888]">
+                Actualiza precios y/o stock sin borrar productos existentes. Soporta Excel de Pirelli y Corven.
+              </CardDescription>
             </div>
-            {source === 'corven' && (
-              <Badge className="mt-3 bg-blue-500">Seleccionado</Badge>
-            )}
-          </button>
-        </div>
-      </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Source Selector Card */}
+      <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#fafafa]">1. Selecciona el origen del Excel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => handleSourceChange('pirelli')}
+              className={`p-6 rounded-xl border-2 transition-all ${
+                source === 'pirelli'
+                  ? 'border-[#d97757] bg-[#d97757]/10'
+                  : 'border-[#3a3a38] hover:border-[#d97757]/50'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full ${source === 'pirelli' ? 'bg-[#d97757]' : 'bg-[#3a3a38]'}`}>
+                  <Car className="h-8 w-8 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-[#fafafa]">
+                    Pirelli
+                  </h3>
+                  <p className="text-sm text-[#888888]">
+                    Neumáticos de autos y camionetas
+                  </p>
+                  <p className="text-xs mt-1 text-[#666666]">
+                    Excel sin columna CATEGORIA
+                  </p>
+                </div>
+              </div>
+              {source === 'pirelli' && (
+                <Badge className="mt-3 bg-[#d97757] text-white">Seleccionado</Badge>
+              )}
+            </button>
+
+            <button
+              onClick={() => handleSourceChange('corven')}
+              className={`p-6 rounded-xl border-2 transition-all ${
+                source === 'corven'
+                  ? 'border-blue-500 bg-blue-500/10'
+                  : 'border-[#3a3a38] hover:border-blue-500/50'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full ${source === 'corven' ? 'bg-blue-500' : 'bg-[#3a3a38]'}`}>
+                  <Truck className="h-8 w-8 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-[#fafafa]">
+                    Corven
+                  </h3>
+                  <p className="text-sm text-[#888888]">
+                    Agro, camiones e industrial
+                  </p>
+                  <p className="text-xs mt-1 text-[#666666]">
+                    Excel con columna CATEGORIA (AGR, CMO, VI)
+                  </p>
+                </div>
+              </div>
+              {source === 'corven' && (
+                <Badge className="mt-3 bg-blue-500 text-white">Seleccionado</Badge>
+              )}
+            </button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Upload Area */}
       {!file && (
-        <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2" style={{ color: colors.foreground }}>
+        <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#fafafa]">
               2. Subir Excel de {source === 'pirelli' ? 'Pirelli' : 'Corven'}
-            </h2>
-            <p className="text-sm" style={{ color: colors.mutedForeground }}>
+            </CardTitle>
+            <CardDescription className="text-[#888888]">
               Arrastra y suelta tu archivo Excel aquí
-            </p>
-          </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('file-upload')?.click()}
+              className="border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer"
+              style={{
+                borderColor: isDragging
+                  ? (source === 'pirelli' ? '#d97757' : '#3b82f6')
+                  : colors.border,
+                backgroundColor: isDragging
+                  ? (source === 'pirelli' ? '#d9775710' : '#3b82f610')
+                  : 'transparent'
+              }}
+            >
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                accept=".xlsx,.xls"
+                onChange={handleFileSelect}
+              />
+              <FileSpreadsheet
+                className="h-16 w-16 mx-auto mb-4"
+                style={{ color: source === 'pirelli' ? '#d97757' : '#3b82f6' }}
+              />
+              <p className="text-lg font-medium mb-2 text-[#fafafa]">
+                {isDragging ? 'Suelta el archivo aquí' : 'Selecciona un archivo Excel'}
+              </p>
+              <p className="text-sm text-[#888888]">
+                Formatos: .xlsx, .xls
+              </p>
+            </div>
 
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById('file-upload')?.click()}
-            className="border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer"
-            style={{
-              borderColor: isDragging
-                ? (source === 'pirelli' ? '#f97316' : '#3b82f6')
-                : colors.border,
-              backgroundColor: isDragging
-                ? (source === 'pirelli' ? '#f9731610' : '#3b82f610')
-                : 'transparent'
-            }}
-          >
-            <input
-              type="file"
-              id="file-upload"
-              className="hidden"
-              accept=".xlsx,.xls"
-              onChange={handleFileSelect}
-            />
-            <FileSpreadsheet
-              className="h-16 w-16 mx-auto mb-4"
-              style={{ color: source === 'pirelli' ? '#f97316' : '#3b82f6' }}
-            />
-            <p className="text-lg font-medium mb-2" style={{ color: colors.foreground }}>
-              {isDragging ? 'Suelta el archivo aquí' : 'Selecciona un archivo Excel'}
-            </p>
-            <p className="text-sm" style={{ color: colors.mutedForeground }}>
-              Formatos: .xlsx, .xls
-            </p>
-          </div>
-
-          {error && (
-            <Alert variant="destructive" className="mt-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-        </div>
+            {error && (
+              <Alert variant="destructive" className="mt-6 bg-red-950/50 border-red-900 text-red-200">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Analysis Loading */}
       {isAnalyzing && (
-        <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-          <div className="space-y-4">
-            <p className="text-center" style={{ color: colors.foreground }}>
-              Analizando archivo...
-            </p>
-            <Progress value={progress} className="w-full" />
-          </div>
-        </div>
+        <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <p className="text-center text-[#fafafa]">
+                Analizando archivo...
+              </p>
+              <Progress value={progress} className="w-full" />
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Format Mismatch Warning */}
@@ -426,23 +424,23 @@ export default function StockUpdatePage() {
 
       {/* Detection Results */}
       {file && analysisResult && !updateResult && !showMismatchConfirm && (
-        <Card>
+        <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-[#fafafa]">
                   <FileSpreadsheet className="h-5 w-5" />
                   {file.name}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-[#888888]">
                   {analysisResult.detection.totalRows} filas detectadas
                 </CardDescription>
               </div>
               <Badge
                 className={
                   analysisResult.detection.detectedFormat === 'pirelli'
-                    ? 'bg-orange-500'
-                    : 'bg-blue-500'
+                    ? 'bg-[#d97757] text-white'
+                    : 'bg-blue-500 text-white'
                 }
               >
                 Formato: {analysisResult.detection.detectedFormat.toUpperCase()}
@@ -461,38 +459,38 @@ export default function StockUpdatePage() {
 
             {/* Detection Info */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg p-4" style={{ backgroundColor: analysisResult.detection.hasPrices ? '#dcfce7' : colors.secondary }}>
+              <div className="rounded-lg p-4" style={{ backgroundColor: analysisResult.detection.hasPrices ? '#14532d20' : colors.secondary }}>
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className={`h-5 w-5 ${analysisResult.detection.hasPrices ? 'text-green-600' : 'text-gray-400'}`} />
-                  <span className="font-semibold" style={{ color: analysisResult.detection.hasPrices ? '#166534' : colors.mutedForeground }}>
+                  <DollarSign className={`h-5 w-5 ${analysisResult.detection.hasPrices ? 'text-green-500' : 'text-gray-500'}`} />
+                  <span className="font-semibold" style={{ color: analysisResult.detection.hasPrices ? '#86efac' : colors.mutedForeground }}>
                     Precios
                   </span>
                 </div>
                 {analysisResult.detection.hasPrices ? (
-                  <div className="text-sm text-green-700">
+                  <div className="text-sm text-green-400">
                     <p>✅ CONTADO → precio real</p>
                     <p>✅ PUBLICO → precio de lista</p>
                   </div>
                 ) : (
-                  <p className="text-sm" style={{ color: colors.mutedForeground }}>
+                  <p className="text-sm text-[#888888]">
                     No se detectaron columnas de precio
                   </p>
                 )}
               </div>
 
-              <div className="rounded-lg p-4" style={{ backgroundColor: analysisResult.detection.hasStock ? '#dbeafe' : colors.secondary }}>
+              <div className="rounded-lg p-4" style={{ backgroundColor: analysisResult.detection.hasStock ? '#1e40af20' : colors.secondary }}>
                 <div className="flex items-center gap-2 mb-2">
-                  <Package className={`h-5 w-5 ${analysisResult.detection.hasStock ? 'text-blue-600' : 'text-gray-400'}`} />
-                  <span className="font-semibold" style={{ color: analysisResult.detection.hasStock ? '#1e40af' : colors.mutedForeground }}>
+                  <Package className={`h-5 w-5 ${analysisResult.detection.hasStock ? 'text-blue-400' : 'text-gray-500'}`} />
+                  <span className="font-semibold" style={{ color: analysisResult.detection.hasStock ? '#60a5fa' : colors.mutedForeground }}>
                     Stock
                   </span>
                 </div>
                 {analysisResult.detection.hasStock ? (
-                  <div className="text-sm text-blue-700">
+                  <div className="text-sm text-blue-300">
                     <p>✅ Sucursales: {analysisResult.detection.stockColumns.join(', ')}</p>
                   </div>
                 ) : (
-                  <p className="text-sm" style={{ color: colors.mutedForeground }}>
+                  <p className="text-sm text-[#888888]">
                     No se detectaron columnas de stock
                   </p>
                 )}
@@ -501,7 +499,7 @@ export default function StockUpdatePage() {
 
             {/* Mode Badge */}
             <div className="flex justify-center gap-4">
-              <Badge variant="secondary" className="text-lg px-4 py-2">
+              <Badge variant="secondary" className="text-lg px-4 py-2 bg-[#3a3a38] text-[#fafafa]">
                 Modo: {analysisResult.detection.hasPrices && analysisResult.detection.hasStock
                   ? '📊 Precios + Stock'
                   : analysisResult.detection.hasPrices
@@ -511,7 +509,7 @@ export default function StockUpdatePage() {
               <Badge
                 variant="secondary"
                 className={`text-lg px-4 py-2 ${
-                  source === 'pirelli' ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-500/20 text-blue-400'
+                  source === 'pirelli' ? 'bg-[#d97757]/20 text-[#d97757]' : 'bg-blue-500/20 text-blue-400'
                 }`}
               >
                 {source === 'pirelli' ? '🚗 Pirelli (Autos)' : '🚜 Corven (Agro/Camiones)'}
@@ -523,8 +521,7 @@ export default function StockUpdatePage() {
               <Button
                 onClick={() => handleUpdate()}
                 disabled={isUpdating}
-                className="flex-1"
-                style={{ backgroundColor: source === 'pirelli' ? '#f97316' : '#3b82f6' }}
+                className="flex-1 bg-[#d97757] hover:bg-[#d97757]/90 text-white"
               >
                 {isUpdating ? (
                   <>
@@ -538,7 +535,11 @@ export default function StockUpdatePage() {
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={handleReset}>
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38]"
+              >
                 Cancelar
               </Button>
             </div>
@@ -549,7 +550,7 @@ export default function StockUpdatePage() {
             )}
 
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="bg-red-950/50 border-red-900 text-red-200">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
@@ -562,128 +563,178 @@ export default function StockUpdatePage() {
       {/* Update Results */}
       {updateResult && (
         <div className="space-y-6">
-          {/* Source Badge */}
-          <div className="flex justify-center">
-            <Badge
-              className={`text-lg px-6 py-2 ${
-                updateResult.source === 'pirelli' ? 'bg-orange-500' : 'bg-blue-500'
-              }`}
-            >
-              {updateResult.source === 'pirelli' ? '🚗 Pirelli' : '🚜 Corven'} - Actualización Completada
-            </Badge>
-          </div>
+          {/* Main Result Card */}
+          <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`p-4 rounded-lg ${
+                    updateResult.updated > 0
+                      ? 'bg-green-500/20 border border-green-500/30'
+                      : 'bg-yellow-500/20 border border-yellow-500/30'
+                  }`}>
+                    {updateResult.updated > 0 ? (
+                      <CheckCircle className="w-10 h-10 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="w-10 h-10 text-yellow-500" />
+                    )}
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl text-[#fafafa]">
+                      {updateResult.updated > 0 ? 'Actualización Completada' : 'Actualización Sin Cambios'}
+                    </CardTitle>
+                    <CardDescription className="text-[#888888] mt-1">
+                      {updateResult.source === 'pirelli' ? '🚗 Origen: Pirelli (Autos)' : '🚜 Origen: Corven (Agro/Camiones)'} •
+                      Modo: {getModeLabel(updateResult.mode)}
+                    </CardDescription>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Statistics Grid */}
+              <div className="grid grid-cols-3 gap-4">
+                {/* Actualizados */}
+                <div className="text-center p-4 rounded-lg bg-[#1a1a18] border border-[#3a3a38]">
+                  <div className="text-4xl font-bold mb-2" style={{
+                    color: updateResult.updated > 0 ? '#86efac' : '#a1a1aa'
+                  }}>
+                    {updateResult.updated}
+                  </div>
+                  <div className="text-sm text-[#888888]">Actualizados</div>
+                  {updateResult.priceUpdates > 0 && (
+                    <div className="text-xs text-green-400 mt-1">
+                      💰 {updateResult.priceUpdates} precios
+                    </div>
+                  )}
+                  {updateResult.stockUpdates > 0 && (
+                    <div className="text-xs text-blue-400 mt-1">
+                      📦 {updateResult.stockUpdates} stocks
+                    </div>
+                  )}
+                </div>
 
-          {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-              <p className="text-sm font-medium mb-2" style={{ color: colors.mutedForeground }}>
-                Modo
-              </p>
-              <div className="text-xl font-bold" style={{ color: colors.foreground }}>
-                {getModeLabel(updateResult.mode)}
-              </div>
-            </div>
-            <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-              <p className="text-sm font-medium mb-2" style={{ color: colors.mutedForeground }}>
-                Actualizados
-              </p>
-              <div className="text-2xl font-bold text-green-600">
-                ✅ {updateResult.updated}
-              </div>
-            </div>
-            <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-              <p className="text-sm font-medium mb-2" style={{ color: colors.mutedForeground }}>
-                No Encontrados
-              </p>
-              <div className="text-2xl font-bold text-yellow-600">
-                ⚠️ {updateResult.notFound}
-              </div>
-            </div>
-            <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-              <p className="text-sm font-medium mb-2" style={{ color: colors.mutedForeground }}>
-                Errores
-              </p>
-              <div className="text-2xl font-bold text-red-600">
-                {updateResult.errors.length > 0 ? '❌' : '✅'} {updateResult.errors.length}
-              </div>
-            </div>
-          </div>
+                {/* No Encontrados */}
+                <div className="text-center p-4 rounded-lg bg-[#1a1a18] border border-[#3a3a38]">
+                  <div className="text-4xl font-bold mb-2 text-yellow-500">
+                    {updateResult.notFound}
+                  </div>
+                  <div className="text-sm text-[#888888]">No Encontrados</div>
+                  {updateResult.notFound > 0 && (
+                    <div className="text-xs text-yellow-400 mt-1">
+                      No existen en BD
+                    </div>
+                  )}
+                </div>
 
-          {/* Detail Stats */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {updateResult.priceUpdates > 0 && (
-              <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold" style={{ color: colors.foreground }}>
-                    Precios Actualizados
-                  </span>
-                </div>
-                <div className="text-3xl font-bold text-green-600">
-                  {updateResult.priceUpdates}
-                </div>
-              </div>
-            )}
-            {updateResult.stockUpdates > 0 && (
-              <div className="rounded-xl p-6" style={{ backgroundColor: colors.card }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <span className="font-semibold" style={{ color: colors.foreground }}>
-                    Stocks Actualizados
-                  </span>
-                </div>
-                <div className="text-3xl font-bold text-blue-600">
-                  {updateResult.stockUpdates}
+                {/* Errores */}
+                <div className="text-center p-4 rounded-lg bg-[#1a1a18] border border-[#3a3a38]">
+                  <div className="text-4xl font-bold mb-2" style={{
+                    color: updateResult.errors.length > 0 ? '#fca5a5' : '#86efac'
+                  }}>
+                    {updateResult.errors.length}
+                  </div>
+                  <div className="text-sm text-[#888888]">Errores</div>
+                  {updateResult.errors.length === 0 && (
+                    <div className="text-xs text-green-400 mt-1">
+                      Sin problemas
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Success Alert */}
-          {updateResult.success && (
-            <Alert>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-600">Actualización Completada</AlertTitle>
-              <AlertDescription>
-                Se actualizaron {updateResult.updated} productos de {updateResult.source === 'pirelli' ? 'Pirelli' : 'Corven'} exitosamente.
+              {/* Total Procesado */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-[#1a1a18] border border-[#3a3a38]">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5 text-[#888888]" />
+                  <span className="text-[#fafafa] font-medium">Total procesado del Excel</span>
+                </div>
+                <span className="text-2xl font-bold text-[#d97757]">{updateResult.totalRows} productos</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status Alert */}
+          {updateResult.updated === 0 && updateResult.notFound > 0 && (
+            <Alert className="border-yellow-500 bg-yellow-500/10">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <AlertTitle className="text-yellow-500 text-lg">Ningún Producto fue Actualizado</AlertTitle>
+              <AlertDescription className="text-yellow-200 mt-2">
+                <p className="mb-3">
+                  Los {updateResult.notFound} productos del Excel no se encontraron en la base de datos.
+                  Esto puede ocurrir por:
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Los códigos de producto en el Excel no coinciden con los de la base de datos</li>
+                  <li>Los productos aún no fueron importados al sistema</li>
+                  <li>Hay diferencias en el formato de los códigos (espacios, guiones, etc.)</li>
+                </ul>
+                <p className="mt-3 font-semibold">
+                  💡 Recomendación: Verifica que los códigos del Excel coincidan con los de tus productos existentes
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {updateResult.updated > 0 && (
+            <Alert className="border-green-500 bg-green-500/10">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <AlertTitle className="text-green-500 text-lg">¡Actualización Exitosa!</AlertTitle>
+              <AlertDescription className="text-green-200">
+                <p>
+                  Se actualizaron correctamente {updateResult.updated} productos de {updateResult.source === 'pirelli' ? 'Pirelli' : 'Corven'}.
+                </p>
                 {updateResult.notFound > 0 && (
-                  <span className="block mt-1">
-                    {updateResult.notFound} productos del Excel no se encontraron en la base de datos.
-                  </span>
+                  <p className="mt-2 text-yellow-200">
+                    ⚠️ {updateResult.notFound} productos del Excel no se encontraron en la base de datos y no fueron actualizados.
+                  </p>
                 )}
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Errors */}
+          {/* Errors List */}
           {updateResult.errors.length > 0 && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Errores ({updateResult.errors.length})</AlertTitle>
-              <AlertDescription>
-                <ul className="list-disc list-inside mt-2">
-                  {updateResult.errors.slice(0, 5).map((err, idx) => (
-                    <li key={idx}>[{err.codigo}] {err.error}</li>
+            <Alert variant="destructive" className="bg-red-950/50 border-red-900">
+              <AlertCircle className="h-5 w-5" />
+              <AlertTitle className="text-lg">Se encontraron {updateResult.errors.length} errores</AlertTitle>
+              <AlertDescription className="mt-2">
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {updateResult.errors.map((err, idx) => (
+                    <div key={idx} className="text-sm font-mono bg-black/20 p-2 rounded">
+                      <span className="text-red-300">[{err.codigo}]</span> {err.error}
+                    </div>
                   ))}
-                  {updateResult.errors.length > 5 && (
-                    <li>... y {updateResult.errors.length - 5} más</li>
-                  )}
-                </ul>
+                </div>
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-4">
-            <Button onClick={handleReset}>
-              Actualizar Otro Archivo
-            </Button>
-            <Link href={updateResult.source === 'corven' ? '/agro-camiones' : '/admin/products'}>
-              <Button variant="outline">
-                Ver Productos {updateResult.source === 'corven' ? 'Agro/Camiones' : ''}
-              </Button>
-            </Link>
-          </div>
+          {/* Action Buttons */}
+          <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+            <CardContent className="pt-6">
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={handleReset}
+                  size="lg"
+                  className="bg-[#d97757] hover:bg-[#d97757]/90 text-white"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Actualizar Otro Archivo
+                </Button>
+                <Link href={updateResult.source === 'corven' ? '/agro-camiones' : '/admin/products'}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38]"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Ver Productos{updateResult.source === 'corven' ? ' Agro/Camiones' : ''}
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </main>

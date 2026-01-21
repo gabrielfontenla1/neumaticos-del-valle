@@ -128,6 +128,18 @@ body {
   min-height: 100vh;
 }
 
+/* Remove native number input spinners for clean shadcn/ui look */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Body styles now handled by @layer base to respect theme variables */
 
 /* Animated background gradient - commented out to allow theme colors */

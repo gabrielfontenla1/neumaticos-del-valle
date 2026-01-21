@@ -1,6 +1,9 @@
 // Product Details Page - Complete Information Display
 'use client'
 
+// Force dynamic rendering for dynamic routes
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {

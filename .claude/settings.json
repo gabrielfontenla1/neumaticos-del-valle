@@ -1,8 +1,0 @@
-{
-  "skills": {
-    "update-stock": {
-      "description": "Actualiza stock y precios desde Excel de Pirelli",
-      "file": ".claude/skills/update-stock.md"
-    }
-  }
-}

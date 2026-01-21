@@ -2,8 +2,8 @@
 
 'use client'
 
-import { Clock, DollarSign, CheckCircle, Check, ChevronRight } from 'lucide-react'
-import { SERVICES } from '../types'
+import { Clock, DollarSign, CheckCircle, Check, ChevronRight, Loader2 } from 'lucide-react'
+import { useServices } from '../hooks/useServices'
 
 interface ServiceSelectorProps {
   selectedServices?: string[]
@@ -12,6 +12,24 @@ interface ServiceSelectorProps {
 }
 
 export function ServiceSelector({ selectedServices = [], onToggleService, hasVoucher }: ServiceSelectorProps) {
+  const { services, loading, error } = useServices()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-[#FEE004]" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">Error al cargar los servicios. Por favor intenta de nuevo.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
@@ -24,7 +42,7 @@ export function ServiceSelector({ selectedServices = [], onToggleService, hasVou
       </div>
 
       <div className="space-y-3">
-        {SERVICES.map((service) => {
+        {services.map((service) => {
           const isSelected = selectedServices.includes(service.id)
           const isFree = hasVoucher && service.voucherEligible
 

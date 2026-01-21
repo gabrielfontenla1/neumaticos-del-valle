@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Calendar, MapPin, ArrowRight, Pause, Droplet, Play } from 'lucide-react'
+import { Calendar, MapPin, ArrowRight, Pause, Droplet, Play, MessageCircle } from 'lucide-react'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
 import type { CarouselApi } from '@/components/ui/carousel'
 import { useRef, useState, useEffect } from 'react'
 import { tireImages, oilImages, locationImages } from './data'
+import { buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 
 export function HeroCarousel() {
   const autoplayPlugin = useRef(Autoplay({ delay: 7000 }))
@@ -123,13 +124,17 @@ function SlideOfertas() {
                 <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
 
-              <Link
-                href="/turnos"
+              <button
+                onClick={() => {
+                  const message = "Hola, estoy buscando asesoramiento para mi vehículo. ¿Me podrían ayudar?"
+                  const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+                  window.open(url, '_blank', 'noopener,noreferrer')
+                }}
                 className="group px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-white border-2 border-black text-black rounded-xl font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105 font-montserrat inline-flex items-center justify-center gap-2 text-sm sm:text-base"
               >
-                <Calendar className="w-5 h-5" />
+                <MessageCircle className="w-5 h-5" />
                 <span>Pedir Asesoramiento</span>
-              </Link>
+              </button>
             </div>
           </div>
 
