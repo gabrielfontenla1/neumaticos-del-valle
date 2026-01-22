@@ -476,7 +476,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
         if (response.ok) {
           console.log('API response:', {
             productsCount: data.products?.length || 0,
-            total: data.total,
+            total: data.metadata?.total,
             firstProduct: data.products?.[0]
           })
 
