@@ -542,7 +542,7 @@ export default function SucursalesPage() {
                     <Input
                       id="new-province"
                       placeholder="ej: Catamarca"
-                      value={newBranch.province}
+                      value={newBranch.province || ''}
                       onChange={(e) => setNewBranch({ ...newBranch, province: e.target.value })}
                       className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
                     />
@@ -577,7 +577,7 @@ export default function SucursalesPage() {
                     <Input
                       id="new-whatsapp"
                       placeholder="ej: 5493834123456"
-                      value={newBranch.whatsapp}
+                      value={newBranch.whatsapp || ''}
                       onChange={(e) => setNewBranch({ ...newBranch, whatsapp: e.target.value })}
                       className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
                     />
@@ -591,7 +591,7 @@ export default function SucursalesPage() {
                       id="new-email"
                       type="email"
                       placeholder="ej: sucursal@neumaticos.com"
-                      value={newBranch.email}
+                      value={newBranch.email || ''}
                       onChange={(e) => setNewBranch({ ...newBranch, email: e.target.value })}
                       className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
                     />
@@ -714,7 +714,7 @@ export default function SucursalesPage() {
                 </h3>
 
                 <ImageUpload
-                  value={newBranch.background_image_url}
+                  value={newBranch.background_image_url || undefined}
                   onChange={(url) => setNewBranch({ ...newBranch, background_image_url: url || undefined })}
                   onUpload={(file) => handleUploadImage(file)}
                   disabled={uploadingImage}
@@ -858,7 +858,7 @@ export default function SucursalesPage() {
                         Provincia *
                       </Label>
                       <Input
-                        value={branchToEdit.province}
+                        value={branchToEdit.province || ''}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, province: e.target.value })}
                         className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
                       />

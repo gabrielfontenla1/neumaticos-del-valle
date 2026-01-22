@@ -35,7 +35,8 @@ export default function SucursalesPage() {
       setLoading(false);
     }
   };
-  const handleWhatsApp = (number: string) => {
+  const handleWhatsApp = (number: string | null) => {
+    if (!number) return;
     window.open(`https://wa.me/${number}`, '_blank');
   };
 
@@ -156,13 +157,15 @@ export default function SucursalesPage() {
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-2">
-                    <button
-                      onClick={() => handleWhatsApp(branch.whatsapp)}
-                      className="flex-1 bg-[#25D366] hover:bg-[#25D366]/90 text-white py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-300 text-sm shadow-lg hover:shadow-[#25D366]/30"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      WhatsApp
-                    </button>
+                    {branch.whatsapp && (
+                      <button
+                        onClick={() => handleWhatsApp(branch.whatsapp)}
+                        className="flex-1 bg-[#25D366] hover:bg-[#25D366]/90 text-white py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-300 text-sm shadow-lg hover:shadow-[#25D366]/30"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        WhatsApp
+                      </button>
+                    )}
 
                     <button
                       onClick={() => handleMap(branch.address)}
