@@ -250,10 +250,10 @@ export function AIConfigPanel() {
   }
 
   return (
-    <div className="flex gap-6 h-full items-start">
-      {/* Sidebar Navigation */}
-      <Card className="w-64 bg-[#262624] border-[#3a3a37] p-4 flex-shrink-0 flex flex-col self-stretch">
-        <div className="space-y-2 flex-shrink-0">
+    <div className="h-full grid grid-cols-[280px_1fr] gap-6 overflow-hidden">
+      {/* Sidebar Navigation - Fixed width, full height */}
+      <Card className="bg-[#262624] border-[#3a3a37] p-4 overflow-hidden flex flex-col">
+        <div className="space-y-2">
           {sections.map((section) => {
             const Icon = section.icon
             return (
@@ -273,11 +273,11 @@ export function AIConfigPanel() {
           })}
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Spacer - pushes status to bottom */}
+        <div className="flex-1 min-h-0" />
 
-        {/* Status Indicators */}
-        <div className="pt-6 border-t border-[#3a3a37] space-y-3 flex-shrink-0">
+        {/* Status Indicators - sticky at bottom */}
+        <div className="pt-4 border-t border-[#3a3a37] space-y-3 mt-auto">
           {isDirty && (
             <Badge variant="outline" className="w-full bg-amber-500/20 text-amber-400 border-amber-500/30">
               Cambios sin guardar
@@ -292,63 +292,67 @@ export function AIConfigPanel() {
         </div>
       </Card>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0 self-stretch overflow-hidden">
+      {/* Main Content Area - Grid column 2, full height with internal scroll */}
+      <div className="overflow-hidden flex flex-col">
+        {/* Error Alert - Fixed at top */}
         {error && (
-          <Alert className="bg-red-500/10 border-red-500/30 mb-4">
+          <Alert className="bg-red-500/10 border-red-500/30 mb-4 flex-shrink-0">
             <AlertCircle className="h-4 w-4 text-red-400" />
             <AlertDescription className="text-red-300">{error}</AlertDescription>
           </Alert>
         )}
 
-        <div className="flex-1 overflow-y-auto pr-4">
-          {activeSection === 'prompts' && (
-            <PromptsSection
-              config={promptsConfig}
-              onChange={(config) => {
-                setPromptsConfig(config)
-                setIsDirty(true)
-              }}
-              onSave={handleSavePrompts}
-              isSaving={isSaving}
-            />
-          )}
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto pr-2">
+          <div className="space-y-6">
+            {activeSection === 'prompts' && (
+              <PromptsSection
+                config={promptsConfig}
+                onChange={(config) => {
+                  setPromptsConfig(config)
+                  setIsDirty(true)
+                }}
+                onSave={handleSavePrompts}
+                isSaving={isSaving}
+              />
+            )}
 
-          {activeSection === 'functions' && (
-            <FunctionToolsSection
-              config={functionsConfig}
-              onChange={(config) => {
-                setFunctionsConfig(config)
-                setIsDirty(true)
-              }}
-              onSave={handleSaveFunctions}
-              isSaving={isSaving}
-            />
-          )}
+            {activeSection === 'functions' && (
+              <FunctionToolsSection
+                config={functionsConfig}
+                onChange={(config) => {
+                  setFunctionsConfig(config)
+                  setIsDirty(true)
+                }}
+                onSave={handleSaveFunctions}
+                isSaving={isSaving}
+              />
+            )}
 
-          {activeSection === 'models' && (
-            <ModelsSection
-              config={modelsConfig}
-              onChange={(config) => {
-                setModelsConfig(config)
-                setIsDirty(true)
-              }}
-              onSave={handleSaveModels}
-              isSaving={isSaving}
-            />
-          )}
+            {activeSection === 'models' && (
+              <ModelsSection
+                config={modelsConfig}
+                onChange={(config) => {
+                  setModelsConfig(config)
+                  setIsDirty(true)
+                }}
+                onSave={handleSaveModels}
+                isSaving={isSaving}
+              />
+            )}
 
-          {activeSection === 'bot' && (
-            <BotConfigSection
-              config={botConfig}
-              onChange={(config) => {
-                setBotConfig(config)
-                setIsDirty(true)
-              }}
-              onSave={handleSaveBot}
-              isSaving={isSaving}
-            />
-          )}
+            {activeSection === 'bot' && (
+              <BotConfigSection
+                config={botConfig}
+                onChange={(config) => {
+                  setBotConfig(config)
+                  setIsDirty(true)
+                }}
+                onSave={handleSaveBot}
+                isSaving={isSaving}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

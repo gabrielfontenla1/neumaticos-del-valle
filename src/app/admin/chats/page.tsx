@@ -328,9 +328,9 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
-      {/* Header */}
-      <div className="mb-6 flex-shrink-0">
+    <div className="h-full w-full grid grid-rows-[auto_auto_1fr] gap-0 p-6">
+      {/* Header - Fixed height */}
+      <div className="pb-4">
         <h1 className="text-3xl font-bold mb-2 text-white flex items-center gap-3">
           <MessageCircle className="h-8 w-8 text-[#d97757]" />
           Chats WhatsApp
@@ -340,9 +340,9 @@ export default function ChatsPage() {
         </p>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="conversations" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="bg-[#262624] border-[#3a3a37] mb-4">
+      {/* Tabs Navigation - Fixed height */}
+      <Tabs defaultValue="conversations" className="contents">
+        <TabsList className="bg-[#262624] border-[#3a3a37] mb-4 w-fit">
           <TabsTrigger
             value="conversations"
             className="data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
@@ -359,10 +359,10 @@ export default function ChatsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Conversations Tab */}
-        <TabsContent value="conversations" className="flex-1 flex gap-4 min-h-0 mt-0">
-        {/* Conversation List */}
-        <Card className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-96 bg-[#262624] border-[#3a3a37]`}>
+        {/* Conversations Tab - Full height container */}
+        <TabsContent value="conversations" className="h-full grid grid-cols-[auto_1fr] gap-4 mt-0 overflow-hidden">
+        {/* Conversation List - Fixed width column */}
+        <Card className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden`}>
           {/* Filters */}
           <div className="p-4 border-b border-[#3a3a37] space-y-3">
             <div className="relative">
@@ -467,8 +467,8 @@ export default function ChatsPage() {
           </div>
         </Card>
 
-        {/* Message View */}
-        <Card className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-[#262624] border-[#3a3a37]`}>
+        {/* Message View - Takes remaining space */}
+        <Card className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden`}>
           {selectedConversation ? (
             <>
               {/* Chat Header */}
@@ -671,8 +671,8 @@ export default function ChatsPage() {
         </Card>
         </TabsContent>
 
-        {/* AI Configuration Tab */}
-        <TabsContent value="ai-config" className="flex-1 flex flex-col min-h-0 mt-0 h-full overflow-hidden">
+        {/* AI Configuration Tab - Full height container */}
+        <TabsContent value="ai-config" className="h-full mt-0 overflow-hidden">
           <AIConfigPanel />
         </TabsContent>
       </Tabs>
