@@ -9,6 +9,7 @@ import { SessionProvider } from '@/features/auth/components/SessionProvider';
 import { WhatsAppBubble } from '@/components/marketing/WhatsAppBubble';
 import { Toaster } from '@/components/ui/sonner';
 import { ToastProvider } from '@/providers/ToastProvider';
+import { GoogleAds } from '@/components/analytics';
 
 // Inter is very similar to Proxima Nova (Mercado Libre's font)
 const inter = Inter({
@@ -83,6 +84,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#FFC700" />
+        <GoogleAds />
       </head>
       <body
         className={`${inter.variable} ${lora.variable} ${ibmPlexMono.variable} ${montserrat.variable} font-sans antialiased`}
