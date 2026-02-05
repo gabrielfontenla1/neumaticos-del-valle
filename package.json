@@ -11,6 +11,7 @@
     "build:prod": "NODE_ENV=production next build",
     "start": "node scripts/start-server.js",
     "migrate": "node scripts/migrate.js",
+    "migrate:backup": "node scripts/backup-before-migration.js",
     "test-checkout": "node scripts/test-checkout.js",
     "test:smoke": "node scripts/test-smoke.js",
     "test": "vitest",

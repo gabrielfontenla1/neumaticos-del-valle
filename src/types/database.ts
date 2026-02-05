@@ -487,6 +487,7 @@ export interface Database {
           alternative_time: string | null
           notes: string | null
           status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+          source: 'website' | 'whatsapp' | 'phone' | 'walk_in' | 'app' | 'admin'
           store_id: string | null
           assigned_to: string | null
           confirmed_date: string | null
@@ -512,6 +513,7 @@ export interface Database {
           alternative_time?: string | null
           notes?: string | null
           status?: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+          source?: 'website' | 'whatsapp' | 'phone' | 'walk_in' | 'app' | 'admin'
           store_id?: string | null
           assigned_to?: string | null
           confirmed_date?: string | null
@@ -537,6 +539,7 @@ export interface Database {
           alternative_time?: string | null
           notes?: string | null
           status?: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+          source?: 'website' | 'whatsapp' | 'phone' | 'walk_in' | 'app' | 'admin'
           store_id?: string | null
           assigned_to?: string | null
           confirmed_date?: string | null
@@ -948,6 +951,7 @@ export interface Database {
     }
     Enums: {
       appointment_status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+      order_source: 'website' | 'whatsapp' | 'phone' | 'walk_in' | 'app' | 'admin'
       product_status: 'active' | 'inactive' | 'out_of_stock'
       voucher_status: 'active' | 'redeemed' | 'expired' | 'cancelled'
     }
