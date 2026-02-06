@@ -24,6 +24,7 @@ export * from './orders'
 export * from './products'
 export * from './appointments'
 export * from './chat'
+export * from './admin-notifications'
 
 // Re-export zod for convenience
 export { z } from 'zod'

@@ -127,6 +127,13 @@ export default function ChatsPage() {
   const handlePauseConversation = async () => {
     if (!selectedConversation) return
 
+    // Confirmation alert before pausing
+    const confirmed = window.confirm(
+      '¿Estás seguro de que querés tomar el control de esta conversación?\n\n' +
+      'El bot dejará de responder automáticamente hasta que lo reactives.'
+    )
+    if (!confirmed) return
+
     setIsPausing(true)
     try {
       const response = await fetch(`/api/admin/whatsapp/conversations/${selectedConversation.id}/pause`, {
@@ -328,31 +335,20 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="h-full w-full grid grid-rows-[auto_auto_1fr] gap-0 p-6">
-      {/* Header - Fixed height */}
-      <div className="pb-4">
-        <h1 className="text-3xl font-bold mb-2 text-white flex items-center gap-3">
-          <MessageCircle className="h-8 w-8 text-[#d97757]" />
-          Chats WhatsApp
-        </h1>
-        <p className="text-gray-400">
-          Conversaciones de WhatsApp y configuración de IA
-        </p>
-      </div>
-
-      {/* Tabs Navigation - Fixed height */}
-      <Tabs defaultValue="conversations" className="contents">
-        <TabsList className="bg-[#262624] border-[#3a3a37] mb-4 w-fit">
+    <div className="h-full w-full flex flex-col p-4 overflow-hidden">
+      {/* Tabs - Takes full height */}
+      <Tabs defaultValue="conversations" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="bg-[#262624] border-[#3a3a37] mb-4 w-fit flex-shrink-0">
           <TabsTrigger
             value="conversations"
-            className="data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
+            className="text-gray-400 data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
           >
             <MessageCircle className="h-4 w-4 mr-2" />
             Conversaciones
           </TabsTrigger>
           <TabsTrigger
             value="ai-config"
-            className="data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
+            className="text-gray-400 data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
           >
             <Settings className="h-4 w-4 mr-2" />
             Configuración IA
@@ -360,9 +356,9 @@ export default function ChatsPage() {
         </TabsList>
 
         {/* Conversations Tab - Full height container */}
-        <TabsContent value="conversations" className="h-full grid grid-cols-[auto_1fr] gap-4 mt-0 overflow-hidden">
+        <TabsContent value="conversations" className="flex-1 grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 mt-0 min-h-0 data-[state=inactive]:hidden">
         {/* Conversation List - Fixed width column */}
-        <Card className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden`}>
+        <Card className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden min-h-0`}>
           {/* Filters */}
           <div className="p-4 border-b border-[#3a3a37] space-y-3">
             <div className="relative">
@@ -407,7 +403,7 @@ export default function ChatsPage() {
           </div>
 
           {/* Conversation List */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 m-0 overflow-auto">
             {isLoading ? (
               <ChatListSkeleton items={5} />
             ) : filteredConversations.length === 0 ? (
@@ -424,7 +420,7 @@ export default function ChatsPage() {
                       key={conv.id}
                       onClick={() => setSelectedConversation(conv)}
                       className={`w-full p-4 text-left hover:bg-[#2a2a28] transition-colors ${
-                        selectedConversation?.id === conv.id ? 'bg-[#2a2a28] border-l-2 border-[#d97757]' : ''
+                        selectedConversation?.id === conv.id ? 'bg-[#d97757]/10 border-l-4 border-[#d97757]' : ''
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -468,7 +464,7 @@ export default function ChatsPage() {
         </Card>
 
         {/* Message View - Takes remaining space */}
-        <Card className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden`}>
+        <Card className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden min-h-0`}>
           {selectedConversation ? (
             <>
               {/* Chat Header */}
@@ -544,7 +540,7 @@ export default function ChatsPage() {
               )}
 
               {/* Messages */}
-              <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-[#1a1a18]">
+              <ScrollArea ref={scrollAreaRef} className="flex-1 m-0 overflow-auto p-4 bg-[#1a1a18]">
                 {isLoadingMessages ? (
                   <ChatMessagesSkeleton messages={6} />
                 ) : messages.length === 0 ? (
@@ -621,45 +617,41 @@ export default function ChatsPage() {
                 )}
               </ScrollArea>
 
-              {/* Message Input (only when paused) */}
-              {selectedConversation.is_paused && (
-                <div className="p-4 border-t border-[#3a3a37] bg-[#262624]">
-                  <div className="flex gap-2">
-                    <Textarea
-                      placeholder="Escribe un mensaje..."
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          handleSendMessage()
-                        }
-                      }}
-                      className="flex-1 bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[60px] resize-none"
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={isSending || !messageInput.trim()}
-                      className="bg-[#d97757] hover:bg-[#c86646] text-white self-end"
-                    >
-                      {isSending ? (
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Presiona Enter para enviar. Shift+Enter para nueva línea.
-                  </p>
+              {/* Message Input - Always visible */}
+              <div className="p-4 border-t border-[#3a3a37] bg-[#262624]">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder={selectedConversation.is_paused ? "Escribe un mensaje..." : "Pausá el bot para enviar mensajes manuales..."}
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && selectedConversation.is_paused) {
+                        e.preventDefault()
+                        handleSendMessage()
+                      }
+                    }}
+                    disabled={!selectedConversation.is_paused}
+                    className="flex-1 bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[60px] resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isSending || !messageInput.trim() || !selectedConversation.is_paused}
+                    className="bg-[#d97757] hover:bg-[#c86646] text-white self-end disabled:opacity-50"
+                  >
+                    {isSending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-              )}
-
-              {/* Footer Info */}
-              <div className="p-3 border-t border-[#3a3a37] text-xs text-gray-500 flex justify-between">
-                <span>Conversación: {selectedConversation.id.slice(0, 8)}...</span>
-                <span>WhatsApp via Twilio</span>
+                <p className="text-xs text-gray-500 mt-2">
+                  {selectedConversation.is_paused
+                    ? "Presiona Enter para enviar. Shift+Enter para nueva línea."
+                    : "El bot está activo. Pausá para enviar mensajes manualmente."}
+                </p>
               </div>
+
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
@@ -672,7 +664,7 @@ export default function ChatsPage() {
         </TabsContent>
 
         {/* AI Configuration Tab - Full height container */}
-        <TabsContent value="ai-config" className="h-full mt-0 overflow-hidden">
+        <TabsContent value="ai-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden">
           <AIConfigPanel />
         </TabsContent>
       </Tabs>

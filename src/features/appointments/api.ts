@@ -216,95 +216,43 @@ export async function checkAvailability(branchId: string, date: string, time: st
   }
 }
 
-// Create new appointment
+// Create new appointment via API endpoint
+// This centralizes logic and enables admin email notification
 export async function createAppointment(formData: AppointmentFormData) {
   try {
-    // Get branch name for legacy column
-    let branchName = ''
-    if (formData.branch_id) {
-      const { data: branch } = await supabase
-        .from('stores')
-        .select('name')
-        .eq('id', formData.branch_id)
-        .single()
-
-      branchName = (branch as { name?: string } | null)?.name || ''
-    }
-
-    // Validate voucher if provided
-    let voucherId = null
-    if (formData.voucher_code) {
-      const { data: voucher, error: voucherError } = await supabase
-        .from('vouchers')
-        .select('id, status')
-        .eq('code', formData.voucher_code)
-        .single()
-
-      const voucherData = voucher as DBVoucher | null
-
-      if (voucherError || !voucherData) {
-        return { error: 'Código de voucher inválido' }
-      }
-
-      if (voucherData.status !== 'active') {
-        return { error: 'El voucher no está activo' }
-      }
-
-      voucherId = voucherData.id
-    }
-
-    // Join multiple service IDs with comma, or use first service as fallback
-    const serviceType = formData.selectedServices && formData.selectedServices.length > 0
-      ? formData.selectedServices.join(', ')
-      : (formData.service_type || 'general')
-
-    // Create untyped client to avoid type inference issues
-    const untypedClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Create appointment - map fields to match database schema
-    const { data, error } = await untypedClient
-      .from('appointments')
-      .insert({
+    const response = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         customer_name: formData.customer_name,
-        customer_email: formData.customer_email || null,
-        customer_phone: formData.customer_phone || null,
+        customer_email: formData.customer_email,
+        customer_phone: formData.customer_phone,
         vehicle_make: formData.vehicle_make,
         vehicle_model: formData.vehicle_model,
         vehicle_year: formData.vehicle_year,
-        service_type: serviceType, // Store comma-separated service IDs
-        store_id: formData.branch_id,
-        branch: branchName, // Branch name for legacy column
+        service_type: formData.service_type,
+        selectedServices: formData.selectedServices,
+        branch_id: formData.branch_id,
         preferred_date: formData.preferred_date,
         preferred_time: formData.preferred_time,
-        appointment_date: formData.preferred_date, // Duplicate for legacy column
-        appointment_time: formData.preferred_time, // Duplicate for legacy column
         notes: formData.notes,
-        status: 'pending',
-        user_id: (formData as AppointmentFormDataWithUserId).user_id || null
-      })
-      .select()
-      .single()
+        voucher_code: formData.voucher_code,
+        user_id: (formData as AppointmentFormDataWithUserId).user_id,
+      }),
+    })
 
-    if (error) throw error
+    const result = await response.json()
 
-    // If voucher was used, link it to the appointment
-    if (voucherId && data) {
-      await untypedClient
-        .from('vouchers')
-        .update({
-          status: 'redeemed',
-          redeemed_at: new Date().toISOString(),
-          redemption_notes: `Usado en turno #${data.id}`
-        })
-        .eq('id', voucherId)
+    if (!response.ok || !result.success) {
+      return { error: result.error || 'Error al crear el turno' }
     }
 
-    return { data }
+    return { data: result.data }
   } catch (error) {
-    return handleSupabaseError(error)
+    console.error('[APPOINTMENTS] Error creating appointment:', error)
+    return { error: 'Error de conexión al crear el turno' }
   }
 }
 

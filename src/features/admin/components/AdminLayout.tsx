@@ -63,6 +63,7 @@ const colors = {
   secondary: '#262626',
 }
 
+
 interface AdminLayoutProps {
   children: React.ReactNode
 }
@@ -91,7 +92,10 @@ const menuItems: MenuItem[] = [
 
 // Memoized navigation component to prevent re-renders
 const NavigationMenu = memo(({ pathname, menuItems }: { pathname: string, menuItems: MenuItem[] }) => (
-  <nav className="space-y-2">
+  <nav
+    className="space-y-2 overflow-y-auto flex-1 pr-2 admin-scrollbar"
+    style={{ maxHeight: 'calc(100vh - 180px)' }}
+  >
     {menuItems.map((item) => {
       const isActive = pathname === item.href
       return (
@@ -336,7 +340,10 @@ function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="mt-20 relative z-10 h-[calc(100vh-80px)]" style={{ marginLeft: '286px' }}>
+      <main
+        className="mt-20 relative z-10 h-[calc(100vh-80px)] overflow-y-auto admin-scrollbar"
+        style={{ marginLeft: '286px' }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
