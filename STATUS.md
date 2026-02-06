@@ -6,7 +6,7 @@
 | DATA | ✅ Done | admin_notifications + get_admin_dashboard_counts + 7 triggers | 2026-02-06 |
 | BACKEND | 🟢 Ready | Esperando nueva tarea | 2026-02-06 |
 | FRONTEND | ✅ Done | Agregado overflow-auto y scrollbar styling a AdminLayout.tsx | 2026-02-06 |
-| ADMIN | ✅ Done | UX chats: eliminado header, input siempre visible, alerta pausar | 2026-02-06 |
+| ADMIN | ✅ Done | Tabs reestructurados: chat view ahora DENTRO de TabsContent | 2026-02-06 |
 | QA | ✅ Done | UX Chats: type-check ✓, build ✓ | 2026-02-06 |
 
 ## Status Legend

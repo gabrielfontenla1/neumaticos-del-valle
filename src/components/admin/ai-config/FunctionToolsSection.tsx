@@ -128,7 +128,7 @@ export function FunctionToolsSection({
 
   return (
     <div className="space-y-6">
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-white">Funciones de WhatsApp Bot</h3>
@@ -154,8 +154,8 @@ export function FunctionToolsSection({
               open={expandedTools.has(index)}
               onOpenChange={() => toggleTool(index)}
             >
-              <Card className="bg-[#1a1a18] border-[#3a3a37]">
-                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-[#2a2a28] transition-colors">
+              <Card className="bg-[#111b21] border-[#2a3942]">
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-[#2a3942] transition-colors">
                   <div className="flex items-center gap-3">
                     {expandedTools.has(index) ? (
                       <ChevronDown className="h-4 w-4 text-gray-400" />
@@ -186,7 +186,7 @@ export function FunctionToolsSection({
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
-                  <div className="p-4 pt-0 space-y-4 border-t border-[#3a3a37]">
+                  <div className="p-4 pt-0 space-y-4 border-t border-[#2a3942]">
                     {/* Function Name */}
                     <div>
                       <label className="text-sm font-medium text-white">Nombre</label>
@@ -194,7 +194,7 @@ export function FunctionToolsSection({
                         value={tool.name}
                         onChange={(e) => updateTool(index, { name: e.target.value })}
                         placeholder="function_name"
-                        className="bg-[#262624] border-[#3a3a37] text-gray-100 font-mono"
+                        className="bg-[#202c33] border-[#2a3942] text-gray-100 font-mono"
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Formato: snake_case (ej: book_appointment)
@@ -208,7 +208,7 @@ export function FunctionToolsSection({
                         value={tool.description}
                         onChange={(e) => updateTool(index, { description: e.target.value })}
                         placeholder="¿Qué hace esta función?"
-                        className="bg-[#262624] border-[#3a3a37] text-gray-100 min-h-[60px]"
+                        className="bg-[#202c33] border-[#2a3942] text-gray-100 min-h-[60px]"
                       />
                     </div>
 
@@ -223,13 +223,13 @@ export function FunctionToolsSection({
                     </div>
 
                     {/* Test Function */}
-                    <div className="border-t border-[#3a3a37] pt-4 space-y-3">
+                    <div className="border-t border-[#2a3942] pt-4 space-y-3">
                       <h5 className="text-sm font-medium text-white">Probar Función</h5>
                       <Textarea
                         value={testMessage}
                         onChange={(e) => setTestMessage(e.target.value)}
                         placeholder="Mensaje de prueba que debería invocar esta función..."
-                        className="bg-[#262624] border-[#3a3a37] text-gray-100 min-h-[60px]"
+                        className="bg-[#202c33] border-[#2a3942] text-gray-100 min-h-[60px]"
                       />
                       <Button
                         onClick={() => testTool(index)}
@@ -246,14 +246,14 @@ export function FunctionToolsSection({
                         Probar con OpenAI
                       </Button>
                       {testResult && (
-                        <div className="bg-[#262624] border border-[#3a3a37] rounded-lg p-3">
+                        <div className="bg-[#202c33] border border-[#2a3942] rounded-lg p-3">
                           <pre className="text-xs text-gray-300 whitespace-pre-wrap">{testResult}</pre>
                         </div>
                       )}
                     </div>
 
                     {/* Delete Button */}
-                    <div className="border-t border-[#3a3a37] pt-4">
+                    <div className="border-t border-[#2a3942] pt-4">
                       <Button
                         onClick={() => deleteTool(index)}
                         variant="outline"
@@ -277,7 +277,7 @@ export function FunctionToolsSection({
         <Button
           onClick={onSave}
           disabled={isSaving}
-          className="bg-[#d97757] hover:bg-[#c86646] text-white"
+          className="bg-[#00a884] hover:bg-[#02906f] text-white"
         >
           {isSaving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

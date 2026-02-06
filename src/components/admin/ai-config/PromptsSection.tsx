@@ -60,7 +60,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
   return (
     <div className="space-y-6">
       {/* WhatsApp System Prompt */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div>
@@ -99,7 +99,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
               })
             }
             placeholder="Sos un asistente virtual de..."
-            className="font-mono text-sm bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[300px]"
+            className="font-mono text-sm bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[300px]"
           />
 
           {!isValidLength && (
@@ -109,13 +109,13 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
           )}
 
           {/* Test Prompt */}
-          <div className="border-t border-[#3a3a37] pt-4 space-y-3">
+          <div className="border-t border-[#2a3942] pt-4 space-y-3">
             <h4 className="text-sm font-medium text-white">Probar Prompt</h4>
             <Textarea
               value={testMessage}
               onChange={(e) => setTestMessage(e.target.value)}
               placeholder="Mensaje de prueba del usuario..."
-              className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+              className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
             />
             <div className="flex gap-2">
               <Button
@@ -133,7 +133,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
               </Button>
             </div>
             {testResponse && (
-              <div className="bg-[#1a1a18] border border-[#3a3a37] rounded-lg p-4">
+              <div className="bg-[#111b21] border border-[#2a3942] rounded-lg p-4">
                 <p className="text-sm text-gray-300 whitespace-pre-wrap">{testResponse}</p>
               </div>
             )}
@@ -142,7 +142,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
       </Card>
 
       {/* Other Prompts */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-white">Prompts Especializados</h3>
 
@@ -154,7 +154,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
               <Textarea
                 value={config.productPrompt}
                 onChange={(e) => onChange({ ...config, productPrompt: e.target.value })}
-                className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+                className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
               />
             </div>
 
@@ -165,7 +165,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
               <Textarea
                 value={config.salesPrompt}
                 onChange={(e) => onChange({ ...config, salesPrompt: e.target.value })}
-                className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+                className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
               />
             </div>
 
@@ -176,7 +176,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
               <Textarea
                 value={config.technicalPrompt}
                 onChange={(e) => onChange({ ...config, technicalPrompt: e.target.value })}
-                className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+                className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
               />
             </div>
 
@@ -187,7 +187,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
               <Textarea
                 value={config.faqPrompt}
                 onChange={(e) => onChange({ ...config, faqPrompt: e.target.value })}
-                className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+                className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
               />
             </div>
           </div>
@@ -199,7 +199,7 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
         <Button
           onClick={onSave}
           disabled={isSaving || !isValidLength}
-          className="bg-[#d97757] hover:bg-[#c86646] text-white"
+          className="bg-[#00a884] hover:bg-[#02906f] text-white"
         >
           {isSaving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

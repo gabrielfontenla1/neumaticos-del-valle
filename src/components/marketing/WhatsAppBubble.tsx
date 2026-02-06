@@ -1,8 +1,19 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { WHATSAPP_NUMBERS, buildWhatsAppUrl } from '@/lib/whatsapp';
 
 export function WhatsAppBubble() {
+  const pathname = usePathname();
+
+  // No mostrar en rutas de administración/dashboard
+  const hiddenRoutes = ['/dashboard', '/admin'];
+  const shouldHide = hiddenRoutes.some(route => pathname?.startsWith(route));
+
+  if (shouldHide) {
+    return null;
+  }
+
   const handleClick = () => {
     const message = `Hola! Me gustaría recibir información sobre neumáticos.`;
     const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message);

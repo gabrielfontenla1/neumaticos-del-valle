@@ -231,8 +231,8 @@ export function AIConfigPanel() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#d97757] border-r-transparent"></div>
-          <p className="mt-4 text-gray-400">Cargando configuración...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00a884] border-r-transparent"></div>
+          <p className="mt-4 text-[#8696a0]">Cargando configuración...</p>
         </div>
       </div>
     )
@@ -250,9 +250,9 @@ export function AIConfigPanel() {
   }
 
   return (
-    <div className="h-full grid grid-cols-[280px_1fr] gap-6 overflow-hidden">
+    <div className="h-full grid grid-cols-[280px_1fr] gap-6 overflow-hidden p-4">
       {/* Sidebar Navigation - Fixed width, full height */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-4 overflow-hidden flex flex-col">
+      <Card className="bg-[#202c33] border-[#2a3942] p-4 overflow-hidden flex flex-col">
         <div className="space-y-2">
           {sections.map((section) => {
             const Icon = section.icon
@@ -262,8 +262,8 @@ export function AIConfigPanel() {
                 onClick={() => setActiveSection(section.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   activeSection === section.id
-                    ? 'bg-[#d97757] text-white'
-                    : 'text-gray-400 hover:bg-[#3a3a37] hover:text-white'
+                    ? 'bg-[#00a884] text-white'
+                    : 'text-[#8696a0] hover:bg-[#2a3942] hover:text-[#e9edef]'
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -277,14 +277,14 @@ export function AIConfigPanel() {
         <div className="flex-1 min-h-0" />
 
         {/* Status Indicators - sticky at bottom */}
-        <div className="pt-4 border-t border-[#3a3a37] space-y-3 mt-auto">
+        <div className="pt-4 border-t border-[#2a3942] space-y-3 mt-auto">
           {isDirty && (
             <Badge variant="outline" className="w-full bg-amber-500/20 text-amber-400 border-amber-500/30">
               Cambios sin guardar
             </Badge>
           )}
           {saveSuccess && (
-            <Badge variant="outline" className="w-full bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <Badge variant="outline" className="w-full bg-[#00a884]/20 text-[#00a884] border-[#00a884]/30">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Guardado exitoso
             </Badge>

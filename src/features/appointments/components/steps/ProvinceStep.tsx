@@ -1,38 +1,38 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, ChevronRight } from 'lucide-react'
+import type { Branch } from '../../types'
 
 interface ProvinceStepProps {
+  branches: Branch[]
   onSelect: (province: string) => void
   selectedProvince?: string
 }
 
-// Provincias donde Neumáticos del Valle tiene sucursales
-const PROVINCES = [
-  {
-    id: 'catamarca',
-    name: 'Catamarca',
-    branches: 2
-  },
-  {
-    id: 'santiago-del-estero',
-    name: 'Santiago del Estero',
-    branches: 2
-  },
-  {
-    id: 'salta',
-    name: 'Salta',
-    branches: 1
-  },
-  {
-    id: 'tucuman',
-    name: 'Tucumán',
-    branches: 1
-  }
-]
+export default function ProvinceStep({ branches, onSelect, selectedProvince }: ProvinceStepProps) {
+  // Derive unique provinces from active branches
+  const provinces = useMemo(() => {
+    const provinceMap = new Map<string, { name: string; count: number }>()
 
-export default function ProvinceStep({ onSelect, selectedProvince }: ProvinceStepProps) {
+    branches.forEach(branch => {
+      if (branch.province && branch.active) {
+        const existing = provinceMap.get(branch.province)
+        if (existing) {
+          existing.count++
+        } else {
+          provinceMap.set(branch.province, { name: branch.province, count: 1 })
+        }
+      }
+    })
+
+    return Array.from(provinceMap.entries()).map(([name, data]) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name: data.name,
+      branches: data.count
+    }))
+  }, [branches])
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
@@ -45,7 +45,7 @@ export default function ProvinceStep({ onSelect, selectedProvince }: ProvinceSte
       </div>
 
       <div className="space-y-3">
-        {PROVINCES.map((province) => (
+        {provinces.map((province) => (
           <motion.div
             key={province.id}
             whileHover={{ scale: 1.02 }}

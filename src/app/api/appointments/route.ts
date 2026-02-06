@@ -48,15 +48,15 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Get branch name
-    let branchName = ''
+    // Get branch name and email
     const { data: branch } = await supabase
       .from('stores')
-      .select('name')
+      .select('name, email')
       .eq('id', branch_id)
       .single()
 
-    branchName = branch?.name || 'No especificada'
+    const branchName = branch?.name || 'No especificada'
+    const branchEmail = branch?.email || null
 
     // Validate voucher if provided
     let voucherId = null
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         .eq('id', voucherId)
     }
 
-    // Send notification to admin (non-blocking)
+    // Send notification to admin and branch (non-blocking)
     try {
       const emailResult = await sendAppointmentNotificationEmail({
         customerName: customer_name,
@@ -142,7 +142,8 @@ export async function POST(request: NextRequest) {
         service: serviceTypeValue,
         date: formatDateSpanish(preferred_date),
         time: preferred_time,
-        branch: branchName
+        branch: branchName,
+        branchEmail: branchEmail
       })
 
       if (!emailResult.success) {

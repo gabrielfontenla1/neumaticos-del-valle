@@ -3,14 +3,15 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, RefreshCw, Plus, Trash2, Edit2, Store } from 'lucide-react'
+import { MapPin, RefreshCw, Plus, Trash2, Edit2, Store, Phone, Mail, Clock, Settings, Building2, Copy, Check, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import {
   Dialog,
   DialogContent,
@@ -65,6 +66,7 @@ export default function SucursalesPage() {
   const [updating, setUpdating] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
   const [newBranch, setNewBranch] = useState<Partial<Branch>>({
     name: '',
     address: '',
@@ -301,6 +303,17 @@ export default function SucursalesPage() {
   const openDeleteDialog = (branchId: string) => {
     setBranchToDelete(branchId)
     setIsDeleteDialogOpen(true)
+  }
+
+  const copyIdToClipboard = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id)
+      setCopiedId(true)
+      toast.success('ID copiado al portapapeles')
+      setTimeout(() => setCopiedId(false), 2000)
+    } catch {
+      toast.error('Error al copiar')
+    }
   }
 
   const openCreateDialog = () => {
@@ -783,65 +796,115 @@ export default function SucursalesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog - Similar structure to Create Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-[#262624] border-[#3a3a38] text-[#fafafa] max-w-3xl max-h-[90vh] overflow-y-auto">
+      {/* Edit Sheet - Modern Tabbed Layout */}
+      <Sheet open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-xl bg-[#262624] border-l border-[#3a3a38] p-0 flex flex-col"
+        >
+          {/* Visually hidden title for accessibility */}
+          <SheetHeader className="sr-only">
+            <SheetTitle>Editar Sucursal</SheetTitle>
+            <SheetDescription>Formulario para editar los datos de la sucursal</SheetDescription>
+          </SheetHeader>
+
           {branchToEdit && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <DialogHeader>
-                <DialogTitle className="text-[#fafafa] text-xl">Editar Sucursal</DialogTitle>
-                <DialogDescription className="text-[#888888]">
-                  Modifica los campos necesarios de la sucursal
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-6 py-4">
-                {/* Same structure as Create Dialog but with branchToEdit */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                    Información Básica
-                  </h3>
-
-                  <div className="space-y-2">
-                    <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      ID de la Sucursal
-                    </Label>
-                    <Input
-                      value={branchToEdit.id}
-                      readOnly
-                      className="bg-[#1a1a18] border-[#3a3a38] text-[#888888] font-mono cursor-default"
-                    />
+            <>
+              {/* Header with Branch Info */}
+              <div className="border-b border-[#3a3a38] p-6 bg-gradient-to-r from-[#262624] to-[#30302e]">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-[#d97757]/20 border border-[#d97757]/30">
+                      <Building2 className="w-6 h-6 text-[#d97757]" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-[#fafafa]">{branchToEdit.name}</h2>
+                      <p className="text-sm text-[#888888] flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3" />
+                        {branchToEdit.city}, {branchToEdit.province}
+                      </p>
+                    </div>
                   </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    {branchToEdit.is_main && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#d97757]/20 text-[#d97757]">
+                        Principal
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      branchToEdit.active
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      {branchToEdit.active ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                {/* ID with copy button */}
+                <div className="mt-4 flex items-center gap-2">
+                  <code className="text-xs text-[#666] bg-[#1a1a18] px-2 py-1 rounded font-mono flex-1 truncate">
+                    {branchToEdit.id}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => copyIdToClipboard(branchToEdit.id)}
+                    className="h-7 w-7 p-0 text-[#888888] hover:text-[#fafafa] hover:bg-[#3a3a38]"
+                  >
+                    {copiedId ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tabs Content */}
+              <Tabs defaultValue="location" className="flex-1 flex flex-col overflow-hidden">
+                <TabsList className="w-full justify-start rounded-none border-b border-[#3a3a38] bg-transparent p-0 h-auto">
+                  <TabsTrigger
+                    value="location"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:bg-transparent data-[state=active]:text-[#d97757] text-[#888888] px-4 py-3 gap-2"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span className="hidden sm:inline">Ubicación</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="contact"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:bg-transparent data-[state=active]:text-[#d97757] text-[#888888] px-4 py-3 gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span className="hidden sm:inline">Contacto</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="hours"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:bg-transparent data-[state=active]:text-[#d97757] text-[#888888] px-4 py-3 gap-2"
+                  >
+                    <Clock className="w-4 h-4" />
+                    <span className="hidden sm:inline">Horarios</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="settings"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:bg-transparent data-[state=active]:text-[#d97757] text-[#888888] px-4 py-3 gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span className="hidden sm:inline">Config</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="flex-1 overflow-y-auto">
+                  {/* Location Tab */}
+                  <TabsContent value="location" className="m-0 p-6 space-y-4">
                     <div className="space-y-2">
                       <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Nombre *
+                        Nombre de la Sucursal *
                       </Label>
                       <Input
                         value={branchToEdit.name}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, name: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        placeholder="ej: Sucursal Catamarca Centro"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Ciudad *
-                      </Label>
-                      <Input
-                        value={branchToEdit.city}
-                        onChange={(e) => setBranchToEdit({ ...branchToEdit, city: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
                         Dirección *
@@ -849,235 +912,320 @@ export default function SucursalesPage() {
                       <Input
                         value={branchToEdit.address}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, address: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        placeholder="ej: Av. Belgrano 938"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Provincia *
-                      </Label>
-                      <Input
-                        value={branchToEdit.province || ''}
-                        onChange={(e) => setBranchToEdit({ ...branchToEdit, province: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                          Ciudad *
+                        </Label>
+                        <Input
+                          value={branchToEdit.city}
+                          onChange={(e) => setBranchToEdit({ ...branchToEdit, city: e.target.value })}
+                          placeholder="ej: San Fernando"
+                          className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                          Provincia *
+                        </Label>
+                        <Input
+                          value={branchToEdit.province || ''}
+                          onChange={(e) => setBranchToEdit({ ...branchToEdit, province: e.target.value })}
+                          placeholder="ej: Catamarca"
+                          className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                    Contacto
-                  </h3>
+                    <div className="pt-4 border-t border-[#3a3a38]">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Globe className="w-4 h-4 text-[#888888]" />
+                        <span className="text-sm text-[#888888]">Coordenadas GPS (opcional)</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                            Latitud
+                          </Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={branchToEdit.latitude || ''}
+                            onChange={(e) => setBranchToEdit({ ...branchToEdit, latitude: e.target.value ? parseFloat(e.target.value) : undefined })}
+                            placeholder="-28.4699"
+                            className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                            Longitud
+                          </Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={branchToEdit.longitude || ''}
+                            onChange={(e) => setBranchToEdit({ ...branchToEdit, longitude: e.target.value ? parseFloat(e.target.value) : undefined })}
+                            placeholder="-65.7795"
+                            className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  {/* Contact Tab */}
+                  <TabsContent value="contact" className="m-0 p-6 space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide flex items-center gap-2">
+                        <Phone className="w-3 h-3" />
                         Teléfono *
                       </Label>
                       <Input
                         value={branchToEdit.phone}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, phone: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        placeholder="ej: 5493855854741"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide flex items-center gap-2">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
                         WhatsApp
                       </Label>
                       <Input
                         value={branchToEdit.whatsapp || ''}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, whatsapp: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        placeholder="ej: 5493855854741"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
+                      <p className="text-xs text-[#666]">
+                        Formato internacional sin + ni espacios
+                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide flex items-center gap-2">
+                        <Mail className="w-3 h-3" />
                         Email
                       </Label>
                       <Input
                         type="email"
                         value={branchToEdit.email || ''}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, email: e.target.value })}
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        placeholder="ej: catamarca@neumaticos.com"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
+                      <p className="text-xs text-[#666]">
+                        Se usará para notificaciones de turnos
+                      </p>
                     </div>
-                  </div>
-                </div>
+                  </TabsContent>
 
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                    Horarios
-                  </h3>
-
-                  <div className="space-y-3">
+                  {/* Hours Tab */}
+                  <TabsContent value="hours" className="m-0 p-6 space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Lunes a Viernes
-                      </Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                          Lunes a Viernes
+                        </Label>
+                        <span className="text-xs text-[#666]">Horario completo</span>
+                      </div>
                       <Input
                         value={branchToEdit.opening_hours.weekdays}
-                        onChange={(e) =>
-                          setBranchToEdit({
-                            ...branchToEdit,
-                            opening_hours: { ...branchToEdit.opening_hours, weekdays: e.target.value },
-                          })
-                        }
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                          Sábado
-                        </Label>
-                        <Input
-                          value={branchToEdit.opening_hours.saturday}
-                          onChange={(e) =>
-                            setBranchToEdit({
-                              ...branchToEdit,
-                              opening_hours: { ...branchToEdit.opening_hours, saturday: e.target.value },
-                            })
-                          }
-                          className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                          Domingo
-                        </Label>
-                        <Input
-                          value={branchToEdit.opening_hours.sunday || ''}
-                          onChange={(e) =>
-                            setBranchToEdit({
-                              ...branchToEdit,
-                              opening_hours: { ...branchToEdit.opening_hours, sunday: e.target.value },
-                            })
-                          }
-                          className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                    Ubicación (Opcional)
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Latitud
-                      </Label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={branchToEdit.latitude || ''}
-                        onChange={(e) =>
-                          setBranchToEdit({ ...branchToEdit, latitude: e.target.value ? parseFloat(e.target.value) : undefined })
-                        }
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        onChange={(e) => setBranchToEdit({
+                          ...branchToEdit,
+                          opening_hours: { ...branchToEdit.opening_hours, weekdays: e.target.value },
+                        })}
+                        placeholder="ej: 08:30 - 19:00"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Longitud
+                        Sábados
                       </Label>
                       <Input
-                        type="number"
-                        step="any"
-                        value={branchToEdit.longitude || ''}
-                        onChange={(e) =>
-                          setBranchToEdit({ ...branchToEdit, longitude: e.target.value ? parseFloat(e.target.value) : undefined })
-                        }
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
+                        value={branchToEdit.opening_hours.saturday}
+                        onChange={(e) => setBranchToEdit({
+                          ...branchToEdit,
+                          opening_hours: { ...branchToEdit.opening_hours, saturday: e.target.value },
+                        })}
+                        placeholder="ej: 08:30 - 13:00"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
                       />
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                    Imagen de Fondo
-                  </h3>
-
-                  <ImageUpload
-                    value={branchToEdit.background_image_url || undefined}
-                    onChange={(url) => setBranchToEdit({ ...branchToEdit, background_image_url: url || undefined })}
-                    onUpload={(file) => handleUploadImage(file, branchToEdit.id)}
-                    disabled={uploadingImage}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                    Configuración
-                  </h3>
-
-                  <div className="flex items-center justify-between p-4 bg-[#30302e]/50 rounded-lg border border-[#3a3a38]">
-                    <div className="space-y-0.5">
-                      <Label className="text-[#fafafa] font-medium">Sucursal Principal</Label>
-                      <p className="text-xs text-[#888888]">
-                        Marcar como sucursal principal de la empresa
-                      </p>
+                    <div className="space-y-2">
+                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                        Domingos
+                      </Label>
+                      <Input
+                        value={branchToEdit.opening_hours.sunday || ''}
+                        onChange={(e) => setBranchToEdit({
+                          ...branchToEdit,
+                          opening_hours: { ...branchToEdit.opening_hours, sunday: e.target.value },
+                        })}
+                        placeholder="ej: Cerrado"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                      />
                     </div>
-                    <Switch
-                      checked={branchToEdit.is_main}
-                      onCheckedChange={(checked) => setBranchToEdit({ ...branchToEdit, is_main: checked })}
-                    />
-                  </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#30302e]/50 rounded-lg border border-[#3a3a38]">
-                    <div className="space-y-0.5">
-                      <Label className="text-[#fafafa] font-medium">Estado Activo</Label>
-                      <p className="text-xs text-[#888888]">
-                        Mostrar sucursal en la página pública
-                      </p>
+                    <div className="mt-4 p-4 bg-[#1a1a18] rounded-lg border border-[#3a3a38]">
+                      <h4 className="text-sm font-medium text-[#fafafa] mb-2">Vista previa</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-[#888888]">Lun - Vie:</span>
+                          <span className="text-[#fafafa]">{branchToEdit.opening_hours.weekdays || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#888888]">Sábado:</span>
+                          <span className="text-[#fafafa]">{branchToEdit.opening_hours.saturday || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#888888]">Domingo:</span>
+                          <span className="text-[#fafafa]">{branchToEdit.opening_hours.sunday || '-'}</span>
+                        </div>
+                      </div>
                     </div>
-                    <Switch
-                      checked={branchToEdit.active}
-                      onCheckedChange={(checked) => setBranchToEdit({ ...branchToEdit, active: checked })}
-                    />
-                  </div>
+                  </TabsContent>
+
+                  {/* Settings Tab */}
+                  <TabsContent value="settings" className="m-0 p-6 space-y-6">
+                    {/* Image Upload */}
+                    <div className="space-y-3">
+                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                        Imagen de Fondo
+                      </Label>
+                      <ImageUpload
+                        value={branchToEdit.background_image_url || undefined}
+                        onChange={(url) => setBranchToEdit({ ...branchToEdit, background_image_url: url || undefined })}
+                        onUpload={(file) => handleUploadImage(file, branchToEdit.id)}
+                        disabled={uploadingImage}
+                      />
+                    </div>
+
+                    {/* Switches */}
+                    <div className="space-y-3">
+                      <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
+                        Configuración
+                      </Label>
+
+                      <div className="space-y-3">
+                        <div
+                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
+                            branchToEdit.is_main
+                              ? 'bg-[#d97757]/10 border-[#d97757]/30'
+                              : 'bg-[#1a1a18] border-[#3a3a38] hover:border-[#4a4a48]'
+                          }`}
+                          onClick={() => setBranchToEdit({ ...branchToEdit, is_main: !branchToEdit.is_main })}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${branchToEdit.is_main ? 'bg-[#d97757]/20' : 'bg-[#262624]'}`}>
+                              <Store className={`w-4 h-4 ${branchToEdit.is_main ? 'text-[#d97757]' : 'text-[#888888]'}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-[#fafafa]">Sucursal Principal</p>
+                              <p className="text-xs text-[#888888]">Casa matriz de la empresa</p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={branchToEdit.is_main}
+                            onCheckedChange={(checked) => setBranchToEdit({ ...branchToEdit, is_main: checked })}
+                          />
+                        </div>
+
+                        <div
+                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
+                            branchToEdit.active
+                              ? 'bg-green-500/10 border-green-500/30'
+                              : 'bg-[#1a1a18] border-[#3a3a38] hover:border-[#4a4a48]'
+                          }`}
+                          onClick={() => setBranchToEdit({ ...branchToEdit, active: !branchToEdit.active })}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${branchToEdit.active ? 'bg-green-500/20' : 'bg-[#262624]'}`}>
+                              <Globe className={`w-4 h-4 ${branchToEdit.active ? 'text-green-400' : 'text-[#888888]'}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-[#fafafa]">Visible al Público</p>
+                              <p className="text-xs text-[#888888]">Mostrar en la web y turnero</p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={branchToEdit.active}
+                            onCheckedChange={(checked) => setBranchToEdit({ ...branchToEdit, active: checked })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div className="pt-4 border-t border-[#3a3a38]">
+                      <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-red-400">Eliminar Sucursal</p>
+                            <p className="text-xs text-[#888888]">Esta acción no se puede deshacer</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setIsEditDialogOpen(false)
+                              openDeleteDialog(branchToEdit.id)
+                            }}
+                            className="text-red-400 hover:text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </div>
+              </Tabs>
+
+              {/* Footer with Save Button */}
+              <div className="border-t border-[#3a3a38] p-4 bg-[#262624]">
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditDialogOpen(false)}
+                    className="flex-1 bg-transparent border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38]"
+                    disabled={updating}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleEditBranch}
+                    disabled={updating || uploadingImage}
+                    className="flex-1 bg-[#d97757] text-white hover:bg-[#d97757]/90"
+                  >
+                    {updating ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      'Guardar Cambios'
+                    )}
+                  </Button>
                 </div>
               </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                  className="bg-[#262626] border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38]"
-                  disabled={updating}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleEditBranch}
-                  disabled={updating || uploadingImage}
-                  className="bg-[#d97757] text-white hover:bg-[#d97757]/90"
-                >
-                  {updating ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Actualizando...
-                    </>
-                  ) : (
-                    'Guardar Cambios'
-                  )}
-                </Button>
-              </DialogFooter>
-            </motion.div>
+            </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

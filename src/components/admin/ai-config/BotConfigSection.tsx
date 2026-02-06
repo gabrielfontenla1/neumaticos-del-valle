@@ -52,10 +52,10 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
   return (
     <div className="space-y-6">
       {/* General Settings */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <Settings className="h-5 w-5 text-[#d97757]" />
+            <Settings className="h-5 w-5 text-[#00a884]" />
             <h3 className="text-lg font-semibold text-white">Configuración General</h3>
           </div>
 
@@ -101,10 +101,10 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
       </Card>
 
       {/* Predefined Messages */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <MessageSquare className="h-5 w-5 text-[#d97757]" />
+            <MessageSquare className="h-5 w-5 text-[#00a884]" />
             <h3 className="text-lg font-semibold text-white">Mensajes Predefinidos</h3>
           </div>
 
@@ -114,7 +114,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
               value={config.welcomeMessage}
               onChange={(e) => onChange({ ...config, welcomeMessage: e.target.value })}
               placeholder="¡Hola! Soy el asistente virtual..."
-              className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+              className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
             />
             <p className="text-xs text-gray-500">Primer mensaje que recibe el usuario</p>
           </div>
@@ -125,7 +125,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
               value={config.errorMessage}
               onChange={(e) => onChange({ ...config, errorMessage: e.target.value })}
               placeholder="Disculpa, hubo un error..."
-              className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+              className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
             />
             <p className="text-xs text-gray-500">Mensaje cuando ocurre un error inesperado</p>
           </div>
@@ -136,7 +136,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
               value={config.maintenanceMessage}
               onChange={(e) => onChange({ ...config, maintenanceMessage: e.target.value })}
               placeholder="El bot está en mantenimiento..."
-              className="bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[80px]"
+              className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
             />
             <p className="text-xs text-gray-500">Mensaje cuando el modo mantenimiento está activo</p>
           </div>
@@ -144,10 +144,10 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
       </Card>
 
       {/* Business Hours */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-5 w-5 text-[#d97757]" />
+            <Clock className="h-5 w-5 text-[#00a884]" />
             <h3 className="text-lg font-semibold text-white">Horarios Laborales</h3>
           </div>
 
@@ -155,7 +155,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
             {DAYS.map(({ key, label }) => (
               <div
                 key={key}
-                className="flex items-center gap-4 p-3 bg-[#1a1a18] border border-[#3a3a37] rounded-lg"
+                className="flex items-center gap-4 p-3 bg-[#111b21] border border-[#2a3942] rounded-lg"
               >
                 <Switch
                   checked={config.businessHours[key].enabled}
@@ -169,7 +169,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
                       value={config.businessHours[key].start}
                       onChange={(e) => updateBusinessHours(key, 'start', e.target.value)}
                       disabled={!config.businessHours[key].enabled}
-                      className="bg-[#262624] border-[#3a3a37] text-gray-100"
+                      className="bg-[#202c33] border-[#2a3942] text-gray-100"
                     />
                     <span className="text-gray-400">-</span>
                     <Input
@@ -177,7 +177,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
                       value={config.businessHours[key].end}
                       onChange={(e) => updateBusinessHours(key, 'end', e.target.value)}
                       disabled={!config.businessHours[key].enabled}
-                      className="bg-[#262624] border-[#3a3a37] text-gray-100"
+                      className="bg-[#202c33] border-[#2a3942] text-gray-100"
                     />
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
       </Card>
 
       {/* Limits and Timeouts */}
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">Límites y Timeouts</h3>
@@ -209,7 +209,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
                     maxMessagesPerConversation: parseInt(e.target.value),
                   })
                 }
-                className="bg-[#1a1a18] border-[#3a3a37] text-gray-100"
+                className="bg-[#111b21] border-[#2a3942] text-gray-100"
               />
               <p className="text-xs text-gray-500">Máximo de mensajes antes de resetear contexto</p>
             </div>
@@ -224,7 +224,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
                 onChange={(e) =>
                   onChange({ ...config, aiResponseTimeout: parseInt(e.target.value) })
                 }
-                className="bg-[#1a1a18] border-[#3a3a37] text-gray-100"
+                className="bg-[#111b21] border-[#2a3942] text-gray-100"
               />
               <p className="text-xs text-gray-500">Tiempo máximo de espera para respuesta de IA</p>
             </div>
@@ -259,7 +259,7 @@ export function BotConfigSection({ config, onChange, onSave, isSaving }: BotConf
         <Button
           onClick={onSave}
           disabled={isSaving}
-          className="bg-[#d97757] hover:bg-[#c86646] text-white"
+          className="bg-[#00a884] hover:bg-[#02906f] text-white"
         >
           {isSaving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

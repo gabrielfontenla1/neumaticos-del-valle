@@ -1,34 +1,22 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   MessageCircle,
   User,
   Bot,
-  Phone,
-  Clock,
-  RefreshCw,
   Search,
   ChevronLeft,
   Pause,
   Play,
   Send,
   UserCheck,
-  Settings
+  Settings,
+  CheckCheck,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
@@ -73,8 +61,7 @@ export default function ChatsPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [pauseFilter, setPauseFilter] = useState('all')
+  const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [messageInput, setMessageInput] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -82,13 +69,13 @@ export default function ChatsPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  // Fetch conversations from new WhatsApp endpoint
+  // Fetch conversations
   const fetchConversations = useCallback(async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
-      if (statusFilter !== 'all') params.set('status', statusFilter)
-      if (pauseFilter !== 'all') params.set('is_paused', pauseFilter === 'paused' ? 'true' : 'false')
+      if (filter === 'paused') params.set('is_paused', 'true')
+      if (filter === 'active') params.set('is_paused', 'false')
 
       const response = await fetch(`/api/admin/whatsapp/conversations?${params}`)
       const data = await response.json()
@@ -101,7 +88,7 @@ export default function ChatsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [statusFilter, pauseFilter])
+  }, [filter])
 
   // Fetch messages for selected conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
@@ -112,7 +99,6 @@ export default function ChatsPage() {
 
       if (data.success && data.data) {
         setMessages(data.data.messages || [])
-        // Update selected conversation with latest data
         const { messages: _, ...convData } = data.data
         setSelectedConversation(prev => prev ? { ...prev, ...convData } : prev)
       }
@@ -123,11 +109,10 @@ export default function ChatsPage() {
     }
   }, [])
 
-  // Pause conversation (human takeover)
+  // Pause conversation
   const handlePauseConversation = async () => {
     if (!selectedConversation) return
 
-    // Confirmation alert before pausing
     const confirmed = window.confirm(
       '¿Estás seguro de que querés tomar el control de esta conversación?\n\n' +
       'El bot dejará de responder automáticamente hasta que lo reactives.'
@@ -140,7 +125,7 @@ export default function ChatsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          paused_by: 'admin', // TODO: Get actual user ID
+          paused_by: 'admin',
           reason: 'Human takeover from dashboard'
         })
       })
@@ -156,7 +141,7 @@ export default function ChatsPage() {
     }
   }
 
-  // Resume conversation (bot takeover)
+  // Resume conversation
   const handleResumeConversation = async () => {
     if (!selectedConversation) return
 
@@ -177,7 +162,7 @@ export default function ChatsPage() {
     }
   }
 
-  // Send message (human intervention)
+  // Send message
   const handleSendMessage = async () => {
     if (!selectedConversation || !messageInput.trim()) return
 
@@ -188,17 +173,15 @@ export default function ChatsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: messageInput.trim(),
-          user_id: 'admin' // TODO: Get actual user ID
+          user_id: 'admin'
         })
       })
 
       if (response.ok) {
         setMessageInput('')
-        // Refresh messages
         fetchMessages(selectedConversation.id)
       } else {
         const errorData = await response.json()
-        console.error('Error sending message:', errorData.error)
         alert('Error al enviar mensaje: ' + (errorData.error || 'Unknown error'))
       }
     } catch (error) {
@@ -231,41 +214,27 @@ export default function ChatsPage() {
     }
   }, [messages])
 
-  // Supabase Realtime subscription for new messages
+  // Supabase Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel('whatsapp-messages')
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'whatsapp_messages'
-        },
+        { event: 'INSERT', schema: 'public', table: 'whatsapp_messages' },
         (payload) => {
           const newMessage = payload.new as Message
-          // If this message belongs to the selected conversation, add it
           if (selectedConversation && newMessage.conversation_id === selectedConversation.id) {
             setMessages(prev => [...prev, newMessage])
           }
-          // Refresh conversation list to update last_message_at
           fetchConversations()
         }
       )
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'whatsapp_conversations'
-        },
+        { event: 'UPDATE', schema: 'public', table: 'whatsapp_conversations' },
         (payload) => {
           const updated = payload.new as Conversation
-          // Update in list
-          setConversations(prev =>
-            prev.map(c => c.id === updated.id ? updated : c)
-          )
-          // Update selected if it's the same
+          setConversations(prev => prev.map(c => c.id === updated.id ? updated : c))
           if (selectedConversation?.id === updated.id) {
             setSelectedConversation(updated)
           }
@@ -278,7 +247,7 @@ export default function ChatsPage() {
     }
   }, [selectedConversation?.id, fetchConversations])
 
-  // Filter conversations by search term
+  // Filter conversations
   const filteredConversations = conversations.filter(conv => {
     if (!searchTerm) return true
     const search = searchTerm.toLowerCase()
@@ -288,383 +257,310 @@ export default function ChatsPage() {
     )
   })
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-'
+  const formatTime = (dateString: string | null) => {
+    if (!dateString) return ''
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return 'Ahora'
-    if (diffMins < 60) return `${diffMins}m`
-    if (diffHours < 24) return `${diffHours}h`
-    if (diffDays < 7) return `${diffDays}d`
-    return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+    if (diffDays === 0) {
+      return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+    }
+    if (diffDays === 1) return 'Ayer'
+    if (diffDays < 7) {
+      return date.toLocaleDateString('es-AR', { weekday: 'long' })
+    }
+    return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
   }
 
-  const formatFullDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const formatMessageTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const getStatusBadge = (conv: Conversation) => {
-    if (conv.is_paused) {
-      return {
-        style: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-        label: 'Pausado'
-      }
-    }
-    const styles: Record<string, string> = {
-      active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      resolved: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-      archived: 'bg-gray-600/20 text-gray-500 border-gray-600/30'
-    }
-    const labels: Record<string, string> = {
-      active: 'Bot Activo',
-      resolved: 'Resuelto',
-      archived: 'Archivado'
-    }
-    return { style: styles[conv.status] || '', label: labels[conv.status] || conv.status }
+  // Get last message preview
+  const getLastMessagePreview = (conv: Conversation) => {
+    // This would ideally come from the API
+    return conv.is_paused ? '⏸️ Bot pausado' : `${conv.message_count} mensajes`
   }
 
   return (
-    <div className="h-full w-full flex flex-col p-4 overflow-hidden">
-      {/* Tabs - Takes full height */}
+    <div className="h-full w-full flex flex-col overflow-hidden bg-[#111b21]">
       <Tabs defaultValue="conversations" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="bg-[#262624] border-[#3a3a37] mb-4 w-fit flex-shrink-0">
-          <TabsTrigger
-            value="conversations"
-            className="text-gray-400 data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Conversaciones
-          </TabsTrigger>
-          <TabsTrigger
-            value="ai-config"
-            className="text-gray-400 data-[state=active]:bg-[#d97757] data-[state=active]:text-white"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Configuración IA
-          </TabsTrigger>
-        </TabsList>
+        {/* Header with Tabs */}
+        <div className="h-12 px-3 flex items-center bg-[#202c33] border-b border-[#2a3942] flex-shrink-0">
+          <TabsList className="bg-transparent h-9 p-0 gap-1">
+            <TabsTrigger
+              value="conversations"
+              className="h-8 px-4 text-sm text-[#8696a0] data-[state=active]:bg-[#2a3942] data-[state=active]:text-[#00a884] rounded"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Chats
+            </TabsTrigger>
+            <TabsTrigger
+              value="ai-config"
+              className="h-8 px-4 text-sm text-[#8696a0] data-[state=active]:bg-[#2a3942] data-[state=active]:text-[#00a884] rounded"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configuración IA
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* Conversations Tab - Full height container */}
-        <TabsContent value="conversations" className="flex-1 grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 mt-0 min-h-0 data-[state=inactive]:hidden">
-        {/* Conversation List - Fixed width column */}
-        <Card className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden min-h-0`}>
-          {/* Filters */}
-          <div className="p-4 border-b border-[#3a3a37] space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="Buscar por nombre o teléfono..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-[#1a1a18] border-[#3a3a37] text-gray-100"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={pauseFilter} onValueChange={setPauseFilter}>
-                <SelectTrigger className="bg-[#1a1a18] border-[#3a3a37] text-gray-100">
-                  <SelectValue placeholder="Estado Bot" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#262624] border-[#3a3a37]">
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="active">Bot Activo</SelectItem>
-                  <SelectItem value="paused">Pausados</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-[#1a1a18] border-[#3a3a37] text-gray-100">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#262624] border-[#3a3a37]">
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="resolved">Resueltos</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={fetchConversations}
-                className="border-[#3a3a37] hover:bg-[#3a3a37]"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <ScrollArea className="flex-1 m-0 overflow-auto">
-            {isLoading ? (
-              <ChatListSkeleton items={5} />
-            ) : filteredConversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-gray-400">
-                <MessageCircle className="h-8 w-8 mb-2 opacity-50" />
-                <p>No hay conversaciones</p>
+        {/* Conversations Tab - Contains BOTH panels */}
+        <TabsContent value="conversations" className="flex-1 flex min-h-0 mt-0 data-[state=inactive]:hidden">
+          {/* Left Panel - Chat List */}
+          <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-[320px] bg-[#111b21] border-r border-[#2a3942] flex-shrink-0`}>
+            {/* Search */}
+            <div className="px-3 py-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8696a0]" />
+                <Input
+                  placeholder="Buscar"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-9 bg-[#202c33] border-0 text-[#e9edef] placeholder:text-[#8696a0] rounded-lg focus-visible:ring-0"
+                />
               </div>
-            ) : (
-              <div className="divide-y divide-[#3a3a37]">
-                {filteredConversations.map((conv) => {
-                  const statusBadge = getStatusBadge(conv)
-                  return (
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex gap-2 px-3 py-2 border-b border-[#2a3942]">
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'active', label: 'Bot Activo' },
+                { id: 'paused', label: 'Pausados' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilter(tab.id)}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                    filter === tab.id
+                      ? 'bg-[#00a884] text-[#111b21]'
+                      : 'bg-[#202c33] text-[#8696a0] hover:bg-[#2a3942]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat List */}
+            <ScrollArea className="flex-1 min-h-0">
+              {isLoading ? (
+                <ChatListSkeleton items={5} />
+              ) : filteredConversations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-[#8696a0]">
+                  <MessageCircle className="h-8 w-8 mb-2 opacity-50" />
+                  <p className="text-sm">No hay conversaciones</p>
+                </div>
+              ) : (
+                <div>
+                  {filteredConversations.map((conv) => (
                     <button
                       key={conv.id}
                       onClick={() => setSelectedConversation(conv)}
-                      className={`w-full p-4 text-left hover:bg-[#2a2a28] transition-colors ${
-                        selectedConversation?.id === conv.id ? 'bg-[#d97757]/10 border-l-4 border-[#d97757]' : ''
+                      className={`w-full flex items-center gap-3 px-3 py-3 hover:bg-[#202c33] transition-colors ${
+                        selectedConversation?.id === conv.id ? 'bg-[#2a3942]' : ''
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-white truncate">
-                              {conv.contact_name || 'Sin nombre'}
-                            </span>
-                            {conv.is_paused && (
-                              <Pause className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                            <Phone className="h-3 w-3" />
-                            <span className="truncate">{conv.phone || 'Sin teléfono'}</span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {conv.message_count} mensajes
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <span className="text-xs text-gray-500">
-                            {formatDate(conv.last_message_at)}
+                      <div className="w-12 h-12 rounded-full bg-[#6b7c85] flex items-center justify-center flex-shrink-0">
+                        <User className="h-6 w-6 text-[#cfd9df]" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="font-medium text-[#e9edef] truncate">
+                            {conv.contact_name || conv.phone || 'Sin nombre'}
                           </span>
-                          <Badge variant="outline" className={`text-xs ${statusBadge.style}`}>
-                            {statusBadge.label}
-                          </Badge>
+                          <span className="text-xs text-[#8696a0] flex-shrink-0 ml-2">
+                            {formatTime(conv.last_message_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {conv.is_paused ? (
+                            <Pause className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                          ) : (
+                            <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb] flex-shrink-0" />
+                          )}
+                          <span className="text-sm text-[#8696a0] truncate">
+                            {getLastMessagePreview(conv)}
+                          </span>
                         </div>
                       </div>
                     </button>
-                  )
-                })}
-              </div>
-            )}
-          </ScrollArea>
-
-          {/* Stats Footer */}
-          <div className="p-3 border-t border-[#3a3a37] text-xs text-gray-500">
-            {filteredConversations.length} conversaciones
-          </div>
-        </Card>
-
-        {/* Message View - Takes remaining space */}
-        <Card className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col h-full bg-[#262624] border-[#3a3a37] overflow-hidden min-h-0`}>
-          {selectedConversation ? (
-            <>
-              {/* Chat Header */}
-              <div className="p-4 border-b border-[#3a3a37] flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedConversation(null)}
-                  className="md:hidden"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <div className="w-10 h-10 rounded-full bg-[#d97757] flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white">
-                    {selectedConversation.contact_name || 'Sin nombre'}
-                  </h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Phone className="h-3 w-3" />
-                    {selectedConversation.phone || 'Sin teléfono'}
-                  </div>
-                </div>
-
-                {/* Pause/Resume Button */}
-                <div className="flex items-center gap-2">
-                  {selectedConversation.is_paused ? (
-                    <Button
-                      onClick={handleResumeConversation}
-                      disabled={isPausing}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      {isPausing ? (
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Play className="h-4 w-4 mr-2" />
-                      )}
-                      Activar Bot
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handlePauseConversation}
-                      disabled={isPausing}
-                      variant="outline"
-                      className="border-amber-500 text-amber-400 hover:bg-amber-500/20"
-                    >
-                      {isPausing ? (
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Pause className="h-4 w-4 mr-2" />
-                      )}
-                      Tomar Control
-                    </Button>
-                  )}
-                </div>
-
-                <div className="text-right text-xs text-gray-500">
-                  <div>{selectedConversation.message_count} mensajes</div>
-                  <div className="flex items-center gap-1 justify-end">
-                    <Clock className="h-3 w-3" />
-                    {formatDate(selectedConversation.created_at)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Paused Warning */}
-              {selectedConversation.is_paused && (
-                <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center gap-2 text-amber-400 text-sm">
-                  <UserCheck className="h-4 w-4" />
-                  <span>Bot pausado - Control humano activo. El bot no responderá hasta que actives nuevamente.</span>
+                  ))}
                 </div>
               )}
+            </ScrollArea>
+          </div>
 
-              {/* Messages */}
-              <ScrollArea ref={scrollAreaRef} className="flex-1 m-0 overflow-auto p-4 bg-[#1a1a18]">
-                {isLoadingMessages ? (
-                  <ChatMessagesSkeleton messages={6} />
-                ) : messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                    <MessageCircle className="h-12 w-12 mb-2 opacity-50" />
-                    <p>No hay mensajes</p>
+          {/* Right Panel - Chat View */}
+          <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col flex-1 bg-[#0b141a] min-w-0`}>
+            {selectedConversation ? (
+              <>
+                {/* Chat Header */}
+                <div className="h-14 px-4 flex items-center gap-3 bg-[#202c33] flex-shrink-0">
+                  <button
+                    onClick={() => setSelectedConversation(null)}
+                    className="md:hidden p-1 hover:bg-[#2a3942] rounded-full"
+                  >
+                    <ChevronLeft className="h-5 w-5 text-[#aebac1]" />
+                  </button>
+
+                  <div className="w-10 h-10 rounded-full bg-[#6b7c85] flex items-center justify-center">
+                    <User className="h-5 w-5 text-[#cfd9df]" />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex gap-3 ${
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
-                        }`}
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-[#e9edef] truncate">
+                      {selectedConversation.contact_name || selectedConversation.phone || 'Sin nombre'}
+                    </h3>
+                    <p className="text-xs text-[#8696a0]">
+                      {selectedConversation.is_paused ? 'Control humano activo' : 'Bot activo'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {selectedConversation.is_paused ? (
+                      <Button
+                        onClick={handleResumeConversation}
+                        disabled={isPausing}
+                        size="sm"
+                        className="bg-[#00a884] hover:bg-[#02906f] text-white h-8"
                       >
+                        <Play className="h-3.5 w-3.5 mr-1" />
+                        Activar Bot
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handlePauseConversation}
+                        disabled={isPausing}
+                        size="sm"
+                        variant="outline"
+                        className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10 h-8"
+                      >
+                        <Pause className="h-3.5 w-3.5 mr-1" />
+                        Tomar Control
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Paused Banner */}
+                {selectedConversation.is_paused && (
+                  <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center justify-center gap-2 text-amber-500 text-xs flex-shrink-0">
+                    <UserCheck className="h-3.5 w-3.5" />
+                    <span>Bot pausado - Estás respondiendo manualmente</span>
+                  </div>
+                )}
+
+                {/* Messages Area */}
+                <ScrollArea
+                  ref={scrollAreaRef}
+                  className="flex-1 min-h-0 px-4 py-2"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                    backgroundColor: '#0b141a'
+                  }}
+                >
+                  {isLoadingMessages ? (
+                    <ChatMessagesSkeleton messages={6} />
+                  ) : messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-[#8696a0]">
+                      <MessageCircle className="h-12 w-12 mb-2 opacity-30" />
+                      <p>No hay mensajes</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 py-2">
+                      {messages.map((message) => (
                         <div
-                          className={`flex gap-3 max-w-[85%] min-w-0 ${
-                            message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                          }`}
+                          key={message.id}
+                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            className={`relative max-w-[65%] px-3 py-2 rounded-lg ${
                               message.role === 'user'
-                                ? 'bg-[#d97757] text-white'
+                                ? 'bg-[#005c4b] text-[#e9edef]'
                                 : message.sent_by_human
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-[#3a3a37] text-gray-300'
+                                  ? 'bg-[#1d4ed8] text-white'
+                                  : 'bg-[#202c33] text-[#e9edef]'
                             }`}
                           >
-                            {message.role === 'user' ? (
-                              <User className="h-4 w-4" />
-                            ) : message.sent_by_human ? (
-                              <UserCheck className="h-4 w-4" />
-                            ) : (
-                              <Bot className="h-4 w-4" />
+                            {message.sent_by_human && message.role === 'assistant' && (
+                              <div className="flex items-center gap-1 text-xs text-blue-300 mb-1">
+                                <UserCheck className="h-3 w-3" />
+                                <span>Admin</span>
+                              </div>
                             )}
-                          </div>
-                          <div
-                            className={`rounded-lg px-4 py-2 min-w-0 ${
-                              message.role === 'user'
-                                ? 'bg-[#d97757] text-white'
-                                : message.sent_by_human
-                                  ? 'bg-blue-600/20 text-blue-100 border border-blue-500/30'
-                                  : 'bg-[#2a2a28] text-gray-100 border border-[#3a3a37]'
-                            }`}
-                          >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                            {!message.sent_by_human && message.role === 'assistant' && (
+                              <div className="flex items-center gap-1 text-xs text-[#00a884] mb-1">
+                                <Bot className="h-3 w-3" />
+                                <span>Bot</span>
+                              </div>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                               {message.content}
-                            </div>
-                            <div className={`flex items-center gap-2 mt-1 text-xs ${
-                              message.role === 'user' ? 'text-white/60' : 'text-gray-500'
+                            </p>
+                            <div className={`flex items-center justify-end gap-1 mt-1 ${
+                              message.role === 'user' ? 'text-[#ffffff99]' : 'text-[#8696a0]'
                             }`}>
-                              <span>{formatFullDate(message.created_at)}</span>
-                              {message.sent_by_human && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-blue-400">Humano</span>
-                                </>
-                              )}
-                              {message.response_time_ms && !message.sent_by_human && (
-                                <>
-                                  <span>•</span>
-                                  <span>{message.response_time_ms}ms</span>
-                                </>
+                              <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
+                              {message.role === 'user' && (
+                                <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]" />
                               )}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </ScrollArea>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </ScrollArea>
 
-              {/* Message Input - Always visible */}
-              <div className="p-4 border-t border-[#3a3a37] bg-[#262624]">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder={selectedConversation.is_paused ? "Escribe un mensaje..." : "Pausá el bot para enviar mensajes manuales..."}
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey && selectedConversation.is_paused) {
-                        e.preventDefault()
-                        handleSendMessage()
-                      }
-                    }}
-                    disabled={!selectedConversation.is_paused}
-                    className="flex-1 bg-[#1a1a18] border-[#3a3a37] text-gray-100 min-h-[60px] resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+                {/* Message Input */}
+                <div className="px-4 py-3 bg-[#202c33] flex items-center gap-2 flex-shrink-0">
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder={selectedConversation.is_paused ? "Escribe un mensaje" : "Pausá el bot para escribir..."}
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && selectedConversation.is_paused) {
+                          e.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
+                      disabled={!selectedConversation.is_paused}
+                      className="bg-[#2a3942] border-0 text-[#e9edef] placeholder:text-[#8696a0] rounded-lg h-10 focus-visible:ring-0 disabled:opacity-50"
+                    />
+                  </div>
+
                   <Button
                     onClick={handleSendMessage}
                     disabled={isSending || !messageInput.trim() || !selectedConversation.is_paused}
-                    className="bg-[#d97757] hover:bg-[#c86646] text-white self-end disabled:opacity-50"
+                    size="icon"
+                    className="bg-[#00a884] hover:bg-[#02906f] text-white h-10 w-10 rounded-full disabled:opacity-50"
                   >
-                    {isSending ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
+                    <Send className="h-5 w-5" />
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {selectedConversation.is_paused
-                    ? "Presiona Enter para enviar. Shift+Enter para nueva línea."
-                    : "El bot está activo. Pausá para enviar mensajes manualmente."}
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-[#8696a0] bg-[#222e35]">
+                <div className="w-48 h-48 mb-6 rounded-full bg-[#2a3942] flex items-center justify-center">
+                  <MessageCircle className="h-24 w-24 text-[#364147]" />
+                </div>
+                <h2 className="text-2xl font-light text-[#e9edef] mb-2">WhatsApp Admin</h2>
+                <p className="text-sm text-center max-w-sm">
+                  Selecciona una conversación para ver los mensajes
                 </p>
               </div>
-
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-              <MessageCircle className="h-16 w-16 mb-4 opacity-30" />
-              <p className="text-lg">Selecciona una conversación</p>
-              <p className="text-sm">para ver los mensajes</p>
-            </div>
-          )}
-        </Card>
+            )}
+          </div>
         </TabsContent>
 
-        {/* AI Configuration Tab - Full height container */}
-        <TabsContent value="ai-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden">
+        {/* AI Config Tab */}
+        <TabsContent value="ai-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden bg-[#111b21]">
           <AIConfigPanel />
         </TabsContent>
       </Tabs>

@@ -363,6 +363,7 @@ export function AppointmentWizard() {
 
                 {currentStep === 'province' && (
                   <ProvinceStep
+                    branches={branches}
                     selectedProvince={undefined}
                     onSelect={(province) => {
                       setSelectedProvince(province)
@@ -587,6 +588,7 @@ export function AppointmentWizard() {
 
                 {currentStep === 'province' && (
                   <ProvinceStep
+                    branches={branches}
                     selectedProvince={undefined}
                     onSelect={(province) => {
                       setSelectedProvince(province)

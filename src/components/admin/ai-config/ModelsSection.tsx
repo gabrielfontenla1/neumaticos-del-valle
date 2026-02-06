@@ -37,7 +37,7 @@ const AVAILABLE_MODELS = [
 export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSectionProps) {
   return (
     <div className="space-y-6">
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">Modelos de IA</h3>
@@ -56,10 +56,10 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
           <div className="space-y-2">
             <Label className="text-white">Modelo Principal (Chat)</Label>
             <Select value={config.chatModel} onValueChange={(value) => onChange({ ...config, chatModel: value })}>
-              <SelectTrigger className="bg-[#1a1a18] border-[#3a3a37] text-gray-100">
+              <SelectTrigger className="bg-[#111b21] border-[#2a3942] text-gray-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#262624] border-[#3a3a37]">
+              <SelectContent className="bg-[#202c33] border-[#2a3942]">
                 {AVAILABLE_MODELS.map((model) => (
                   <SelectItem key={model.value} value={model.value}>
                     {model.label}
@@ -74,10 +74,10 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
           <div className="space-y-2">
             <Label className="text-white">Modelo Rápido</Label>
             <Select value={config.fastModel} onValueChange={(value) => onChange({ ...config, fastModel: value })}>
-              <SelectTrigger className="bg-[#1a1a18] border-[#3a3a37] text-gray-100">
+              <SelectTrigger className="bg-[#111b21] border-[#2a3942] text-gray-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#262624] border-[#3a3a37]">
+              <SelectContent className="bg-[#202c33] border-[#2a3942]">
                 {AVAILABLE_MODELS.map((model) => (
                   <SelectItem key={model.value} value={model.value}>
                     {model.label}
@@ -90,7 +90,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
         </div>
       </Card>
 
-      <Card className="bg-[#262624] border-[#3a3a37] p-6">
+      <Card className="bg-[#202c33] border-[#2a3942] p-6">
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">Parámetros del Modelo</h3>
@@ -110,7 +110,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
               step="0.1"
               value={config.temperature}
               onChange={(e) => onChange({ ...config, temperature: parseFloat(e.target.value) })}
-              className="bg-[#1a1a18] border-[#3a3a37]"
+              className="bg-[#111b21] border-[#2a3942]"
             />
             <div className="flex justify-between text-xs text-gray-500">
               <span>Preciso (0)</span>
@@ -136,7 +136,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
               step="100"
               value={config.maxTokens}
               onChange={(e) => onChange({ ...config, maxTokens: parseInt(e.target.value) })}
-              className="bg-[#1a1a18] border-[#3a3a37] text-gray-100"
+              className="bg-[#111b21] border-[#2a3942] text-gray-100"
             />
             <p className="text-xs text-gray-500">
               Máximo de tokens por respuesta (recomendado: 500-2000 para WhatsApp)
@@ -156,7 +156,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
               step="0.05"
               value={config.topP}
               onChange={(e) => onChange({ ...config, topP: parseFloat(e.target.value) })}
-              className="bg-[#1a1a18] border-[#3a3a37]"
+              className="bg-[#111b21] border-[#2a3942]"
             />
             <p className="text-xs text-gray-500">
               Controla la diversidad de tokens considerados (recomendado: 1)
@@ -178,7 +178,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
               onChange={(e) =>
                 onChange({ ...config, frequencyPenalty: parseFloat(e.target.value) })
               }
-              className="bg-[#1a1a18] border-[#3a3a37]"
+              className="bg-[#111b21] border-[#2a3942]"
             />
             <p className="text-xs text-gray-500">
               Penaliza tokens que ya aparecieron (positivo reduce repeticiones)
@@ -200,7 +200,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
               onChange={(e) =>
                 onChange({ ...config, presencePenalty: parseFloat(e.target.value) })
               }
-              className="bg-[#1a1a18] border-[#3a3a37]"
+              className="bg-[#111b21] border-[#2a3942]"
             />
             <p className="text-xs text-gray-500">
               Penaliza tokens nuevos (positivo fomenta hablar de temas nuevos)
@@ -214,7 +214,7 @@ export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSect
         <Button
           onClick={onSave}
           disabled={isSaving}
-          className="bg-[#d97757] hover:bg-[#c86646] text-white"
+          className="bg-[#00a884] hover:bg-[#02906f] text-white"
         >
           {isSaving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

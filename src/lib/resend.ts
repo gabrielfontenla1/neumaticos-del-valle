@@ -42,6 +42,7 @@ export interface AppointmentEmailData {
   date: string        // formato legible: "Lunes 10 de Febrero"
   time: string        // formato: "14:30"
   branch: string      // nombre de sucursal
+  branchEmail?: string | null  // email de la sucursal (opcional)
 }
 
 /**
@@ -55,16 +56,27 @@ export async function sendAppointmentNotificationEmail(
   try {
     const adminEmail = process.env.ADMIN_EMAIL
 
-    if (!adminEmail) {
-      console.warn('[EMAIL] ADMIN_EMAIL not configured, skipping notification')
-      return { success: false, error: 'ADMIN_EMAIL not configured' }
+    // Build list of recipients (admin + branch if configured)
+    const recipients: string[] = []
+
+    if (adminEmail) {
+      recipients.push(adminEmail)
+    }
+
+    if (data.branchEmail) {
+      recipients.push(data.branchEmail)
+    }
+
+    if (recipients.length === 0) {
+      console.warn('[EMAIL] No recipients configured (ADMIN_EMAIL or branch email), skipping notification')
+      return { success: false, error: 'No recipients configured' }
     }
 
     const client = getResendClient()
 
     await client.emails.send({
       from: FROM_EMAIL,
-      to: [adminEmail],
+      to: recipients,
       subject: `Nuevo Turno - ${data.customerName}`,
       html: `
         <!DOCTYPE html>
@@ -108,7 +120,7 @@ export async function sendAppointmentNotificationEmail(
       `,
     })
 
-    console.log('[EMAIL] Appointment notification sent to admin:', adminEmail)
+    console.log('[EMAIL] Appointment notification sent to:', recipients.join(', '))
     return { success: true }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
