@@ -618,3 +618,278 @@ When working on this project:
 **Last Updated**: January 2026
 **Maintained By**: Development Team
 **Questions?**: Create a GitHub issue or contact the team
+
+---
+
+## 🔴 SQUAD - Sistema Multi-Agente 100% Autónomo
+
+> **Carpeta de configuración**: `squad/`
+> **Documentación**: `WORKFLOW.md`, `SPECS.md`, `STATUS.md`
+
+### Layout de Terminales (2 filas)
+```
+┌─────────────────────────────────────┬────────────────┐
+│  🎯 ORCHESTRATOR (75%)              │ 👁️ WATCHER (25%)│
+├─────────┬─────────┬────────┬────────┼────────────────┤
+│ 🗄️ DATA │⚙️BACKEND│🎨FRONT │🛠️ADMIN │    🧪 QA       │
+└─────────┴─────────┴────────┴────────┴────────────────┘
+```
+
+### 🎯 ORCHESTRATOR (Terminal 1)
+```
+ROL: Planificador Inteligente - NO escribe código
+
+PUEDE LEER: Todo el proyecto
+ESCRIBE EN: SPECS.md, WORKFLOW.md, STATUS.md
+
+CONTEXTO OBLIGATORIO (leer antes de planificar):
+1. squad/PROJECT_MAP.md - Qué archivos maneja cada agente
+2. squad/patterns/*.md - Templates de workflows reutilizables
+3. squad/history.log - Workflows anteriores y lecciones
+
+FLUJO MEJORADO:
+1. Usuario pide feature
+2. Completar CHECKLIST ReACT (análisis estructurado)
+3. Proponer plan y ESPERAR aprobación
+4. Crear SPECS.md con especificaciones
+5. Crear WORKFLOW.md usando patrón apropiado
+6. El WATCHER detecta y dispara agentes automáticamente
+7. Monitorear STATUS.md y reportar progreso
+
+PATRONES DISPONIBLES:
+- new-feature-fullstack (DB + API + UI)
+- bugfix-ui (fix visual)
+- bugfix-api (fix endpoint)
+- add-endpoint (API sin DB)
+- database-migration (cambios de schema)
+- refactor-component (mejora de código)
+
+NO USA: assign.sh (el watcher lo hace automáticamente)
+```
+
+### 👁️ WATCHER (Daemon automático)
+```
+ROL: Automatizador - corre en background
+
+MONITOREA:
+- WORKFLOW.md cada 3 segundos
+- STATUS.md para detectar ✅ Done
+
+CUANDO DETECTA:
+- ⏳ Pending en WORKFLOW.md → Lo marca 🔵 Running y dispara assign.sh
+- ✅ Done en STATUS.md → Marca el step como ✅ Done en WORKFLOW.md
+
+NOTIFICA: macOS notification cuando workflow completa
+```
+
+### 🗄️ DATA (Terminal 2)
+```
+TERRITORIO:
+- src/lib/supabase*.ts
+- src/lib/db/
+- src/lib/validations/
+- supabase/migrations/
+- src/types/database.ts (solo lectura)
+
+NO TOCAR:
+- src/app/api/ (BACKEND)
+- src/components/
+- src/features/*/components/
+
+DOCUMENTA EN: SCHEMAS.md
+ACTUALIZA: STATUS.md (🔵 Working → ✅ Done)
+```
+
+### ⚙️ BACKEND (Terminal 3)
+```
+TERRITORIO:
+- src/app/api/** (todos los endpoints)
+- src/lib/whatsapp/
+- src/lib/twilio/
+- src/lib/ai/
+- src/lib/messaging/
+- src/lib/email.ts
+- src/lib/resend.ts
+
+NO TOCAR:
+- src/lib/supabase*.ts (DATA)
+- src/lib/db/ (DATA)
+- src/lib/validations/ (DATA)
+- src/components/
+- src/app/(páginas)
+
+CONSUME: SCHEMAS.md de DATA
+DOCUMENTA EN: INTERFACES.md
+ACTUALIZA: STATUS.md (🔵 Working → ✅ Done)
+```
+
+### 🎨 FRONTEND (Terminal 4)
+```
+TERRITORIO:
+- src/app/(páginas públicas)/ → productos, carrito, turnos, checkout
+- src/components/ (excepto /admin y /ui)
+- src/features/cart/
+- src/features/products/
+- src/features/checkout/
+- src/features/appointments/
+- src/features/quotation/
+- src/features/reviews/
+- src/hooks/
+
+NO TOCAR:
+- src/app/api/ (BACKEND)
+- src/app/admin/ (ADMIN)
+- src/lib/ (excepto utils.ts)
+- src/components/ui/ (shadcn)
+- src/components/admin/ (ADMIN)
+
+CONSUME: INTERFACES.md de BACKEND
+ACTUALIZA: STATUS.md (🔵 Working → ✅ Done)
+```
+
+### 🛠️ ADMIN (Terminal 5)
+```
+TERRITORIO:
+- src/app/admin/** (todo el dashboard)
+- src/components/admin/
+- src/features/admin/
+- src/features/orders/
+- src/features/automations/
+
+NO TOCAR:
+- src/app/(páginas públicas) (FRONTEND)
+- src/app/api/ (BACKEND - solo consumir)
+- src/components/ui/ (shadcn)
+- src/lib/ (DATA/BACKEND)
+
+CONSUME: INTERFACES.md de BACKEND
+ACTUALIZA: STATUS.md (🔵 Working → ✅ Done)
+```
+
+### 🧪 QA (Terminal 6)
+```
+TERRITORIO:
+- tests/**
+- src/**/*.test.ts
+- playwright.config.ts
+- vitest.config.ts
+- scripts/ (scripts de testing)
+
+NO TOCAR: Código de producción (solo tests)
+
+EJECUTA:
+npm run type-check    # TypeScript
+npm run lint          # Linting
+npm run build         # Build
+
+REPORTA EN: ISSUES.md si algo falla
+ACTUALIZA: STATUS.md (🔵 Working → ✅ Done)
+
+ES EL ÚLTIMO PASO - cuando QA termina, el workflow está completo
+```
+
+---
+
+## 📋 ARCHIVOS DE COORDINACIÓN
+
+| Archivo | Propósito | Quién Escribe | Quién Lee |
+|---------|-----------|---------------|-----------|
+| `SPECS.md` | Especificaciones de features | 🎯 ORCHESTRATOR | Todos |
+| `WORKFLOW.md` | Pipeline de ejecución | 🎯 ORCHESTRATOR, 👁️ WATCHER | Todos |
+| `STATUS.md` | Estado actual de agentes | Todos los agentes | 👁️ WATCHER, Todos |
+| `SCHEMAS.md` | Schemas de DB y Zod | 🗄️ DATA | ⚙️ BACKEND |
+| `INTERFACES.md` | Contratos de API | ⚙️ BACKEND | 🎨 FRONTEND, 🛠️ ADMIN |
+| `ISSUES.md` | Bugs y problemas | 🧪 QA, Todos | Todos |
+| `squad/PROJECT_MAP.md` | Inventario archivos por agente | 🎯 ORCHESTRATOR | 🎯 ORCHESTRATOR |
+| `squad/patterns/*.md` | Templates de workflows | 🎯 ORCHESTRATOR | 🎯 ORCHESTRATOR |
+| `squad/history.log` | Historial de workflows | Auto/Sistema | 🎯 ORCHESTRATOR |
+
+### Protocolo de Inicio de Sesión (Agentes)
+```
+1. Leer CLAUDE.md (contexto del proyecto)
+2. Leer squad/prompts/[mi-rol].md (mi territorio y protocolo)
+3. Leer SPECS.md (tareas actuales)
+4. Leer STATUS.md (estado de otros agentes)
+5. Si soy BACKEND: Leer SCHEMAS.md
+6. Si soy FRONTEND/ADMIN: Leer INTERFACES.md
+```
+
+### Flujo Automático
+```
+Usuario → ORCHESTRATOR → SPECS.md + WORKFLOW.md
+                              ↓
+                         👁️ WATCHER detecta ⏳ Pending
+                              ↓
+                         assign.sh dispara agente
+                              ↓
+                         Agente trabaja y actualiza STATUS.md
+                              ↓
+                         WATCHER detecta ✅ Done
+                              ↓
+                         Marca step ✅ en WORKFLOW.md
+                              ↓
+                         Siguiente agente...
+                              ↓
+                         🧪 QA valida → Workflow COMPLETO
+```
+
+---
+
+## ⚠️ ARCHIVOS GRANDES - MODIFICAR CON CUIDADO
+
+| Archivo | Líneas | Owner |
+|---------|--------|-------|
+| ProductsClient.tsx | 1,605 | 🎨 FRONTEND |
+| AgroCamionesClient.tsx | 1,431 | 🎨 FRONTEND |
+| sucursales/page.tsx | 1,118 | 🎨 FRONTEND |
+| twilio/webhook/route.ts | 984 | ⚙️ BACKEND |
+| database.ts (types) | 958 | ❌ NADIE (auto-generado) |
+| function-handler.ts | 916 | ⚙️ BACKEND |
+
+**Regla**: Commits pequeños, un cambio a la vez en estos archivos.
+
+---
+
+## 🔒 ARCHIVOS COMPARTIDOS (NO MODIFICAR SIN COORDINAR)
+
+| Archivo | Owner | Notas |
+|---------|-------|-------|
+| `src/types/database.ts` | ❌ NADIE | Auto-generado de Supabase |
+| `src/components/ui/` | ❌ NADIE | shadcn/ui, no modificar |
+| `src/lib/utils.ts` | 🌍 TODOS | Coordinar antes de cambiar |
+| `src/lib/validations/` | 🗄️ DATA | DATA escribe, otros consultan |
+| `tailwind.config.ts` | 🎨 FRONTEND | Coordinar antes de cambiar |
+| `package.json` | 🎯 ORCHESTRATOR | Decide cambios de deps |
+
+---
+
+## ✅ VERIFICACIÓN PRE-COMMIT (todos los agentes)
+```bash
+npm run type-check    # Sin errores
+npm run lint          # Sin errores
+npm run build         # Compila OK
+```
+
+---
+
+## 🚀 Iniciar SQUAD
+
+### Iniciar el sistema completo
+```bash
+./squad/start-squad.sh
+```
+Abre iTerm2 con 6 agentes + watcher. Los prompts se envían automáticamente.
+
+### Comandos útiles
+```bash
+./squad/check-status.sh    # Ver estado actual
+./squad/assign.sh AGENT "tarea"  # Asignar tarea manual
+./squad/reset.sh           # Resetear STATUS.md y WORKFLOW.md
+./squad/stop.sh            # Detener watcher
+```
+
+### Hablar con el sistema
+1. Ir al panel de 🎯 ORCHESTRATOR
+2. Describir la feature que querés
+3. ORCHESTRATOR crea SPECS.md y WORKFLOW.md
+4. El sistema se ejecuta automáticamente

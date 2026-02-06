@@ -73,30 +73,30 @@ export interface Database {
           email: string
           full_name: string | null
           phone: string | null
-          avatar_url: string | null
-          is_admin: boolean
+          role: 'admin' | 'vendedor' | null
           created_at: string
           updated_at: string
+          last_sign_in_at: string | null
         }
         Insert: {
           id: string
           email: string
           full_name?: string | null
           phone?: string | null
-          avatar_url?: string | null
-          is_admin?: boolean
+          role?: 'admin' | 'vendedor' | null
           created_at?: string
           updated_at?: string
+          last_sign_in_at?: string | null
         }
         Update: {
           id?: string
           email?: string
           full_name?: string | null
           phone?: string | null
-          avatar_url?: string | null
-          is_admin?: boolean
+          role?: 'admin' | 'vendedor' | null
           created_at?: string
           updated_at?: string
+          last_sign_in_at?: string | null
         }
       }
       stores: {
