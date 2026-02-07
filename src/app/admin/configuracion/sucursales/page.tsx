@@ -949,18 +949,18 @@ export default function SucursalesPage() {
                           }}
                         >
                           <SelectTrigger
-                            className={`bg-[#30302e] text-[#fafafa] h-12 focus:ring-[#d97757] ${
-                              fieldErrors.province ? 'border-red-500' : 'border-[#3a3a38]'
-                            } ${!newBranch.province ? 'text-[#666666]' : ''}`}
+                            className={`!bg-[#30302e] !text-[#fafafa] h-12 focus:ring-[#d97757] [&>svg]:!text-[#888888] ${
+                              fieldErrors.province ? '!border-red-500' : '!border-[#3a3a38]'
+                            } ${!newBranch.province ? '[&>span]:!text-[#666666]' : ''}`}
                           >
                             <SelectValue placeholder="Seleccionar provincia" />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+                          <SelectContent className="!bg-[#262624] !border-[#3a3a38] max-h-[280px]">
                             {ARGENTINA_PROVINCES.map((province) => (
                               <SelectItem
                                 key={province}
                                 value={province}
-                                className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa]"
+                                className="!text-[#fafafa] !bg-transparent hover:!bg-[#3a3a38] focus:!bg-[#3a3a38] focus:!text-[#fafafa] cursor-pointer"
                               >
                                 {province}
                               </SelectItem>
@@ -1660,18 +1660,18 @@ export default function SucursalesPage() {
                           onValueChange={(value) => setBranchToEdit({ ...branchToEdit, province: value })}
                         >
                           <SelectTrigger
-                            className={`bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] h-11 focus:ring-[#d97757] ${
-                              !branchToEdit.province ? 'text-[#666666]' : ''
+                            className={`!bg-[#1a1a18] !border-[#3a3a38] !text-[#fafafa] h-11 focus:ring-[#d97757] [&>svg]:!text-[#888888] ${
+                              !branchToEdit.province ? '[&>span]:!text-[#666666]' : ''
                             }`}
                           >
                             <SelectValue placeholder="Seleccionar provincia" />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+                          <SelectContent className="!bg-[#262624] !border-[#3a3a38] max-h-[280px]">
                             {ARGENTINA_PROVINCES.map((province) => (
                               <SelectItem
                                 key={province}
                                 value={province}
-                                className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa]"
+                                className="!text-[#fafafa] !bg-transparent hover:!bg-[#3a3a38] focus:!bg-[#3a3a38] focus:!text-[#fafafa] cursor-pointer"
                               >
                                 {province}
                               </SelectItem>
