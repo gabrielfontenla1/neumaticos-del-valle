@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdminUntyped } from '@/lib/supabase-admin'
 import { requireAdminAuth } from '@/lib/auth/admin-check'
 
 /**
@@ -54,11 +54,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       )
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Use admin client (bypasses RLS)
+    const supabase = supabaseAdminUntyped
 
     // Generate unique filename
     const fileExt = file.name.split('.').pop()
@@ -142,11 +139,8 @@ export async function DELETE(request: Request): Promise<NextResponse> {
       )
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Use admin client (bypasses RLS)
+    const supabase = supabaseAdminUntyped
 
     // Delete from Supabase Storage
     const { error: deleteError } = await supabase.storage

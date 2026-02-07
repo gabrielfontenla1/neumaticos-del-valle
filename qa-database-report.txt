@@ -1,7 +1,0 @@
-✅ 13 ENUM types creados
-✅ 13 columnas migradas a ENUM
-✅ 18 foreign keys activos
-✅ 18/18 tablas con RLS habilitado
-✅ 106 indexes totales
-✅ 6 views recreadas
-✅ 14 triggers activos

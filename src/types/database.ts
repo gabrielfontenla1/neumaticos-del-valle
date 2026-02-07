@@ -844,6 +844,351 @@ export interface Database {
           updated_at?: string
         }
       }
+      // Nuevas tablas agregadas 2026-02-06
+      product_embeddings: {
+        Row: {
+          id: string
+          product_id: string | null
+          content: string
+          content_type: string
+          embedding: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          product_id?: string | null
+          content: string
+          content_type?: string
+          embedding?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string | null
+          content?: string
+          content_type?: string
+          embedding?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      faq_items: {
+        Row: {
+          id: string
+          question: string
+          answer: string
+          category: string | null
+          tags: string[] | null
+          views: number
+          helpful_count: number
+          not_helpful_count: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          question: string
+          answer: string
+          category?: string | null
+          tags?: string[] | null
+          views?: number
+          helpful_count?: number
+          not_helpful_count?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          question?: string
+          answer?: string
+          category?: string | null
+          tags?: string[] | null
+          views?: number
+          helpful_count?: number
+          not_helpful_count?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      vehicle_brands: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      vehicle_models: {
+        Row: {
+          id: string
+          brand_id: string
+          name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          brand_id: string
+          name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          brand_id?: string
+          name?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      quotation_services: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          price: number
+          price_type: 'per-tire' | 'flat'
+          icon: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          description: string
+          price: number
+          price_type: 'per-tire' | 'flat'
+          icon?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          price?: number
+          price_type?: 'per-tire' | 'flat'
+          icon?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      admin_notifications: {
+        Row: {
+          id: string
+          type: string
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          title: string
+          message: string
+          entity_type: string | null
+          entity_id: string | null
+          metadata: Json
+          is_read: boolean
+          read_at: string | null
+          read_by: string | null
+          is_dismissed: boolean
+          dismissed_at: string | null
+          dismissed_by: string | null
+          action_url: string | null
+          action_label: string | null
+          expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          type: string
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          title: string
+          message: string
+          entity_type?: string | null
+          entity_id?: string | null
+          metadata?: Json
+          is_read?: boolean
+          read_at?: string | null
+          read_by?: string | null
+          is_dismissed?: boolean
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          action_url?: string | null
+          action_label?: string | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          type?: string
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          title?: string
+          message?: string
+          entity_type?: string | null
+          entity_id?: string | null
+          metadata?: Json
+          is_read?: boolean
+          read_at?: string | null
+          read_by?: string | null
+          is_dismissed?: boolean
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          action_url?: string | null
+          action_label?: string | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          value: Json
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: Json
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: Json
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      whatsapp_conversations: {
+        Row: {
+          id: string
+          phone_number: string
+          customer_name: string | null
+          status: string
+          last_message_at: string | null
+          context: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          phone_number: string
+          customer_name?: string | null
+          status?: string
+          last_message_at?: string | null
+          context?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          phone_number?: string
+          customer_name?: string | null
+          status?: string
+          last_message_at?: string | null
+          context?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      whatsapp_messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          direction: 'inbound' | 'outbound'
+          content: string
+          message_type: string
+          media_url: string | null
+          status: string
+          external_id: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          direction: 'inbound' | 'outbound'
+          content: string
+          message_type?: string
+          media_url?: string | null
+          status?: string
+          external_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          direction?: 'inbound' | 'outbound'
+          content?: string
+          message_type?: string
+          media_url?: string | null
+          status?: string
+          external_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+      }
+      appointment_services: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          duration_minutes: number
+          price: number | null
+          is_active: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          duration_minutes?: number
+          price?: number | null
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          duration_minutes?: number
+          price?: number | null
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -947,6 +1292,34 @@ export interface Database {
           rating: number
           review_count: number
         }[]
+      }
+      match_embeddings: {
+        Args: {
+          query_embedding: string
+          match_threshold?: number
+          match_count?: number
+          content_type_filter?: string
+        }
+        Returns: {
+          id: string
+          product_id: string | null
+          content: string
+          content_type: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      get_admin_dashboard_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          pending_orders: number
+          pending_appointments: number
+          pending_reviews: number
+          pending_quotes: number
+          low_stock_products: number
+          total_products: number
+          unread_notifications: number
+        }
       }
     }
     Enums: {

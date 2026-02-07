@@ -155,14 +155,14 @@ export function FunctionToolsSection({
               onOpenChange={() => toggleTool(index)}
             >
               <Card className="bg-[#111b21] border-[#2a3942]">
-                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-[#2a3942] transition-colors">
-                  <div className="flex items-center gap-3">
+                <div className="p-4 flex items-center justify-between hover:bg-[#2a3942] transition-colors">
+                  <CollapsibleTrigger className="flex items-center gap-3 flex-1 text-left">
                     {expandedTools.has(index) ? (
                       <ChevronDown className="h-4 w-4 text-gray-400" />
                     ) : (
                       <ChevronRight className="h-4 w-4 text-gray-400" />
                     )}
-                    <div className="text-left">
+                    <div>
                       <div className="flex items-center gap-2">
                         <code className="text-sm font-mono text-white">{tool.name}</code>
                         {tool.enabled ? (
@@ -177,13 +177,12 @@ export function FunctionToolsSection({
                       </div>
                       <p className="text-xs text-gray-400 mt-1">{tool.description}</p>
                     </div>
-                  </div>
+                  </CollapsibleTrigger>
                   <Switch
                     checked={tool.enabled}
                     onCheckedChange={(checked) => updateTool(index, { enabled: checked })}
-                    onClick={(e) => e.stopPropagation()}
                   />
-                </CollapsibleTrigger>
+                </div>
 
                 <CollapsibleContent>
                   <div className="p-4 pt-0 space-y-4 border-t border-[#2a3942]">

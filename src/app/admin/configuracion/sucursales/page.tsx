@@ -2,12 +2,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { MapPin, RefreshCw, Plus, Trash2, Edit2, Store, Phone, Mail, Clock, Settings, Building2, Copy, Check, Globe } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MapPin, RefreshCw, Plus, Trash2, Edit2, Store, Phone, Mail, Clock, Settings, Building2, Copy, Check, Globe, Loader2, ChevronLeft, ChevronRight, Sparkles, CheckCircle2, AlertCircle, Sun, Moon, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -33,7 +40,7 @@ import {
 import { TableSkeleton } from '@/components/skeletons/TableSkeleton'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { toast } from 'sonner'
-import type { Branch, OpeningHours } from '@/types/branch'
+import type { Branch, OpeningHours, DaySchedule, StructuredSchedule } from '@/types/branch'
 
 // Exact colors from rapicompras darkColors theme
 const colors = {
@@ -45,6 +52,96 @@ const colors = {
   border: '#3a3a38',
   input: '#262626',
   secondary: '#262626',
+}
+
+// Provincias de Argentina (ordenadas alfabéticamente)
+const ARGENTINA_PROVINCES = [
+  'Buenos Aires',
+  'Catamarca',
+  'Chaco',
+  'Chubut',
+  'Ciudad Autónoma de Buenos Aires',
+  'Córdoba',
+  'Corrientes',
+  'Entre Ríos',
+  'Formosa',
+  'Jujuy',
+  'La Pampa',
+  'La Rioja',
+  'Mendoza',
+  'Misiones',
+  'Neuquén',
+  'Río Negro',
+  'Salta',
+  'San Juan',
+  'San Luis',
+  'Santa Cruz',
+  'Santa Fe',
+  'Santiago del Estero',
+  'Tierra del Fuego',
+  'Tucumán',
+] as const
+
+// Default structured schedule
+const defaultStructuredSchedule: StructuredSchedule = {
+  weekdays: {
+    closed: false,
+    morning: { from: '08:00', to: '12:30' },
+    afternoon: { from: '16:00', to: '20:00' },
+  },
+  saturday: {
+    closed: false,
+    morning: { from: '08:30', to: '12:30' },
+    afternoon: undefined,
+  },
+  sunday: {
+    closed: true,
+    morning: undefined,
+    afternoon: undefined,
+  },
+}
+
+// Convert structured schedule to string format for API
+const scheduleToString = (day: DaySchedule): string => {
+  if (day.closed) return 'Cerrado'
+  const parts: string[] = []
+  if (day.morning?.from && day.morning?.to) {
+    parts.push(`${day.morning.from} - ${day.morning.to}`)
+  }
+  if (day.afternoon?.from && day.afternoon?.to) {
+    parts.push(`${day.afternoon.from} - ${day.afternoon.to}`)
+  }
+  return parts.length > 0 ? parts.join(' y ') : 'Cerrado'
+}
+
+// Convert structured schedule to OpeningHours
+const structuredToOpeningHours = (schedule: StructuredSchedule): OpeningHours => ({
+  weekdays: scheduleToString(schedule.weekdays),
+  saturday: scheduleToString(schedule.saturday),
+  sunday: scheduleToString(schedule.sunday),
+})
+
+// Email validation regex
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// Phone validation (only numbers, min 8 digits)
+const isValidPhone = (phone: string): boolean => {
+  const digitsOnly = phone.replace(/\D/g, '')
+  return digitsOnly.length >= 8
+}
+
+// Field error interface
+interface FieldErrors {
+  name?: string
+  address?: string
+  city?: string
+  province?: string
+  phone?: string
+  email?: string
+  whatsapp?: string
 }
 
 const defaultOpeningHours: OpeningHours = {
@@ -67,6 +164,8 @@ export default function SucursalesPage() {
   const [deleting, setDeleting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
+  const [createStep, setCreateStep] = useState(0)
+  const [stepError, setStepError] = useState<string | null>(null)
   const [newBranch, setNewBranch] = useState<Partial<Branch>>({
     name: '',
     address: '',
@@ -82,6 +181,8 @@ export default function SucursalesPage() {
     is_main: false,
     active: true,
   })
+  const [schedule, setSchedule] = useState<StructuredSchedule>(defaultStructuredSchedule)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   useEffect(() => {
     fetchBranches()
@@ -230,6 +331,11 @@ export default function SucursalesPage() {
         return
       }
 
+      if (!newBranch.email || newBranch.email.trim() === '') {
+        toast.error('El email es requerido')
+        return
+      }
+
       setCreating(true)
 
       const response = await fetch('/api/admin/branches', {
@@ -332,19 +438,199 @@ export default function SucursalesPage() {
       is_main: false,
       active: true,
     })
+    setCreateStep(0)
+    setStepError(null)
+    setFieldErrors({})
+    setSchedule(defaultStructuredSchedule)
     setIsCreateDialogOpen(true)
+  }
+
+  // Stepper configuration
+  const CREATE_STEPS = [
+    { id: 0, title: 'Información', description: 'Datos básicos de la sucursal', icon: Building2 },
+    { id: 1, title: 'Contacto', description: 'Teléfono, email y WhatsApp', icon: Phone },
+    { id: 2, title: 'Horarios', description: 'Días y horas de atención', icon: Clock },
+    { id: 3, title: 'Configuración', description: 'Opciones adicionales', icon: Settings },
+  ]
+
+  const validateCreateStep = (step: number): boolean => {
+    setStepError(null)
+    const errors: FieldErrors = {}
+
+    switch (step) {
+      case 0:
+        if (!newBranch.name?.trim()) {
+          errors.name = 'El nombre es requerido'
+        } else if (newBranch.name.trim().length < 3) {
+          errors.name = 'El nombre debe tener al menos 3 caracteres'
+        }
+        if (!newBranch.address?.trim()) {
+          errors.address = 'La dirección es requerida'
+        } else if (newBranch.address.trim().length < 5) {
+          errors.address = 'La dirección debe tener al menos 5 caracteres'
+        }
+        if (!newBranch.city?.trim()) {
+          errors.city = 'La ciudad es requerida'
+        }
+        if (!newBranch.province?.trim()) {
+          errors.province = 'La provincia es requerida'
+        }
+
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors)
+          setStepError('Por favor completa los campos requeridos')
+          return false
+        }
+        setFieldErrors({})
+        return true
+
+      case 1:
+        if (!newBranch.phone?.trim()) {
+          errors.phone = 'El teléfono es requerido'
+        } else if (!isValidPhone(newBranch.phone)) {
+          errors.phone = 'El teléfono debe tener al menos 8 dígitos'
+        }
+        if (!newBranch.email?.trim()) {
+          errors.email = 'El email es requerido'
+        } else if (!isValidEmail(newBranch.email)) {
+          errors.email = 'El formato de email no es válido'
+        }
+        if (newBranch.whatsapp?.trim() && !isValidPhone(newBranch.whatsapp)) {
+          errors.whatsapp = 'El WhatsApp debe tener al menos 8 dígitos'
+        }
+
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors)
+          setStepError('Por favor corrige los errores')
+          return false
+        }
+        setFieldErrors({})
+        return true
+
+      case 2:
+        // Update opening_hours from structured schedule
+        setNewBranch({
+          ...newBranch,
+          opening_hours: structuredToOpeningHours(schedule)
+        })
+        return true
+
+      case 3:
+        return true
+
+      default:
+        return true
+    }
+  }
+
+  const handleNextStep = () => {
+    if (validateCreateStep(createStep)) {
+      if (createStep < CREATE_STEPS.length - 1) {
+        setCreateStep(createStep + 1)
+      }
+    }
+  }
+
+  const handlePrevStep = () => {
+    if (createStep > 0) {
+      setStepError(null)
+      setCreateStep(createStep - 1)
+    }
   }
 
   if (loading && branches.length === 0) {
     return (
-      <div className="p-6 bg-[#30302e] min-h-screen">
-        <TableSkeleton rows={8} columns={7} />
-      </div>
+      <main className="p-6 space-y-6 min-h-screen">
+        {/* Header Card Skeleton */}
+        <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-[#d97757]/20 border border-[#d97757]/30 animate-pulse">
+                  <div className="w-8 h-8 bg-[#d97757]/40 rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-7 w-56 bg-[#3a3a38] rounded animate-pulse" />
+                  <div className="h-4 w-72 bg-[#3a3a38]/60 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-10 w-28 bg-[#3a3a38] rounded-md animate-pulse" />
+                <div className="h-10 w-36 bg-[#d97757]/30 rounded-md animate-pulse" />
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Table Card Skeleton */}
+        <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              {/* Table Header */}
+              <div className="grid grid-cols-7 gap-4 p-4 border-b border-[#3a3a38]">
+                {['Sucursal', 'Dirección', 'Contacto', 'Horarios', 'Principal', 'Estado', 'Acciones'].map((_, i) => (
+                  <div key={i} className="h-4 bg-[#3a3a38]/60 rounded animate-pulse" />
+                ))}
+              </div>
+
+              {/* Table Rows */}
+              {Array.from({ length: 5 }).map((_, rowIndex) => (
+                <div
+                  key={rowIndex}
+                  className="grid grid-cols-7 gap-4 p-4 border-b border-[#3a3a38]/50"
+                  style={{ animationDelay: `${rowIndex * 100}ms` }}
+                >
+                  {/* Sucursal */}
+                  <div className="space-y-2">
+                    <div className="h-5 w-32 bg-[#3a3a38] rounded animate-pulse" />
+                    <div className="h-3 w-24 bg-[#3a3a38]/40 rounded animate-pulse" />
+                  </div>
+                  {/* Dirección */}
+                  <div className="space-y-2">
+                    <div className="h-4 w-36 bg-[#3a3a38] rounded animate-pulse" />
+                    <div className="h-3 w-28 bg-[#3a3a38]/40 rounded animate-pulse" />
+                  </div>
+                  {/* Contacto */}
+                  <div className="space-y-2">
+                    <div className="h-4 w-28 bg-[#3a3a38] rounded animate-pulse" />
+                    <div className="h-3 w-32 bg-[#3a3a38]/40 rounded animate-pulse" />
+                  </div>
+                  {/* Horarios */}
+                  <div className="space-y-1">
+                    <div className="h-3 w-36 bg-[#3a3a38] rounded animate-pulse" />
+                    <div className="h-3 w-28 bg-[#3a3a38]/40 rounded animate-pulse" />
+                    <div className="h-3 w-20 bg-[#3a3a38]/40 rounded animate-pulse" />
+                  </div>
+                  {/* Principal */}
+                  <div className="flex justify-center">
+                    <div className="h-6 w-6 bg-[#3a3a38] rounded-full animate-pulse" />
+                  </div>
+                  {/* Estado */}
+                  <div className="flex justify-center">
+                    <div className="h-6 w-16 bg-[#3a3a38] rounded-full animate-pulse" />
+                  </div>
+                  {/* Acciones */}
+                  <div className="flex justify-center gap-2">
+                    <div className="h-8 w-8 bg-[#3a3a38] rounded animate-pulse" />
+                    <div className="h-8 w-8 bg-[#3a3a38] rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Loading indicator */}
+        <div className="flex items-center justify-center gap-3 text-[#888888]">
+          <Loader2 className="w-5 h-5 animate-spin text-[#d97757]" />
+          <span className="text-sm">Cargando sucursales...</span>
+        </div>
+      </main>
     )
   }
 
   return (
-    <main className="p-6 space-y-6 bg-[#30302e] min-h-screen">
+    <main className="p-6 space-y-6 min-h-screen">
       {/* Header Card */}
       <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
         <CardHeader>
@@ -483,316 +769,752 @@ export default function SucursalesPage() {
         </CardContent>
       </Card>
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-[#262624] border-[#3a3a38] text-[#fafafa] max-w-3xl max-h-[90vh] overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <DialogHeader>
-              <DialogTitle className="text-[#fafafa] text-xl">Crear Nueva Sucursal</DialogTitle>
-              <DialogDescription className="text-[#888888]">
-                Completa todos los campos requeridos (*) para crear una nueva sucursal
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 py-4">
-              {/* Información Básica */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                  Información Básica
-                </h3>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-name" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Nombre *
-                    </Label>
-                    <Input
-                      id="new-name"
-                      placeholder="ej: Sucursal Catamarca Centro"
-                      value={newBranch.name}
-                      onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-city" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Ciudad *
-                    </Label>
-                    <Input
-                      id="new-city"
-                      placeholder="ej: San Fernando del Valle de Catamarca"
-                      value={newBranch.city}
-                      onChange={(e) => setNewBranch({ ...newBranch, city: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-address" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Dirección *
-                    </Label>
-                    <Input
-                      id="new-address"
-                      placeholder="ej: Av. Belgrano 123"
-                      value={newBranch.address}
-                      onChange={(e) => setNewBranch({ ...newBranch, address: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-province" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Provincia *
-                    </Label>
-                    <Input
-                      id="new-province"
-                      placeholder="ej: Catamarca"
-                      value={newBranch.province || ''}
-                      onChange={(e) => setNewBranch({ ...newBranch, province: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-                </div>
+      {/* Create Dialog - Stepper Version */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setCreateStep(0)
+          setStepError(null)
+        }
+        setIsCreateDialogOpen(open)
+      }}>
+        <DialogContent className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] max-w-2xl p-0 max-h-[90vh] flex flex-col">
+          {/* Header with Progress */}
+          <div className="bg-gradient-to-r from-[#262624] to-[#30302e] p-6 border-b border-[#3a3a38] shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <DialogTitle className="text-xl font-bold text-[#fafafa]">
+                  Nueva Sucursal
+                </DialogTitle>
+                <DialogDescription className="text-[#888888] mt-1">
+                  {CREATE_STEPS[createStep].description}
+                </DialogDescription>
               </div>
-
-              {/* Contacto */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                  Contacto
-                </h3>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-phone" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Teléfono *
-                    </Label>
-                    <Input
-                      id="new-phone"
-                      placeholder="ej: 3834123456"
-                      value={newBranch.phone}
-                      onChange={(e) => setNewBranch({ ...newBranch, phone: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-whatsapp" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      WhatsApp
-                    </Label>
-                    <Input
-                      id="new-whatsapp"
-                      placeholder="ej: 5493834123456"
-                      value={newBranch.whatsapp || ''}
-                      onChange={(e) => setNewBranch({ ...newBranch, whatsapp: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-email" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Email
-                    </Label>
-                    <Input
-                      id="new-email"
-                      type="email"
-                      placeholder="ej: sucursal@neumaticos.com"
-                      value={newBranch.email || ''}
-                      onChange={(e) => setNewBranch({ ...newBranch, email: e.target.value })}
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Horarios */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                  Horarios
-                </h3>
-
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-weekdays" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Lunes a Viernes
-                    </Label>
-                    <Input
-                      id="new-weekdays"
-                      placeholder="ej: 08:00 - 12:30 y 16:00 - 20:00"
-                      value={newBranch.opening_hours?.weekdays}
-                      onChange={(e) =>
-                        setNewBranch({
-                          ...newBranch,
-                          opening_hours: { ...newBranch.opening_hours!, weekdays: e.target.value },
-                        })
-                      }
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="new-saturday" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Sábado
-                      </Label>
-                      <Input
-                        id="new-saturday"
-                        placeholder="ej: 08:30 - 12:30"
-                        value={newBranch.opening_hours?.saturday}
-                        onChange={(e) =>
-                          setNewBranch({
-                            ...newBranch,
-                            opening_hours: { ...newBranch.opening_hours!, saturday: e.target.value },
-                          })
-                        }
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="new-sunday" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                        Domingo
-                      </Label>
-                      <Input
-                        id="new-sunday"
-                        placeholder="ej: Cerrado"
-                        value={newBranch.opening_hours?.sunday}
-                        onChange={(e) =>
-                          setNewBranch({
-                            ...newBranch,
-                            opening_hours: { ...newBranch.opening_hours!, sunday: e.target.value },
-                          })
-                        }
-                        className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ubicación (opcional) */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                  Ubicación (Opcional)
-                </h3>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-latitude" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Latitud
-                    </Label>
-                    <Input
-                      id="new-latitude"
-                      type="number"
-                      step="any"
-                      placeholder="ej: -28.4699"
-                      value={newBranch.latitude || ''}
-                      onChange={(e) =>
-                        setNewBranch({ ...newBranch, latitude: e.target.value ? parseFloat(e.target.value) : undefined })
-                      }
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-longitude" className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
-                      Longitud
-                    </Label>
-                    <Input
-                      id="new-longitude"
-                      type="number"
-                      step="any"
-                      placeholder="ej: -65.7795"
-                      value={newBranch.longitude || ''}
-                      onChange={(e) =>
-                        setNewBranch({ ...newBranch, longitude: e.target.value ? parseFloat(e.target.value) : undefined })
-                      }
-                      className="bg-[#262626] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Imagen de Fondo */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                  Imagen de Fondo
-                </h3>
-
-                <ImageUpload
-                  value={newBranch.background_image_url || undefined}
-                  onChange={(url) => setNewBranch({ ...newBranch, background_image_url: url || undefined })}
-                  onUpload={(file) => handleUploadImage(file)}
-                  disabled={uploadingImage}
-                />
-              </div>
-
-              {/* Configuración */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-[#d97757] uppercase tracking-wide">
-                  Configuración
-                </h3>
-
-                <div className="flex items-center justify-between p-4 bg-[#30302e]/50 rounded-lg border border-[#3a3a38]">
-                  <div className="space-y-0.5">
-                    <Label className="text-[#fafafa] font-medium">Sucursal Principal</Label>
-                    <p className="text-xs text-[#888888]">
-                      Marcar como sucursal principal de la empresa
-                    </p>
-                  </div>
-                  <Switch
-                    checked={newBranch.is_main}
-                    onCheckedChange={(checked) => setNewBranch({ ...newBranch, is_main: checked })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-[#30302e]/50 rounded-lg border border-[#3a3a38]">
-                  <div className="space-y-0.5">
-                    <Label className="text-[#fafafa] font-medium">Estado Activo</Label>
-                    <p className="text-xs text-[#888888]">
-                      Mostrar sucursal en la página pública
-                    </p>
-                  </div>
-                  <Switch
-                    checked={newBranch.active}
-                    onCheckedChange={(checked) => setNewBranch({ ...newBranch, active: checked })}
-                  />
-                </div>
+              <div className="flex items-center gap-2 bg-[#30302e] px-3 py-1.5 rounded-full border border-[#3a3a38]">
+                <span className="text-sm font-medium text-[#d97757]">{createStep + 1}</span>
+                <span className="text-sm text-[#888888]">de {CREATE_STEPS.length}</span>
               </div>
             </div>
 
-            <DialogFooter>
+            {/* Progress Bar */}
+            <div className="h-1.5 bg-[#3a3a38] rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#d97757] to-[#e89578]"
+                initial={{ width: 0 }}
+                animate={{ width: `${((createStep + 1) / CREATE_STEPS.length) * 100}%` }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              />
+            </div>
+
+            {/* Step Indicators */}
+            <div className="flex justify-between mt-4">
+              {CREATE_STEPS.map((step, index) => {
+                const StepIcon = step.icon
+                const isCompleted = index < createStep
+                const isCurrent = index === createStep
+                return (
+                  <div key={step.id} className="flex flex-col items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isCompleted
+                          ? 'bg-[#22c55e] text-white'
+                          : isCurrent
+                          ? 'bg-[#d97757] text-white ring-4 ring-[#d97757]/20'
+                          : 'bg-[#3a3a38] text-[#888888]'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        <StepIcon className="w-5 h-5" />
+                      )}
+                    </div>
+                    <span className={`text-xs mt-2 font-medium ${isCurrent ? 'text-[#d97757]' : 'text-[#888888]'}`}>
+                      {step.title}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Step Content */}
+          <div className="p-6 min-h-[280px] flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={createStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Error Message */}
+                {stepError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2"
+                  >
+                    <AlertCircle className="w-4 h-4 text-red-400" />
+                    <p className="text-red-400 text-sm">{stepError}</p>
+                  </motion.div>
+                )}
+
+                {/* Step 0: Información Básica */}
+                {createStep === 0 && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-name" className="text-[#fafafa] font-medium flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-[#d97757]" />
+                        Nombre de la Sucursal *
+                      </Label>
+                      <Input
+                        id="new-name"
+                        placeholder="ej: Sucursal Catamarca Centro"
+                        value={newBranch.name}
+                        onChange={(e) => {
+                          setNewBranch({ ...newBranch, name: e.target.value })
+                          if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: undefined })
+                        }}
+                        className={`bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 focus:border-[#d97757] focus:ring-[#d97757]/20 ${
+                          fieldErrors.name ? 'border-red-500' : 'border-[#3a3a38]'
+                        }`}
+                        autoFocus
+                      />
+                      {fieldErrors.name && (
+                        <p className="text-red-400 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {fieldErrors.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="new-address" className="text-[#fafafa] font-medium flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-[#d97757]" />
+                        Dirección *
+                      </Label>
+                      <Input
+                        id="new-address"
+                        placeholder="ej: Av. Belgrano 123"
+                        value={newBranch.address}
+                        onChange={(e) => {
+                          setNewBranch({ ...newBranch, address: e.target.value })
+                          if (fieldErrors.address) setFieldErrors({ ...fieldErrors, address: undefined })
+                        }}
+                        className={`bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 focus:border-[#d97757] ${
+                          fieldErrors.address ? 'border-red-500' : 'border-[#3a3a38]'
+                        }`}
+                      />
+                      {fieldErrors.address && (
+                        <p className="text-red-400 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {fieldErrors.address}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="new-city" className="text-[#fafafa] font-medium">
+                          Ciudad *
+                        </Label>
+                        <Input
+                          id="new-city"
+                          placeholder="ej: San Fernando del Valle"
+                          value={newBranch.city}
+                          onChange={(e) => {
+                            setNewBranch({ ...newBranch, city: e.target.value })
+                            if (fieldErrors.city) setFieldErrors({ ...fieldErrors, city: undefined })
+                          }}
+                          className={`bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 focus:border-[#d97757] ${
+                            fieldErrors.city ? 'border-red-500' : 'border-[#3a3a38]'
+                          }`}
+                        />
+                        {fieldErrors.city && (
+                          <p className="text-red-400 text-xs flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {fieldErrors.city}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-province" className="text-[#fafafa] font-medium">
+                          Provincia *
+                        </Label>
+                        <Select
+                          value={newBranch.province || ''}
+                          onValueChange={(value) => {
+                            setNewBranch({ ...newBranch, province: value })
+                            if (fieldErrors.province) setFieldErrors({ ...fieldErrors, province: undefined })
+                          }}
+                        >
+                          <SelectTrigger
+                            className={`bg-[#30302e] text-[#fafafa] h-12 focus:ring-[#d97757] ${
+                              fieldErrors.province ? 'border-red-500' : 'border-[#3a3a38]'
+                            } ${!newBranch.province ? 'text-[#666666]' : ''}`}
+                          >
+                            <SelectValue placeholder="Seleccionar provincia" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+                            {ARGENTINA_PROVINCES.map((province) => (
+                              <SelectItem
+                                key={province}
+                                value={province}
+                                className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa]"
+                              >
+                                {province}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {fieldErrors.province && (
+                          <p className="text-red-400 text-xs flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {fieldErrors.province}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 1: Contacto */}
+                {createStep === 1 && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-phone" className="text-[#fafafa] font-medium flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-[#d97757]" />
+                        Teléfono *
+                      </Label>
+                      <Input
+                        id="new-phone"
+                        placeholder="ej: 3834123456"
+                        value={newBranch.phone}
+                        onChange={(e) => {
+                          setNewBranch({ ...newBranch, phone: e.target.value })
+                          if (fieldErrors.phone) setFieldErrors({ ...fieldErrors, phone: undefined })
+                        }}
+                        className={`bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 focus:border-[#d97757] ${
+                          fieldErrors.phone ? 'border-red-500' : 'border-[#3a3a38]'
+                        }`}
+                        autoFocus
+                      />
+                      {fieldErrors.phone && (
+                        <p className="text-red-400 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {fieldErrors.phone}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="new-email" className="text-[#fafafa] font-medium flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-[#d97757]" />
+                        Email *
+                      </Label>
+                      <Input
+                        id="new-email"
+                        type="email"
+                        placeholder="ej: sucursal@neumaticos.com"
+                        value={newBranch.email || ''}
+                        onChange={(e) => {
+                          setNewBranch({ ...newBranch, email: e.target.value })
+                          if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined })
+                        }}
+                        className={`bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 focus:border-[#d97757] ${
+                          fieldErrors.email ? 'border-red-500' : 'border-[#3a3a38]'
+                        }`}
+                      />
+                      {fieldErrors.email && (
+                        <p className="text-red-400 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {fieldErrors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="new-whatsapp" className="text-[#fafafa] font-medium flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-[#22c55e]" />
+                        WhatsApp <span className="text-[#888888] text-xs">(opcional)</span>
+                      </Label>
+                      <Input
+                        id="new-whatsapp"
+                        placeholder="ej: 5493834123456"
+                        value={newBranch.whatsapp || ''}
+                        onChange={(e) => {
+                          setNewBranch({ ...newBranch, whatsapp: e.target.value })
+                          if (fieldErrors.whatsapp) setFieldErrors({ ...fieldErrors, whatsapp: undefined })
+                        }}
+                        className={`bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 focus:border-[#d97757] ${
+                          fieldErrors.whatsapp ? 'border-red-500' : 'border-[#3a3a38]'
+                        }`}
+                      />
+                      {fieldErrors.whatsapp ? (
+                        <p className="text-red-400 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {fieldErrors.whatsapp}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[#888888]">Incluye código de país (ej: 549 para Argentina)</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Horarios */}
+                {createStep === 2 && (
+                  <div className="space-y-4">
+                    {/* Weekdays Schedule */}
+                    <div className="p-4 bg-[#30302e] rounded-xl border border-[#3a3a38]">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-[#d97757]/10">
+                            <Calendar className="w-5 h-5 text-[#d97757]" />
+                          </div>
+                          <div>
+                            <Label className="text-[#fafafa] font-medium">Lunes a Viernes</Label>
+                            <p className="text-xs text-[#888888]">Horario de atención semanal</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#888888]">Cerrado</span>
+                          <Switch
+                            checked={schedule.weekdays.closed}
+                            onCheckedChange={(checked) => setSchedule({
+                              ...schedule,
+                              weekdays: { ...schedule.weekdays, closed: checked }
+                            })}
+                          />
+                        </div>
+                      </div>
+
+                      {!schedule.weekdays.closed && (
+                        <div className="space-y-3">
+                          {/* Morning Shift */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 w-24">
+                              <Sun className="w-4 h-4 text-yellow-500" />
+                              <span className="text-sm text-[#fafafa]">Mañana</span>
+                            </div>
+                            <Input
+                              type="time"
+                              value={schedule.weekdays.morning?.from || ''}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                weekdays: {
+                                  ...schedule.weekdays,
+                                  morning: { ...schedule.weekdays.morning!, from: e.target.value }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                            <span className="text-[#888888]">a</span>
+                            <Input
+                              type="time"
+                              value={schedule.weekdays.morning?.to || ''}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                weekdays: {
+                                  ...schedule.weekdays,
+                                  morning: { ...schedule.weekdays.morning!, to: e.target.value }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                          </div>
+
+                          {/* Afternoon Shift */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 w-24">
+                              <Moon className="w-4 h-4 text-blue-400" />
+                              <span className="text-sm text-[#fafafa]">Tarde</span>
+                            </div>
+                            <Input
+                              type="time"
+                              value={schedule.weekdays.afternoon?.from || ''}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                weekdays: {
+                                  ...schedule.weekdays,
+                                  afternoon: { from: e.target.value, to: schedule.weekdays.afternoon?.to || '' }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                            <span className="text-[#888888]">a</span>
+                            <Input
+                              type="time"
+                              value={schedule.weekdays.afternoon?.to || ''}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                weekdays: {
+                                  ...schedule.weekdays,
+                                  afternoon: { from: schedule.weekdays.afternoon?.from || '', to: e.target.value }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSchedule({
+                                ...schedule,
+                                weekdays: { ...schedule.weekdays, afternoon: undefined }
+                              })}
+                              className="text-[#888888] hover:text-red-400 h-8 px-2"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Saturday Schedule */}
+                    <div className="p-4 bg-[#30302e] rounded-xl border border-[#3a3a38]">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-[#22c55e]/10">
+                            <Calendar className="w-5 h-5 text-[#22c55e]" />
+                          </div>
+                          <div>
+                            <Label className="text-[#fafafa] font-medium">Sábado</Label>
+                            <p className="text-xs text-[#888888]">Horario fin de semana</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#888888]">Cerrado</span>
+                          <Switch
+                            checked={schedule.saturday.closed}
+                            onCheckedChange={(checked) => setSchedule({
+                              ...schedule,
+                              saturday: { ...schedule.saturday, closed: checked }
+                            })}
+                          />
+                        </div>
+                      </div>
+
+                      {!schedule.saturday.closed && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 w-24">
+                              <Sun className="w-4 h-4 text-yellow-500" />
+                              <span className="text-sm text-[#fafafa]">Mañana</span>
+                            </div>
+                            <Input
+                              type="time"
+                              value={schedule.saturday.morning?.from || ''}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                saturday: {
+                                  ...schedule.saturday,
+                                  morning: { ...schedule.saturday.morning!, from: e.target.value }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                            <span className="text-[#888888]">a</span>
+                            <Input
+                              type="time"
+                              value={schedule.saturday.morning?.to || ''}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                saturday: {
+                                  ...schedule.saturday,
+                                  morning: { ...schedule.saturday.morning!, to: e.target.value }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                          </div>
+
+                          {schedule.saturday.afternoon ? (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 w-24">
+                                <Moon className="w-4 h-4 text-blue-400" />
+                                <span className="text-sm text-[#fafafa]">Tarde</span>
+                              </div>
+                              <Input
+                                type="time"
+                                value={schedule.saturday.afternoon?.from || ''}
+                                onChange={(e) => setSchedule({
+                                  ...schedule,
+                                  saturday: {
+                                    ...schedule.saturday,
+                                    afternoon: { from: e.target.value, to: schedule.saturday.afternoon?.to || '' }
+                                  }
+                                })}
+                                className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                              />
+                              <span className="text-[#888888]">a</span>
+                              <Input
+                                type="time"
+                                value={schedule.saturday.afternoon?.to || ''}
+                                onChange={(e) => setSchedule({
+                                  ...schedule,
+                                  saturday: {
+                                    ...schedule.saturday,
+                                    afternoon: { from: schedule.saturday.afternoon?.from || '', to: e.target.value }
+                                  }
+                                })}
+                                className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSchedule({
+                                  ...schedule,
+                                  saturday: { ...schedule.saturday, afternoon: undefined }
+                                })}
+                                className="text-[#888888] hover:text-red-400 h-8 px-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSchedule({
+                                ...schedule,
+                                saturday: {
+                                  ...schedule.saturday,
+                                  afternoon: { from: '16:00', to: '20:00' }
+                                }
+                              })}
+                              className="text-[#d97757] hover:text-[#d97757] hover:bg-[#d97757]/10"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Agregar turno tarde
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sunday Schedule */}
+                    <div className="p-4 bg-[#30302e] rounded-xl border border-[#3a3a38]">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-red-500/10">
+                            <Calendar className="w-5 h-5 text-red-400" />
+                          </div>
+                          <div>
+                            <Label className="text-[#fafafa] font-medium">Domingo</Label>
+                            <p className="text-xs text-[#888888]">Generalmente cerrado</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#888888]">Cerrado</span>
+                          <Switch
+                            checked={schedule.sunday.closed}
+                            onCheckedChange={(checked) => setSchedule({
+                              ...schedule,
+                              sunday: { ...schedule.sunday, closed: checked }
+                            })}
+                          />
+                        </div>
+                      </div>
+
+                      {!schedule.sunday.closed && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 w-24">
+                              <Sun className="w-4 h-4 text-yellow-500" />
+                              <span className="text-sm text-[#fafafa]">Mañana</span>
+                            </div>
+                            <Input
+                              type="time"
+                              value={schedule.sunday.morning?.from || '09:00'}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                sunday: {
+                                  ...schedule.sunday,
+                                  morning: { from: e.target.value, to: schedule.sunday.morning?.to || '13:00' }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                            <span className="text-[#888888]">a</span>
+                            <Input
+                              type="time"
+                              value={schedule.sunday.morning?.to || '13:00'}
+                              onChange={(e) => setSchedule({
+                                ...schedule,
+                                sunday: {
+                                  ...schedule.sunday,
+                                  morning: { from: schedule.sunday.morning?.from || '09:00', to: e.target.value }
+                                }
+                              })}
+                              className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555] h-10 w-28"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preview */}
+                    <div className="p-4 bg-[#262624] rounded-lg border border-[#3a3a38]">
+                      <p className="text-xs text-[#888888] mb-2">Vista previa del horario:</p>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-[#fafafa]">
+                          <span className="text-[#d97757] font-medium">Lun-Vie:</span> {scheduleToString(schedule.weekdays)}
+                        </p>
+                        <p className="text-[#fafafa]">
+                          <span className="text-[#22c55e] font-medium">Sábado:</span> {scheduleToString(schedule.saturday)}
+                        </p>
+                        <p className="text-[#fafafa]">
+                          <span className="text-red-400 font-medium">Domingo:</span> {scheduleToString(schedule.sunday)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Configuración */}
+                {createStep === 3 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-[#30302e] rounded-xl border border-[#3a3a38] hover:border-[#d97757]/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-[#d97757]/10">
+                          <Store className="w-5 h-5 text-[#d97757]" />
+                        </div>
+                        <div>
+                          <Label className="text-[#fafafa] font-medium">Sucursal Principal</Label>
+                          <p className="text-xs text-[#888888]">
+                            Marcar como sucursal principal de la empresa
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={newBranch.is_main}
+                        onCheckedChange={(checked) => setNewBranch({ ...newBranch, is_main: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-[#30302e] rounded-xl border border-[#3a3a38] hover:border-[#22c55e]/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-[#22c55e]/10">
+                          <Globe className="w-5 h-5 text-[#22c55e]" />
+                        </div>
+                        <div>
+                          <Label className="text-[#fafafa] font-medium">Estado Activo</Label>
+                          <p className="text-xs text-[#888888]">
+                            Mostrar sucursal en la página pública
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={newBranch.active}
+                        onCheckedChange={(checked) => setNewBranch({ ...newBranch, active: checked })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[#fafafa] font-medium flex items-center gap-2">
+                        <Settings className="w-4 h-4 text-[#d97757]" />
+                        Imagen de Fondo <span className="text-[#888888] text-xs">(opcional)</span>
+                      </Label>
+                      <ImageUpload
+                        value={newBranch.background_image_url || undefined}
+                        onChange={(url) => setNewBranch({ ...newBranch, background_image_url: url || undefined })}
+                        onUpload={(file) => handleUploadImage(file)}
+                        disabled={uploadingImage}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="new-latitude" className="text-[#888888] text-sm">
+                          Latitud (opcional)
+                        </Label>
+                        <Input
+                          id="new-latitude"
+                          type="number"
+                          step="any"
+                          placeholder="ej: -28.4699"
+                          value={newBranch.latitude || ''}
+                          onChange={(e) =>
+                            setNewBranch({ ...newBranch, latitude: e.target.value ? parseFloat(e.target.value) : undefined })
+                          }
+                          className="bg-[#30302e] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-longitude" className="text-[#888888] text-sm">
+                          Longitud (opcional)
+                        </Label>
+                        <Input
+                          id="new-longitude"
+                          type="number"
+                          step="any"
+                          placeholder="ej: -65.7795"
+                          value={newBranch.longitude || ''}
+                          onChange={(e) =>
+                            setNewBranch({ ...newBranch, longitude: e.target.value ? parseFloat(e.target.value) : undefined })
+                          }
+                          className="bg-[#30302e] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Footer with Navigation */}
+          <div className="p-6 border-t border-[#3a3a38] bg-[#262624] shrink-0">
+            <div className="flex items-center justify-between">
               <Button
                 variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-                className="bg-[#262626] border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38]"
+                onClick={createStep === 0 ? () => setIsCreateDialogOpen(false) : handlePrevStep}
+                className="bg-transparent border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38]"
                 disabled={creating}
               >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleCreateBranch}
-                disabled={creating || uploadingImage}
-                className="bg-[#d97757] text-white hover:bg-[#d97757]/90"
-              >
-                {creating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Creando...
-                  </>
+                {createStep === 0 ? (
+                  'Cancelar'
                 ) : (
-                  'Crear Sucursal'
+                  <>
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Anterior
+                  </>
                 )}
               </Button>
-            </DialogFooter>
-          </motion.div>
+
+              {createStep < CREATE_STEPS.length - 1 ? (
+                <Button
+                  onClick={handleNextStep}
+                  className="bg-[#d97757] text-white hover:bg-[#d97757]/90 min-w-[120px]"
+                >
+                  Siguiente
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCreateBranch}
+                  disabled={creating || uploadingImage}
+                  className="bg-[#22c55e] text-white hover:bg-[#22c55e]/90 min-w-[140px]"
+                >
+                  {creating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Crear Sucursal
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -901,7 +1623,7 @@ export default function SucursalesPage() {
                         value={branchToEdit.name}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, name: e.target.value })}
                         placeholder="ej: Sucursal Catamarca Centro"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                     </div>
 
@@ -913,7 +1635,7 @@ export default function SucursalesPage() {
                         value={branchToEdit.address}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, address: e.target.value })}
                         placeholder="ej: Av. Belgrano 938"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                     </div>
 
@@ -926,19 +1648,36 @@ export default function SucursalesPage() {
                           value={branchToEdit.city}
                           onChange={(e) => setBranchToEdit({ ...branchToEdit, city: e.target.value })}
                           placeholder="ej: San Fernando"
-                          className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                          className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[#a1a1aa] text-xs font-medium uppercase tracking-wide">
                           Provincia *
                         </Label>
-                        <Input
+                        <Select
                           value={branchToEdit.province || ''}
-                          onChange={(e) => setBranchToEdit({ ...branchToEdit, province: e.target.value })}
-                          placeholder="ej: Catamarca"
-                          className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
-                        />
+                          onValueChange={(value) => setBranchToEdit({ ...branchToEdit, province: value })}
+                        >
+                          <SelectTrigger
+                            className={`bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] h-11 focus:ring-[#d97757] ${
+                              !branchToEdit.province ? 'text-[#666666]' : ''
+                            }`}
+                          >
+                            <SelectValue placeholder="Seleccionar provincia" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#262624] border-[#3a3a38]">
+                            {ARGENTINA_PROVINCES.map((province) => (
+                              <SelectItem
+                                key={province}
+                                value={province}
+                                className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa]"
+                              >
+                                {province}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -958,7 +1697,7 @@ export default function SucursalesPage() {
                             value={branchToEdit.latitude || ''}
                             onChange={(e) => setBranchToEdit({ ...branchToEdit, latitude: e.target.value ? parseFloat(e.target.value) : undefined })}
                             placeholder="-28.4699"
-                            className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                            className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                           />
                         </div>
                         <div className="space-y-2">
@@ -971,7 +1710,7 @@ export default function SucursalesPage() {
                             value={branchToEdit.longitude || ''}
                             onChange={(e) => setBranchToEdit({ ...branchToEdit, longitude: e.target.value ? parseFloat(e.target.value) : undefined })}
                             placeholder="-65.7795"
-                            className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                            className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                           />
                         </div>
                       </div>
@@ -989,7 +1728,7 @@ export default function SucursalesPage() {
                         value={branchToEdit.phone}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, phone: e.target.value })}
                         placeholder="ej: 5493855854741"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                     </div>
 
@@ -1004,7 +1743,7 @@ export default function SucursalesPage() {
                         value={branchToEdit.whatsapp || ''}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, whatsapp: e.target.value })}
                         placeholder="ej: 5493855854741"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                       <p className="text-xs text-[#666]">
                         Formato internacional sin + ni espacios
@@ -1021,7 +1760,7 @@ export default function SucursalesPage() {
                         value={branchToEdit.email || ''}
                         onChange={(e) => setBranchToEdit({ ...branchToEdit, email: e.target.value })}
                         placeholder="ej: catamarca@neumaticos.com"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                       <p className="text-xs text-[#666]">
                         Se usará para notificaciones de turnos
@@ -1045,7 +1784,7 @@ export default function SucursalesPage() {
                           opening_hours: { ...branchToEdit.opening_hours, weekdays: e.target.value },
                         })}
                         placeholder="ej: 08:30 - 19:00"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                     </div>
 
@@ -1060,7 +1799,7 @@ export default function SucursalesPage() {
                           opening_hours: { ...branchToEdit.opening_hours, saturday: e.target.value },
                         })}
                         placeholder="ej: 08:30 - 13:00"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                     </div>
 
@@ -1075,7 +1814,7 @@ export default function SucursalesPage() {
                           opening_hours: { ...branchToEdit.opening_hours, sunday: e.target.value },
                         })}
                         placeholder="ej: Cerrado"
-                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] focus:border-[#d97757] h-11"
+                        className="bg-[#1a1a18] border-[#3a3a38] text-[#fafafa] placeholder:text-[#666666] focus:border-[#d97757] h-11"
                       />
                     </div>
 
@@ -1229,7 +1968,7 @@ export default function SucursalesPage() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-[#262624] border-[#3a3a38] text-[#fafafa]">
+        <AlertDialogContent className="bg-[#262624] border-[#3a3a38] text-[#fafafa] placeholder:text-[#555555]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[#fafafa]">¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription className="text-[#888888]">
@@ -1261,6 +2000,28 @@ export default function SucursalesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Loading Overlay - Shows while deleting */}
+      {deleting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-[#262624] border border-[#3a3a38] shadow-2xl"
+          >
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-[#d97757]/20 animate-ping" />
+              <div className="relative p-4 rounded-full bg-[#d97757]/10 border border-[#d97757]/30">
+                <Loader2 className="w-8 h-8 text-[#d97757] animate-spin" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-[#fafafa]">Eliminando sucursal...</p>
+              <p className="text-sm text-[#888888] mt-1">Por favor espere</p>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </main>
   )
 }

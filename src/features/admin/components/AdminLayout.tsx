@@ -4,7 +4,7 @@
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -33,6 +33,8 @@ import {
   Store,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useAdminNotifications } from '../hooks/useAdminNotifications'
+import { NotificationDropdown } from './notifications'
 import dynamic from 'next/dynamic'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -44,7 +46,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
 
 // Dynamic import to avoid SSR hydration issues with PIXI.js
@@ -147,11 +148,11 @@ const NavigationMenu = memo(({ pathname, menuItems, theme }: { pathname: string,
           key={item.href}
           href={item.href}
           prefetch={true}
-          className="flex items-center px-3 py-3 rounded-xl cursor-pointer group hover:scale-105 hover:shadow-lg"
+          className="flex items-center px-3 py-3 rounded-xl cursor-pointer group"
           style={{
             background: isActive ? theme.primaryGradient : 'transparent',
             color: isActive ? '#ffffff' : theme.mutedForeground,
-            transition: 'transform 0.3s, box-shadow 0.3s',
+            transition: 'background 0.2s ease',
           }}
           onMouseEnter={(e) => {
             if (!isActive) {
@@ -193,6 +194,32 @@ function AdminLayout({ children }: AdminLayoutProps) {
   // Get current theme based on pathname
   const currentTheme = useMemo(() => getThemeForPath(pathname), [pathname])
   const theme = themes[currentTheme]
+
+  // Notifications hook
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    error: notificationsError,
+    markAsRead,
+    markAllAsRead,
+  } = useAdminNotifications({ enableRealtime: true, initialFilters: { limit: 10 } })
+
+  // Filter system messages for the Mail dropdown
+  const systemMessages = useMemo(
+    () => notifications.filter((n) => n.type === 'system'),
+    [notifications]
+  )
+  const unreadSystemCount = systemMessages.filter((n) => !n.is_read).length
+
+  // Handlers
+  const handleMarkAsRead = useCallback((id: string) => {
+    markAsRead(id)
+  }, [markAsRead])
+
+  const handleMarkAllAsRead = useCallback(() => {
+    markAllAsRead()
+  }, [markAllAsRead])
 
   const getUserInitials = () => {
     const email = session?.user?.email || ''
@@ -250,55 +277,93 @@ function AdminLayout({ children }: AdminLayoutProps) {
                 <motion.div animate={{ color: theme.mutedForeground }} transition={quickColorTransition}>
                   <Bell className="w-5 h-5" />
                 </motion.div>
-                <motion.div
-                  className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
-                  animate={{ backgroundColor: theme.primary }}
-                  transition={quickColorTransition}
-                >
-                  3
-                </motion.div>
+                <AnimatePresence>
+                  {unreadCount > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1, backgroundColor: theme.primary }}
+                      exit={{ scale: 0 }}
+                      transition={quickColorTransition}
+                      className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
-              <DropdownMenuLabel style={{ color: theme.foreground }}>Notificaciones</DropdownMenuLabel>
-              <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
-              <div className="p-2 space-y-2">
-                <div className="p-3 rounded hover:bg-white/5 cursor-pointer">
-                  <p className="text-sm" style={{ color: theme.foreground }}>Nuevo pedido recibido</p>
-                  <p className="text-xs mt-1" style={{ color: theme.mutedForeground }}>Hace 5 minutos</p>
-                </div>
-                <div className="p-3 rounded hover:bg-white/5 cursor-pointer">
-                  <p className="text-sm" style={{ color: theme.foreground }}>Stock bajo en neumáticos</p>
-                  <p className="text-xs mt-1" style={{ color: theme.mutedForeground }}>Hace 1 hora</p>
-                </div>
-              </div>
+            <DropdownMenuContent align="end" className="p-0" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
+              <NotificationDropdown
+                notifications={notifications}
+                loading={notificationsLoading}
+                error={notificationsError}
+                onMarkAsRead={handleMarkAsRead}
+                onMarkAllAsRead={handleMarkAllAsRead}
+                theme={theme}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Messages */}
+          {/* Messages (System Notifications) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="relative p-2 rounded-lg hover:bg-white/10 transition-colors">
                 <motion.div animate={{ color: theme.mutedForeground }} transition={quickColorTransition}>
                   <Mail className="w-5 h-5" />
                 </motion.div>
-                <motion.div
-                  className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
-                  animate={{ backgroundColor: theme.primary }}
-                  transition={quickColorTransition}
-                >
-                  2
-                </motion.div>
+                <AnimatePresence>
+                  {unreadSystemCount > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1, backgroundColor: theme.primary }}
+                      exit={{ scale: 0 }}
+                      transition={quickColorTransition}
+                      className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
+                    >
+                      {unreadSystemCount > 99 ? '99+' : unreadSystemCount}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
-              <DropdownMenuLabel style={{ color: theme.foreground }}>Mensajes</DropdownMenuLabel>
+              <DropdownMenuLabel style={{ color: theme.foreground }}>Mensajes del Sistema</DropdownMenuLabel>
               <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
               <div className="p-2 space-y-2">
-                <div className="p-3 rounded hover:bg-white/5 cursor-pointer">
-                  <p className="text-sm font-medium" style={{ color: theme.foreground }}>Juan Pérez</p>
-                  <p className="text-xs mt-1" style={{ color: theme.mutedForeground }}>Consulta sobre pedido #1234</p>
-                </div>
+                {systemMessages.length === 0 ? (
+                  <div className="px-4 py-6 text-center">
+                    <div
+                      className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
+                      style={{ backgroundColor: `${theme.mutedForeground}20` }}
+                    >
+                      <Mail className="w-6 h-6" style={{ color: theme.mutedForeground }} />
+                    </div>
+                    <p className="text-sm font-medium" style={{ color: theme.foreground }}>
+                      Sin mensajes
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: theme.mutedForeground }}>
+                      Los mensajes del sistema aparecerán aquí
+                    </p>
+                  </div>
+                ) : (
+                  systemMessages.slice(0, 5).map((msg) => (
+                    <div
+                      key={msg.id}
+                      className="p-3 rounded hover:bg-white/5 cursor-pointer"
+                      onClick={() => handleMarkAsRead(msg.id)}
+                      style={{
+                        backgroundColor: msg.is_read ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+                      }}
+                    >
+                      <p className="text-sm font-medium" style={{ color: theme.foreground }}>
+                        {msg.title}
+                      </p>
+                      <p className="text-xs mt-1 line-clamp-2" style={{ color: theme.mutedForeground }}>
+                        {msg.message}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -432,7 +497,7 @@ function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <main
-        className="mt-20 relative z-10 h-[calc(100vh-80px)] overflow-hidden"
+        className="mt-20 relative z-10 h-[calc(100vh-80px)] overflow-y-auto"
         style={{ marginLeft: '286px' }}
       >
         <AnimatePresence mode="wait">

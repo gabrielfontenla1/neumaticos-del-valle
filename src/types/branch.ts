@@ -3,6 +3,26 @@
  * Represents a physical store location with contact info and hours
  */
 
+// Time slot for a single shift
+export interface TimeSlot {
+  from: string; // HH:MM format
+  to: string;   // HH:MM format
+}
+
+// Day schedule with optional morning and afternoon shifts
+export interface DaySchedule {
+  closed: boolean;
+  morning?: TimeSlot;
+  afternoon?: TimeSlot;
+}
+
+// Structured schedule for the week
+export interface StructuredSchedule {
+  weekdays: DaySchedule;
+  saturday: DaySchedule;
+  sunday: DaySchedule;
+}
+
 export interface OpeningHours {
   weekdays: string;
   saturday: string;

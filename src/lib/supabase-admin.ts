@@ -19,7 +19,28 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 // Create admin client with SERVICE_ROLE_KEY (bypasses RLS)
+// Typed version for strict type checking
 export const supabaseAdmin = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    global: {
+      headers: {
+        'x-application-name': 'neumaticos-del-valle-admin'
+      }
+    },
+    db: {
+      schema: 'public'
+    }
+  }
+)
+
+// Untyped version for flexible CRUD operations (useful when Database types are incomplete)
+export const supabaseAdminUntyped = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   {

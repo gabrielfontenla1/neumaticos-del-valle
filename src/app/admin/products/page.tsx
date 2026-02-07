@@ -17,12 +17,14 @@ import {
   ChevronDown,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { updateProductStock, deleteProduct } from '@/features/admin/api'
 import { createClient } from '@supabase/supabase-js'
 import { TableSkeleton } from '@/components/skeletons/TableSkeleton'
+import { EditProductDialog } from '@/features/admin/components/products'
 
 // Exact colors from rapicompras darkColors theme
 const colors = {
@@ -53,8 +55,10 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [editingProduct, setEditingProduct] = useState<string | null>(null)
+  const [editingStockProduct, setEditingStockProduct] = useState<string | null>(null)
   const [editStock, setEditStock] = useState<{ [key: string]: number }>({})
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'price'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -175,7 +179,7 @@ export default function AdminProductsPage() {
       setProducts(products.map(p =>
         p.id === productId ? { ...p, stock: newStock } : p
       ))
-      setEditingProduct(null)
+      setEditingStockProduct(null)
     } else {
       alert(`Error al actualizar stock: ${result.error}`)
     }
@@ -289,9 +293,95 @@ export default function AdminProductsPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <TableSkeleton rows={8} columns={6} />
-      </div>
+      <main className="p-6 space-y-6 min-h-screen">
+        {/* Header Card Skeleton */}
+        <div
+          className="rounded-lg shadow-xl p-6 flex items-center justify-between"
+          style={{ backgroundColor: colors.card }}
+        >
+          <div className="space-y-2">
+            <div className="h-7 w-48 bg-[#3a3a38] rounded animate-pulse" />
+            <div className="h-4 w-32 bg-[#3a3a38]/60 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-40 bg-[#d97757]/30 rounded-lg animate-pulse" />
+        </div>
+
+        {/* Filters Skeleton */}
+        <div
+          className="rounded-xl p-4"
+          style={{ backgroundColor: colors.card }}
+        >
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 h-10 bg-[#3a3a38] rounded-lg animate-pulse" />
+            <div className="w-48 h-10 bg-[#3a3a38] rounded-lg animate-pulse" />
+          </div>
+        </div>
+
+        {/* Table Skeleton */}
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{ backgroundColor: colors.card }}
+        >
+          {/* Table Header */}
+          <div className="grid grid-cols-6 gap-4 p-4 border-b border-[#3a3a38]">
+            {['Producto', 'Marca', 'Categoría', 'Precio', 'Stock', 'Acciones'].map((_, i) => (
+              <div key={i} className="h-4 bg-[#3a3a38]/60 rounded animate-pulse" />
+            ))}
+          </div>
+
+          {/* Table Rows */}
+          {Array.from({ length: 10 }).map((_, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="grid grid-cols-6 gap-4 p-4 border-b border-[#3a3a38]/50 items-center"
+              style={{ animationDelay: `${rowIndex * 50}ms` }}
+            >
+              {/* Producto */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-[#3a3a38] rounded-lg animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-[#3a3a38] rounded animate-pulse" />
+                  <div className="h-3 w-20 bg-[#3a3a38]/40 rounded animate-pulse" />
+                </div>
+              </div>
+              {/* Marca */}
+              <div className="h-4 w-24 bg-[#3a3a38] rounded animate-pulse" />
+              {/* Categoría */}
+              <div className="h-6 w-20 bg-[#3a3a38] rounded-full animate-pulse" />
+              {/* Precio */}
+              <div className="h-4 w-20 bg-[#3a3a38] rounded animate-pulse" />
+              {/* Stock */}
+              <div className="h-8 w-16 bg-[#3a3a38] rounded animate-pulse" />
+              {/* Acciones */}
+              <div className="flex gap-2">
+                <div className="h-8 w-8 bg-[#3a3a38] rounded animate-pulse" />
+                <div className="h-8 w-8 bg-[#3a3a38] rounded animate-pulse" />
+                <div className="h-8 w-8 bg-[#3a3a38] rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+
+          {/* Pagination Skeleton */}
+          <div className="px-6 py-4 border-t border-[#3a3a38] flex items-center justify-between">
+            <div className="h-4 w-48 bg-[#3a3a38]/60 rounded animate-pulse" />
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 bg-[#3a3a38] rounded-lg animate-pulse" />
+              <div className="flex gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-8 w-8 bg-[#3a3a38] rounded-lg animate-pulse" />
+                ))}
+              </div>
+              <div className="h-9 w-9 bg-[#3a3a38] rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Loading indicator */}
+        <div className="flex items-center justify-center gap-3 text-[#888888]">
+          <Loader2 className="w-5 h-5 animate-spin text-[#d97757]" />
+          <span className="text-sm">Cargando productos...</span>
+        </div>
+      </main>
     )
   }
 
@@ -458,7 +548,7 @@ export default function AdminProductsPage() {
                       {formatCurrency(product.price)}
                     </td>
                     <td className="px-6 py-4">
-                      {editingProduct === product.id ? (
+                      {editingStockProduct === product.id ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
@@ -483,7 +573,7 @@ export default function AdminProductsPage() {
                             <Save className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setEditingProduct(null)}
+                            onClick={() => setEditingStockProduct(null)}
                             className="p-1 rounded cursor-pointer transition-colors"
                             style={{ color: colors.mutedForeground }}
                           >
@@ -517,12 +607,12 @@ export default function AdminProductsPage() {
                         </button>
                         <button
                           onClick={() => {
-                            setEditingProduct(product.id)
-                            setEditStock({ ...editStock, [product.id]: product.stock })
+                            setEditingProductId(product.id)
+                            setEditDialogOpen(true)
                           }}
                           className="p-1 rounded cursor-pointer transition-colors"
                           style={{ color: colors.primary }}
-                          title="Editar stock"
+                          title="Editar producto"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -556,6 +646,14 @@ export default function AdminProductsPage() {
           {/* Pagination Bottom */}
           {filteredProducts.length > 0 && <PaginationControls />}
         </div>
+
+        {/* Edit Product Dialog */}
+        <EditProductDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          productId={editingProductId}
+          onSuccess={loadProducts}
+        />
     </main>
   )
 }

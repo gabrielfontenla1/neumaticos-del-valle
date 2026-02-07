@@ -188,31 +188,16 @@ input[type="number"] {
   -ms-overflow-style: none;
 }
 
-/* Admin layout scrollbar styles - visible thin scrollbar */
+/* Admin layout scrollbar styles - hidden scrollbar, functional scroll */
 .admin-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  -ms-overflow-style: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .admin-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-  display: block;
-}
-
-.admin-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 3px;
-}
-
-.admin-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-.admin-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* Glassmorphic card styles */

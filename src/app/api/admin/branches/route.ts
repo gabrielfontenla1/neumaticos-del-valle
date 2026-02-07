@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdminUntyped } from '@/lib/supabase-admin'
 import { requireAdminAuth } from '@/lib/auth/admin-check'
 import type { Branch } from '@/types/branch'
 
@@ -16,11 +16,8 @@ export async function GET(): Promise<NextResponse> {
       return authResult.response as NextResponse
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Use admin client (bypasses RLS)
+    const supabase = supabaseAdminUntyped
 
     // Fetch all branches ordered by is_main and name
     const { data: branches, error } = await supabase
@@ -77,22 +74,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Parse request body
     const body = await request.json()
 
-    // Basic validation
-    if (!body.name || !body.address || !body.city || !body.province || !body.phone) {
+    // Basic validation (email is required by database constraint)
+    if (!body.name || !body.address || !body.city || !body.province || !body.phone || !body.email) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required fields: name, address, city, province, phone',
+          error: 'Missing required fields: name, address, city, province, phone, email',
         },
         { status: 400 }
       )
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Use admin client (bypasses RLS)
+    const supabase = supabaseAdminUntyped
 
     // Prepare branch data
     const branchData = {
@@ -102,7 +96,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       province: body.province,
       phone: body.phone,
       whatsapp: body.whatsapp || null,
-      email: body.email || null,
+      email: body.email,
       latitude: body.latitude || null,
       longitude: body.longitude || null,
       opening_hours: body.opening_hours || {
@@ -187,11 +181,8 @@ export async function PUT(request: Request): Promise<NextResponse> {
       )
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Use admin client (bypasses RLS)
+    const supabase = supabaseAdminUntyped
 
     // Prepare update data (only include fields that are present)
     const updateData: any = {
@@ -286,11 +277,8 @@ export async function DELETE(request: Request): Promise<NextResponse> {
       )
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Use admin client (bypasses RLS)
+    const supabase = supabaseAdminUntyped
 
     // Get branch data to delete associated image
     const { data: branch } = await supabase
