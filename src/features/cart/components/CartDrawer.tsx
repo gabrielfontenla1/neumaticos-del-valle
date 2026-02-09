@@ -30,9 +30,9 @@ export function CartDrawer() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: 'Cliente WhatsApp',
+          customer_name: 'Cliente WhatsApp (pendiente)',
           customer_email: 'pendiente@whatsapp.temp',
-          customer_phone: 'pendiente',
+          customer_phone: '0000000000', // Se actualiza cuando el cliente contacta
           items: items.map(item => ({
             product_id: item.id,
             product_name: `${item.brand} ${item.name}`,

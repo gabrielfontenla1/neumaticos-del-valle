@@ -36,8 +36,13 @@ export default function AdminOrdersPage() {
     fetchOrders({ page: newPage, limit: 20 })
   }
 
-  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
-    await updateOrderStatus(orderId, status)
+  const handleStatusChange = async (orderId: string, status: OrderStatus): Promise<boolean> => {
+    const success = await updateOrderStatus(orderId, status)
+    if (success) {
+      // Refresh the orders list to get updated data
+      fetchOrders({ page, limit: 20 })
+    }
+    return success
   }
 
   if (loading && orders.length === 0) {

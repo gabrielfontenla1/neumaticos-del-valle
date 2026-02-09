@@ -39,7 +39,8 @@ export const paymentMethodSchema = z.enum([
   'debit_card',
   'transfer',
   'mercadopago',
-  'other', // Used for WhatsApp orders where payment method is TBD
+  'other',
+  'pending', // For WhatsApp orders where payment method is TBD
 ])
 
 // Order item schema (aligned with OrderItem from @/features/orders/types)

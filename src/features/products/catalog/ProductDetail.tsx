@@ -166,10 +166,52 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
     console.log('🔵 [ProductDetail] handleAddToCart FIN')
   }
 
-  const handleCheckoutConfirm = (qty: number, branch: Branch) => {
+  const handleCheckoutConfirm = async (qty: number, branch: Branch) => {
     if (!product) return
 
+    let orderNumber: string | null = null
+    const unitPrice = product.price
+    const totalPrice = unitPrice * qty
     const productSku = product.id.slice(0, 8).toUpperCase()
+
+    // 1. Create order in database
+    try {
+      const orderResponse = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name: 'Cliente WhatsApp (pendiente)',
+          customer_email: 'pendiente@whatsapp.temp',
+          customer_phone: '0000000000',
+          items: [{
+            product_id: product.id,
+            product_name: `${product.brand} ${product.name}`,
+            sku: productSku,
+            quantity: qty,
+            unit_price: unitPrice,
+            total_price: totalPrice,
+            image_url: product.image_url,
+            brand: product.brand,
+          }],
+          subtotal: totalPrice,
+          tax: 0,
+          shipping: 0,
+          payment_method: 'pending',
+          source: 'whatsapp',
+          store_id: branch.id,
+          notes: `Compra directa - Sucursal: ${branch.name}`,
+        }),
+      })
+
+      const orderData = await orderResponse.json()
+      if (orderData.success && orderData.order) {
+        orderNumber = orderData.order.order_number
+      }
+    } catch (error) {
+      console.error('Error creating order:', error)
+    }
+
+    // 2. Generate WhatsApp message
     const message = generateSingleProductMessage({
       sku: productSku,
       brand: product.brand || '',
@@ -178,8 +220,10 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
       width: product.width,
       aspect_ratio: product.profile,
       rim_diameter: product.diameter
-    }, qty, branch.name)
-    const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+    }, qty, branch.name, orderNumber)
+
+    // 3. Open WhatsApp
+    const url = buildWhatsAppUrl(branch.whatsapp || WHATSAPP_NUMBERS.default, message)
     window.open(url, '_blank', 'noopener,noreferrer')
     setShowCheckoutModal(false)
   }

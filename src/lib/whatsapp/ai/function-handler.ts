@@ -42,6 +42,13 @@ import {
   getBranchByCode
 } from '../services/location-service'
 import * as stockTemplates from '../templates/stock-responses'
+import { createClient } from '@supabase/supabase-js'
+
+// Supabase client for order creation
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 import type { Branch } from '@/features/appointments/types'
 
 // ============================================================================
@@ -147,6 +154,73 @@ export function parseWebPurchaseMessage(text: string): WebPurchase | null {
 }
 
 /**
+ * Create order in database from WhatsApp purchase
+ */
+async function createOrderFromWhatsApp(
+  purchase: WebPurchase,
+  phoneNumber: string,
+  branchName?: string
+): Promise<string | null> {
+  try {
+    // Generate order number
+    const year = new Date().getFullYear()
+    const { count } = await supabaseAdmin
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+    const orderNumber = `ORD-${year}-${String((count || 0) + 1).padStart(5, '0')}`
+
+    // Parse total amount
+    const totalStr = purchase.total?.replace(/[^\d.,]/g, '').replace(',', '.') || '0'
+    const totalAmount = parseFloat(totalStr) || 0
+
+    // Prepare order items
+    const orderItems = purchase.items.map(item => {
+      const priceStr = item.unitPrice?.replace(/[^\d.,]/g, '').replace(',', '.') || '0'
+      const unitPrice = parseFloat(priceStr) || 0
+      return {
+        product_id: item.sku,
+        product_name: item.name || item.sku,
+        sku: item.sku,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        total_price: unitPrice * item.quantity,
+      }
+    })
+
+    // Create order
+    const { error } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        order_number: orderNumber,
+        customer_name: `Cliente WhatsApp`,
+        customer_email: 'whatsapp@directo.temp',
+        customer_phone: phoneNumber,
+        items: orderItems,
+        subtotal: totalAmount,
+        tax: 0,
+        shipping: 0,
+        total_amount: totalAmount,
+        status: 'pending',
+        payment_status: 'pending',
+        payment_method: 'pending',
+        source: 'whatsapp',
+        notes: branchName ? `Pedido WhatsApp directo - Sucursal: ${branchName}` : 'Pedido WhatsApp directo',
+      })
+
+    if (error) {
+      console.error('[WhatsApp] Error creating order:', error)
+      return null
+    }
+
+    console.log('[WhatsApp] Order created:', orderNumber)
+    return orderNumber
+  } catch (error) {
+    console.error('[WhatsApp] Error in createOrderFromWhatsApp:', error)
+    return null
+  }
+}
+
+/**
  * Handle web purchase flow - skip stock check, use branch from message if provided
  */
 export async function handleWebPurchase(
@@ -160,15 +234,24 @@ export async function handleWebPurchase(
     return `• ${item.quantity}x ${item.name || item.sku}${sizeDisplay}${priceDisplay}`
   }).join('\n')
 
+  const totalDisplay = purchase.total || 'A confirmar'
+
+  // Create order in database
+  const orderNumber = await createOrderFromWhatsApp(
+    purchase,
+    conversation.phone,
+    purchase.branchName
+  )
+  const orderInfo = orderNumber ? `\n\n🧾 *Pedido #${orderNumber}*` : ''
+
   // If branch is provided in the message (from CheckoutModal), use it directly
   if (purchase.branchName) {
-    const totalDisplay = purchase.total || 'A confirmar'
     return {
       response: `¡Hola! Recibí tu pedido para *${purchase.branchName}*:
 
 ${itemsList}
 
-💰 *Total: ${totalDisplay}*
+💰 *Total: ${totalDisplay}*${orderInfo}
 
 Un asesor te contactará en breve para coordinar el pago y la entrega.
 
@@ -176,8 +259,6 @@ Un asesor te contactará en breve para coordinar el pago y la entrega.
       handled: true
     }
   }
-
-  const totalDisplay = purchase.total || 'A confirmar'
 
   // Legacy fallback: If we already know the user's city, we can proceed
   if (conversation.user_city) {
@@ -191,7 +272,7 @@ Un asesor te contactará en breve para coordinar el pago y la entrega.
 
 ${itemsList}
 
-💰 *Total: ${totalDisplay}*
+💰 *Total: ${totalDisplay}*${orderInfo}
 
 📍 Te atiende nuestra sucursal de *${branchName}*
 
@@ -212,7 +293,7 @@ ${itemsList}
 
 ${itemsList}
 
-💰 *Total: ${totalDisplay}*
+💰 *Total: ${totalDisplay}*${orderInfo}
 
 ¿Desde qué ciudad nos escribís? 📍`,
     handled: true

@@ -37,10 +37,59 @@ export default function CarritoPage() {
     setShowCheckoutModal(true)
   }
 
-  const handleCheckoutConfirm = (_qty: number, branch: Branch) => {
-    const message = generateAIOptimizedMessage(items, totals, branch.name)
-    const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+  const handleCheckoutConfirm = async (_qty: number, branch: Branch) => {
+    let orderNumber: string | null = null
+
+    try {
+      // 1. Create order in database
+      const orderResponse = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name: 'Cliente WhatsApp (pendiente)',
+          customer_email: 'pendiente@whatsapp.temp',
+          customer_phone: '0000000000',
+          items: items.map(item => ({
+            product_id: item.id,
+            product_name: `${item.brand} ${item.name}`,
+            sku: item.sku,
+            quantity: item.quantity,
+            unit_price: item.sale_price || item.price,
+            total_price: (item.sale_price || item.price) * item.quantity,
+            image_url: item.image_url,
+            brand: item.brand,
+          })),
+          subtotal: totals.subtotal,
+          tax: totals.tax,
+          shipping: totals.shipping,
+          payment_method: 'pending',
+          source: 'whatsapp',
+          store_id: branch.id,
+          notes: `Pedido desde web - Sucursal: ${branch.name}`,
+        }),
+      })
+
+      const orderData = await orderResponse.json()
+
+      if (orderData.success && orderData.order) {
+        orderNumber = orderData.order.order_number
+      }
+    } catch (error) {
+      console.error('Error creating order:', error)
+    }
+
+    // 2. Generate message with order number
+    const message = generateAIOptimizedMessage(items, totals, branch.name, orderNumber)
+    const url = buildWhatsAppUrl(branch.whatsapp || WHATSAPP_NUMBERS.default, message)
+
+    // 3. Open WhatsApp
     window.open(url, '_blank', 'noopener,noreferrer')
+
+    // 4. Clear cart if order was created
+    if (orderNumber) {
+      await clearAll()
+    }
+
     setShowCheckoutModal(false)
   }
 

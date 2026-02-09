@@ -59,6 +59,117 @@ interface DetectionResult {
   hasCorvenColumns: boolean
 }
 
+interface ColumnValidationResult {
+  isValid: boolean
+  missingRequired: string[]
+  missingStock: string[]
+  extraColumns: string[]
+  foundColumns: string[]
+  message: string
+}
+
+// Validation function for Excel columns
+function validateExcelColumns(headers: string[]): ColumnValidationResult {
+  const normalizedHeaders = headers.map(h => String(h).toUpperCase().trim())
+
+  // Required columns - must have CODIGO_PROPIO and at least CONTADO for prices
+  const REQUIRED_COLUMNS = ['DESCRIPCION']
+
+  // Stock columns - at least one required for stock updates
+  const STOCK_COLUMNS = ['CATAMARCA', 'LA_BANDA', 'LA BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN', 'BELGRANO']
+
+  // Known columns - for identifying extra/unknown columns
+  const KNOWN_COLUMNS = [
+    'CODIGO_PROPIO', 'CODIGO PROPIO',
+    'CODIGO_PROVEEDOR', 'CODIGO PROVEEDOR',
+    'DESCRIPCION',
+    'GRUPO',
+    'ESTANTERIA',
+    'ESTANTE',
+    'INGRESOS',
+    'EGRESOS',
+    'INGRESOS_RI',
+    'EGRESOS_RI',
+    'STOCK',
+    'STOCK_MINIMO',
+    'STOCK_MAXIMO',
+    'CATAMARCA',
+    'LA_BANDA', 'LA BANDA',
+    'SALTA',
+    'SANTIAGO',
+    'TUCUMAN',
+    'VIRGEN',
+    'BELGRANO',
+    'PROVEEDOR',
+    'CATEGORIA',
+    'RUBRO',
+    'SUBRUBRO',
+    'MARCA',
+    'PUBLICO',
+    'CONTADO'
+  ]
+
+  const missingRequired: string[] = []
+
+  // CODIGO_PROPIO can come as CODIGO_PROPIO or CODIGO PROPIO
+  const hasCodigoPropio = normalizedHeaders.includes('CODIGO_PROPIO') || normalizedHeaders.includes('CODIGO PROPIO')
+  if (!hasCodigoPropio) missingRequired.push('CODIGO_PROPIO')
+
+  // Check other required columns
+  if (!normalizedHeaders.includes('DESCRIPCION')) missingRequired.push('DESCRIPCION')
+
+  // Check price columns - at least CONTADO is required
+  const hasContado = normalizedHeaders.includes('CONTADO')
+  const hasPublico = normalizedHeaders.includes('PUBLICO')
+  if (!hasContado) missingRequired.push('CONTADO (precio venta)')
+  if (!hasPublico) missingRequired.push('PUBLICO (precio lista)')
+
+  // Check stock columns (at least one required for stock updates)
+  const missingStock: string[] = []
+  const foundStockColumns = STOCK_COLUMNS.filter(col =>
+    normalizedHeaders.includes(col) || normalizedHeaders.includes(col.replace('_', ' '))
+  )
+
+  if (foundStockColumns.length === 0) {
+    // Only warn, not error - stock columns are optional
+    missingStock.push(...['CATAMARCA', 'LA_BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN'])
+  }
+
+  // Check for unknown columns
+  const extraColumns = normalizedHeaders.filter(h =>
+    h !== '' && h !== 'NULL' && h !== 'UNDEFINED' &&
+    !KNOWN_COLUMNS.some(known => known.toUpperCase() === h)
+  )
+
+  // Only fail if critical columns are missing
+  const isValid = hasCodigoPropio && hasContado
+
+  let message = ''
+  if (!isValid) {
+    message = `El Excel no tiene el formato correcto.\n\n`
+
+    if (missingRequired.length > 0) {
+      message += `Columnas requeridas faltantes:\n`
+      message += missingRequired.map(c => `  - ${c}`).join('\n')
+      message += '\n\n'
+    }
+
+    message += `Formato del Excel Modelo:\n`
+    message += `  Columnas obligatorias: CODIGO_PROPIO, DESCRIPCION, PUBLICO, CONTADO\n`
+    message += `  Columnas de stock: CATAMARCA, LA_BANDA, SALTA, SANTIAGO, TUCUMAN, VIRGEN\n`
+    message += `  Columnas opcionales: CODIGO_PROVEEDOR, PROVEEDOR, CATEGORIA, RUBRO, SUBRUBRO, MARCA`
+  }
+
+  return {
+    isValid,
+    missingRequired,
+    missingStock,
+    extraColumns,
+    foundColumns: normalizedHeaders.filter(h => h !== '' && h !== 'NULL' && h !== 'UNDEFINED'),
+    message
+  }
+}
+
 interface UpdateResult {
   success: boolean
   mode: 'prices_and_stock' | 'prices_only' | 'stock_only'
@@ -280,6 +391,29 @@ export async function POST(request: NextRequest) {
       defval: null,
     })
 
+    // Validate Excel columns BEFORE processing
+    const headers = Object.keys(jsonData[0] || {})
+    const validation = validateExcelColumns(headers)
+
+    if (!validation.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: 'Formato de Excel inválido',
+        validation: {
+          missingRequired: validation.missingRequired,
+          missingStock: validation.missingStock,
+          extraColumns: validation.extraColumns,
+          foundColumns: validation.foundColumns,
+          message: validation.message
+        },
+        expectedFormat: {
+          required: ['CODIGO_PROPIO', 'DESCRIPCION', 'PUBLICO', 'CONTADO'],
+          stock: ['CATAMARCA', 'LA_BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN'],
+          optional: ['CODIGO_PROVEEDOR', 'PROVEEDOR', 'CATEGORIA', 'RUBRO', 'SUBRUBRO', 'MARCA']
+        }
+      }, { status: 400 })
+    }
+
     const normalizedData = jsonData.map(normalizeColumns)
     const detection = detectColumns(normalizedData)
 
@@ -297,12 +431,32 @@ export async function POST(request: NextRequest) {
 
     // If action is 'analyze', return detection info
     if (action === 'analyze') {
+      // Prepare Excel data for verification (limited to 2000 rows)
+      const excelDataForVerification = normalizedData.slice(0, 2000).map(row => {
+        const codigo = cleanCodigo(row.CODIGO_PROPIO)
+        const descripcion = String(row.DESCRIPCION || '').substring(0, 100)
+        const contado = safeNumber(row.CONTADO, 0)
+        const publico = safeNumber(row.PUBLICO, 0)
+        const stockTotal = calculateTotalStock(row)
+        const stockByBranch = getStockByBranch(row)
+
+        return {
+          codigo_propio: codigo,
+          descripcion,
+          contado,
+          publico,
+          stock_total: stockTotal,
+          stock_by_branch: stockByBranch,
+        }
+      }).filter(row => row.codigo_propio && row.codigo_propio !== 'nan')
+
       return NextResponse.json({
         success: true,
         detection,
         userSource,
         formatMismatch,
         mismatchWarning,
+        excelData: excelDataForVerification,
         message: formatMismatch
           ? `⚠️ ${mismatchWarning}`
           : detection.hasPrices && detection.hasStock

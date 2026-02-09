@@ -4,6 +4,14 @@ import type { UpdateOrderRequest, UpdateOrderResponse, Order } from '@/features/
 import { OrderStatus, PaymentStatus } from '@/features/orders/types'
 import { requireAdminAuth } from '@/lib/auth/admin-check'
 
+// Create Supabase client with service role to bypass RLS
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
 /**
  * Validate order status transitions
  * Not all status transitions are allowed
@@ -49,10 +57,7 @@ export async function GET(
       )
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = getSupabaseAdmin()
 
     // Fetch order
     const { data: order, error } = await supabase
@@ -131,10 +136,7 @@ export async function PUT(
       )
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = getSupabaseAdmin()
 
     // Fetch current order
     const { data: currentOrder, error: fetchError } = await supabase
@@ -327,10 +329,7 @@ export async function DELETE(
       )
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = getSupabaseAdmin()
 
     // Fetch current order
     const { data: currentOrder, error: fetchError } = await supabase

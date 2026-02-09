@@ -291,7 +291,8 @@ export interface SingleProductData {
 export function generateSingleProductMessage(
   product: SingleProductData,
   quantity: number,
-  branchName?: string
+  branchName?: string,
+  orderNumber?: string | null
 ): string {
   const price = product.sale_price || product.price
   const tireSize = (product.width && product.aspect_ratio && product.rim_diameter)
@@ -302,6 +303,11 @@ export function generateSingleProductMessage(
   const lines = [
     `[BOT:COMPRA_WEB]`
   ]
+
+  // Add order number if provided
+  if (orderNumber) {
+    lines.push(`Pedido: ${orderNumber}`)
+  }
 
   // Add branch if provided
   if (branchName) {

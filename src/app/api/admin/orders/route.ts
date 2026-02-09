@@ -10,6 +10,14 @@ import {
   parseAndValidate,
 } from '@/lib/validations'
 
+// Create Supabase client with service role to bypass RLS
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
 /**
  * Build WHERE clause for Supabase query based on filters
  */
@@ -84,10 +92,10 @@ export async function GET(request: Request): Promise<NextResponse<ListOrdersResp
     filters.page = page < 1 ? 1 : page
     filters.limit = limit < 1 ? 50 : limit
 
-    // Create Supabase client
+    // Create Supabase client with service role to bypass RLS
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     // Build query
@@ -206,10 +214,7 @@ export async function POST(request: Request): Promise<NextResponse<CreateOrderRe
 
     const body = validation.data
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = getSupabaseAdmin()
 
     // Generate order number
     const today = new Date()

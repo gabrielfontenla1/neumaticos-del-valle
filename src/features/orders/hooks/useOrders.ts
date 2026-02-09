@@ -96,14 +96,23 @@ export function useOrders(): UseOrdersReturn {
           body: JSON.stringify(updateData),
         })
 
-        if (!response.ok) {
-          throw new Error('Failed to update order status')
+        let data
+        try {
+          data = await response.json()
+        } catch {
+          toast.error('Error de comunicación con el servidor')
+          return false
         }
 
-        const data = await response.json()
-
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to update order status')
+        if (!response.ok || !data.success) {
+          const errorMsg = data.error || 'Failed to update order status'
+          // Show specific error for invalid transitions
+          if (errorMsg.includes('Invalid status transition')) {
+            toast.error('Transición de estado no válida. Revisa el flujo permitido.')
+          } else {
+            toast.error(errorMsg)
+          }
+          return false
         }
 
         // Update local state

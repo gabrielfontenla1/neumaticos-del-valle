@@ -20,12 +20,17 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 <!-- Cambios ya implementados con referencia a la migración -->
 
-### 2026-02-09 - WhatsApp Checkout Payment Method
+### 2026-02-09 - WhatsApp Checkout & Order Triggers Fix
 
 - [x] **20260209_add_pending_payment_method.sql** - Enum payment_method extendido
   - Añade: valor `'pending'` al enum `payment_method`
   - Propósito: Soporte para checkout WhatsApp donde el método de pago se define después
   - Código actualizado: `src/features/cart/components/CartDrawer.tsx`
+
+- [x] **20260209_fix_order_triggers.sql** - 🔴 CRÍTICO - Fix triggers de órdenes
+  - Corrige: `trigger_notify_new_order` y `trigger_notify_order_cancelled`
+  - Error: Usaban `NEW.total` pero la columna correcta es `total_amount`
+  - Impacto: Desbloqueadas TODAS las órdenes nuevas
 
 ### 2026-02-06 - Migraciones Aplicadas en Producción
 

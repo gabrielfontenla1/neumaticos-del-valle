@@ -5,7 +5,6 @@ import type {
   Order,
 } from '@/features/orders/types'
 import { OrderSource } from '@/features/orders/types'
-import type { Database } from '@/types/database'
 import {
   createOrderRequestSchema,
   getOrderQuerySchema,
@@ -17,22 +16,20 @@ import {
  * Generate sequential order number
  * Format: ORD-2025-00001
  */
-async function generateOrderNumber(supabase: SupabaseClient<Database>): Promise<string> {
+async function generateOrderNumber(supabase: SupabaseClient): Promise<string> {
   try {
     const today = new Date()
     const year = today.getFullYear()
-    const dateStr = `${year}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
-    // Get the count of orders created today
+    // Get total count of orders for the year to generate sequential number
     const { count, error } = await supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
-      .eq('created_at', `gte.${dateStr}T00:00:00`)
-      .lt('created_at', `lt.${dateStr}T23:59:59`)
 
     if (error) {
-      console.error('Error counting orders for today:', error)
-      return `ORD-${year}-00001`
+      console.error('Error counting orders:', error)
+      // Fallback: use timestamp to ensure uniqueness
+      return `ORD-${year}-${Date.now().toString().slice(-5)}`
     }
 
     const nextNumber = (count || 0) + 1
@@ -40,7 +37,7 @@ async function generateOrderNumber(supabase: SupabaseClient<Database>): Promise<
   } catch (error) {
     console.error('Error generating order number:', error)
     // Fallback: generate with timestamp
-    return `ORD-${Date.now()}`
+    return `ORD-${Date.now().toString().slice(-8)}`
   }
 }
 
@@ -65,10 +62,11 @@ export async function POST(request: Request): Promise<NextResponse<CreateOrderRe
 
     const body = validation.data
 
-    // Create Supabase client
+    // Create Supabase client with service role to bypass RLS
+    // This is safe because this is a server-side API route
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     // Generate order number

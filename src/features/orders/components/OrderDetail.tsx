@@ -2,21 +2,34 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Order, OrderHistory, OrderStatus } from '@/features/orders/types'
-import { ORDER_STATUS_STYLES } from '@/lib/constants/admin-theme'
+import Image from 'next/image'
+import { Order, OrderHistory, OrderStatus, PaymentStatus } from '@/features/orders/types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Separator } from '@/components/ui/separator'
+import { ArrowLeft, Printer, CheckCircle, AlertTriangle, Package, User, CreditCard, Clock } from 'lucide-react'
 
 interface OrderDetailProps {
   order: Order & { history?: OrderHistory[] }
   onStatusChange: (orderId: string, status: OrderStatus) => Promise<void>
-}
-
-const STATUS_COLORS: Record<OrderStatus, string> = {
-  pending: ORDER_STATUS_STYLES.pending.badge,
-  confirmed: ORDER_STATUS_STYLES.confirmed.badge,
-  processing: ORDER_STATUS_STYLES.processing.badge,
-  shipped: ORDER_STATUS_STYLES.shipped.badge,
-  delivered: ORDER_STATUS_STYLES.delivered.badge,
-  cancelled: ORDER_STATUS_STYLES.cancelled.badge,
 }
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -26,6 +39,33 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   shipped: 'Enviado',
   delivered: 'Entregado',
   cancelled: 'Cancelado',
+}
+
+const STATUS_COLORS: Record<OrderStatus, string> = {
+  pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  confirmed: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  processing: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  shipped: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  delivered: 'bg-green-500/20 text-green-400 border-green-500/30',
+  cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: 'Efectivo',
+  credit_card: 'Tarjeta de Crédito',
+  debit_card: 'Tarjeta de Débito',
+  transfer: 'Transferencia',
+  mercadopago: 'MercadoPago',
+  other: 'Otro',
+  pending: 'Pendiente',
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  website: 'Sitio Web',
+  whatsapp: 'WhatsApp',
+  phone: 'Teléfono',
+  store: 'Tienda',
+  admin: 'Admin',
 }
 
 export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
@@ -47,13 +87,12 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
+      minimumFractionDigits: 0,
     }).format(amount)
   }
 
   const handleStatusUpdate = async () => {
-    if (selectedStatus === order.status) {
-      return
-    }
+    if (selectedStatus === order.status) return
 
     if (window.confirm('¿Está seguro de cambiar el estado de esta orden?')) {
       setUpdatingStatus(true)
@@ -65,303 +104,313 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
     }
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
+  const isWhatsAppPending = order.source === 'whatsapp' && order.customer_name.includes('WhatsApp')
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#fafafa]">Orden {order.order_number}</h1>
-            <p className="mt-1 text-sm text-[#888888]">
-              Creada el {formatDate(order.created_at)}
-            </p>
+      <Card className="bg-[#262624]/90 backdrop-blur-sm border-[#3a3a38]">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle className="text-2xl text-[#fafafa]">Orden {order.order_number}</CardTitle>
+              <p className="text-sm text-[#888888] mt-1">
+                Creada el {formatDate(order.created_at)}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                asChild
+                className="bg-[#3a3a38] border-[#444442] text-[#fafafa] hover:bg-[#444442] hover:text-[#fafafa]"
+              >
+                <Link href="/admin/orders">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Volver
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.print()}
+                className="bg-[#3a3a38] border-[#444442] text-[#fafafa] hover:bg-[#444442] hover:text-[#fafafa]"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir
+              </Button>
+            </div>
           </div>
-          <div className="mt-4 md:mt-0 flex space-x-3">
-            <Link
-              href="/admin/orders"
-              className="px-4 py-2 text-sm font-medium text-[#fafafa] bg-[#3a3a38] border border-[#444442] rounded-md hover:bg-[#444442] transition-colors"
-            >
-              Volver a la Lista
-            </Link>
-            <button
-              onClick={handlePrint}
-              className="px-4 py-2 text-sm font-medium text-[#fafafa] bg-[#3a3a38] border border-[#444442] rounded-md hover:bg-[#444442] transition-colors"
-            >
-              Imprimir
-            </button>
-          </div>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
+
+      {/* WhatsApp Pending Alert */}
+      {isWhatsAppPending && (
+        <Alert className="bg-yellow-500/10 border-yellow-500/50">
+          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          <AlertTitle className="text-yellow-400">Pedido de WhatsApp - Datos Pendientes</AlertTitle>
+          <AlertDescription className="text-yellow-300/80">
+            Este pedido fue creado desde WhatsApp. Actualiza los datos del cliente cuando te contacte.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Products */}
-          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#3a3a38]">
-              <h2 className="text-lg font-semibold text-[#fafafa]">Productos</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-[#3a3a38]">
-                <thead className="bg-[#1e1e1c]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
-                      Producto
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
-                      Cantidad
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
-                      Precio Unit.
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#888888] uppercase">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-[#262624] divide-y divide-[#3a3a38]">
+          {/* Products Table */}
+          <Card className="bg-[#262624]/90 backdrop-blur-sm border-[#3a3a38]">
+            <CardHeader className="border-b border-[#3a3a38]">
+              <CardTitle className="flex items-center gap-2 text-[#fafafa]">
+                <Package className="h-5 w-5" />
+                Productos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#1e1e1c] border-[#3a3a38] hover:bg-[#1e1e1c]">
+                    <TableHead className="text-[#888888]">Producto</TableHead>
+                    <TableHead className="text-center text-[#888888]">Cantidad</TableHead>
+                    <TableHead className="text-right text-[#888888]">Precio Unit.</TableHead>
+                    <TableHead className="text-right text-[#888888]">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {order.items.map((item, index) => (
-                    <tr key={index} className="hover:bg-[#2a2a28] transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
+                    <TableRow key={index} className="border-[#3a3a38] hover:bg-[#2a2a28]">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
                           {item.image_url && (
-                            <img
-                              src={item.image_url}
-                              alt={item.product_name}
-                              className="h-12 w-12 object-cover rounded mr-4"
-                            />
+                            <div className="relative h-12 w-12 rounded overflow-hidden bg-[#1e1e1c]">
+                              <Image
+                                src={item.image_url}
+                                alt={item.product_name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
                           )}
                           <div>
-                            <div className="text-sm font-medium text-[#fafafa]">
-                              {item.product_name}
-                            </div>
+                            <p className="font-medium text-[#fafafa]">{item.product_name}</p>
                             {item.sku && (
-                              <div className="text-xs text-[#888888]">SKU: {item.sku}</div>
+                              <p className="text-xs text-[#888888]">SKU: {item.sku}</p>
                             )}
-                            {(item.brand || item.model) && (
-                              <div className="text-xs text-[#888888]">
-                                {item.brand} {item.model}
-                              </div>
+                            {item.brand && (
+                              <p className="text-xs text-[#888888]">{item.brand}</p>
                             )}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#fafafa]">
+                      </TableCell>
+                      <TableCell className="text-center font-medium text-[#fafafa]">
                         {item.quantity}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#fafafa]">
+                      </TableCell>
+                      <TableCell className="text-right text-[#fafafa]">
                         {formatCurrency(item.unit_price)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#fafafa]">
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-[#fafafa]">
                         {formatCurrency(item.total_price)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-                <tfoot className="bg-[#1e1e1c]">
-                  <tr>
-                    <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-[#888888]">
-                      Subtotal:
-                    </td>
-                    <td className="px-6 py-3 text-sm font-medium text-[#fafafa]">
-                      {formatCurrency(order.subtotal)}
-                    </td>
-                  </tr>
+                </TableBody>
+                <TableFooter className="bg-[#1e1e1c]">
+                  <TableRow className="border-[#3a3a38] hover:bg-[#1e1e1c]">
+                    <TableCell colSpan={3} className="text-right text-[#888888]">Subtotal</TableCell>
+                    <TableCell className="text-right text-[#fafafa]">{formatCurrency(order.subtotal)}</TableCell>
+                  </TableRow>
                   {order.tax > 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-[#888888]">
-                        Impuestos:
-                      </td>
-                      <td className="px-6 py-3 text-sm font-medium text-[#fafafa]">
-                        {formatCurrency(order.tax)}
-                      </td>
-                    </tr>
+                    <TableRow className="border-[#3a3a38] hover:bg-[#1e1e1c]">
+                      <TableCell colSpan={3} className="text-right text-[#888888]">Impuestos</TableCell>
+                      <TableCell className="text-right text-[#fafafa]">{formatCurrency(order.tax)}</TableCell>
+                    </TableRow>
                   )}
                   {order.shipping > 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-[#888888]">
-                        Envío:
-                      </td>
-                      <td className="px-6 py-3 text-sm font-medium text-[#fafafa]">
-                        {formatCurrency(order.shipping)}
-                      </td>
-                    </tr>
+                    <TableRow className="border-[#3a3a38] hover:bg-[#1e1e1c]">
+                      <TableCell colSpan={3} className="text-right text-[#888888]">Envío</TableCell>
+                      <TableCell className="text-right text-[#fafafa]">{formatCurrency(order.shipping)}</TableCell>
+                    </TableRow>
                   )}
-                  <tr className="border-t-2 border-[#3a3a38]">
-                    <td colSpan={3} className="px-6 py-3 text-right text-base font-bold text-[#fafafa]">
-                      Total:
-                    </td>
-                    <td className="px-6 py-3 text-base font-bold text-[#d97757]">
+                  <TableRow className="border-t-2 border-[#3a3a38] hover:bg-[#1e1e1c]">
+                    <TableCell colSpan={3} className="text-right font-bold text-base text-[#fafafa]">Total</TableCell>
+                    <TableCell className="text-right font-bold text-base text-[#d97757]">
                       {formatCurrency(order.total_amount)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </CardContent>
+          </Card>
 
           {/* Order History */}
           {order.history && order.history.length > 0 && (
-            <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 overflow-hidden">
-              <div className="px-6 py-4 border-b border-[#3a3a38]">
-                <h2 className="text-lg font-semibold text-[#fafafa]">Historial de Cambios</h2>
-              </div>
-              <div className="px-6 py-4">
-                <div className="flow-root">
-                  <ul className="-mb-8">
-                    {order.history.map((entry, index) => (
-                      <li key={entry.id}>
-                        <div className="relative pb-8">
-                          {index !== order.history!.length - 1 && (
-                            <span
-                              className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-[#3a3a38]"
-                              aria-hidden="true"
-                            />
-                          )}
-                          <div className="relative flex space-x-3">
-                            <div>
-                              <span className="h-8 w-8 rounded-full bg-[#3b82f6] flex items-center justify-center ring-8 ring-[#262624]">
-                                <svg
-                                  className="h-5 w-5 text-white"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div>
-                                <p className="text-sm font-medium text-[#fafafa]">{entry.action}</p>
-                                <p className="mt-0.5 text-sm text-[#888888]">{entry.description}</p>
-                                {entry.previous_status && entry.new_status && (
-                                  <p className="mt-1 text-xs text-[#888888]">
-                                    {STATUS_LABELS[entry.previous_status]} →{' '}
-                                    {STATUS_LABELS[entry.new_status]}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="mt-2 text-xs text-[#666666]">
-                                {formatDate(entry.created_at)}
-                              </div>
-                            </div>
-                          </div>
+            <Card className="bg-[#262624]/90 backdrop-blur-sm border-[#3a3a38]">
+              <CardHeader className="border-b border-[#3a3a38]">
+                <CardTitle className="flex items-center gap-2 text-[#fafafa]">
+                  <Clock className="h-5 w-5" />
+                  Historial de Cambios
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {order.history.map((entry, index) => (
+                    <div key={entry.id} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="h-8 w-8 rounded-full bg-[#3b82f6]/20 flex items-center justify-center">
+                          <CheckCircle className="h-4 w-4 text-[#3b82f6]" />
                         </div>
-                      </li>
-                    ))}
-                  </ul>
+                        {index !== order.history!.length - 1 && (
+                          <div className="w-0.5 flex-1 bg-[#3a3a38] mt-2" />
+                        )}
+                      </div>
+                      <div className="flex-1 pb-4">
+                        <p className="font-medium text-sm text-[#fafafa]">{entry.action}</p>
+                        <p className="text-sm text-[#888888]">{entry.description}</p>
+                        {entry.previous_status && entry.new_status && (
+                          <p className="text-xs text-[#666666] mt-1">
+                            {STATUS_LABELS[entry.previous_status]} → {STATUS_LABELS[entry.new_status]}
+                          </p>
+                        )}
+                        <p className="text-xs text-[#666666] mt-1">
+                          {formatDate(entry.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Customer Information */}
-          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
-            <h2 className="text-lg font-semibold text-[#fafafa] mb-4">Información del Cliente</h2>
-            <dl className="space-y-3">
+          <Card className="bg-[#262624]/90 backdrop-blur-sm border-[#3a3a38]">
+            <CardHeader className="border-b border-[#3a3a38]">
+              <CardTitle className="flex items-center gap-2 text-[#fafafa]">
+                <User className="h-5 w-5" />
+                Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Nombre</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{order.customer_name}</dd>
+                <p className="text-xs text-[#888888]">Nombre</p>
+                <p className="font-medium text-[#fafafa]">{order.customer_name}</p>
               </div>
+              <Separator className="bg-[#3a3a38]" />
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Email</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{order.customer_email}</dd>
+                <p className="text-xs text-[#888888]">Email</p>
+                <p className="font-medium text-[#fafafa]">{order.customer_email}</p>
               </div>
+              <Separator className="bg-[#3a3a38]" />
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Teléfono</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{order.customer_phone}</dd>
+                <p className="text-xs text-[#888888]">Teléfono</p>
+                <p className="font-medium text-[#fafafa]">{order.customer_phone}</p>
               </div>
-            </dl>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Order Status */}
-          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
-            <h2 className="text-lg font-semibold text-[#fafafa] mb-4">Estado de la Orden</h2>
-            <div className="space-y-4">
+          <Card className="bg-[#262624]/90 backdrop-blur-sm border-[#3a3a38]">
+            <CardHeader className="border-b border-[#3a3a38]">
+              <CardTitle className="text-[#fafafa]">Estado de la Orden</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-[#888888] mb-2">
-                  Estado Actual
-                </label>
-                <span
-                  className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${
-                    STATUS_COLORS[order.status]
-                  }`}
-                >
+                <p className="text-xs text-[#888888] mb-2">Estado Actual</p>
+                <Badge className={`${STATUS_COLORS[order.status]} border`}>
                   {STATUS_LABELS[order.status]}
-                </span>
+                </Badge>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-[#888888] mb-2">
-                  Cambiar Estado
-                </label>
-                <select
+              <Separator className="bg-[#3a3a38]" />
+              <div className="space-y-3">
+                <p className="text-xs text-[#888888]">Cambiar Estado</p>
+                <Select
                   value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
-                  className="w-full px-3 py-2 bg-[#1e1e1c] border border-[#3a3a38] text-[#fafafa] rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97757] focus:border-transparent"
+                  onValueChange={(value) => setSelectedStatus(value as OrderStatus)}
                 >
-                  {Object.values(OrderStatus).map((status) => (
-                    <option key={status} value={status}>
-                      {STATUS_LABELS[status]}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="bg-[#1e1e1c] border-[#3a3a38] text-[#fafafa] focus:ring-[#d97757]">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#262624] border-[#3a3a38] text-[#fafafa]">
+                    {Object.values(OrderStatus).map((status) => (
+                      <SelectItem
+                        key={status}
+                        value={status}
+                        className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa] hover:bg-[#3a3a38] hover:text-[#fafafa] cursor-pointer"
+                      >
+                        {STATUS_LABELS[status]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleStatusUpdate}
+                  disabled={updatingStatus || selectedStatus === order.status}
+                  className="w-full bg-[#d97757] hover:bg-[#c56647] text-white disabled:opacity-50"
+                >
+                  {updatingStatus ? 'Actualizando...' : 'Actualizar Estado'}
+                </Button>
               </div>
-              <button
-                onClick={handleStatusUpdate}
-                disabled={updatingStatus || selectedStatus === order.status}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-[#d97757] rounded-md hover:bg-[#c56647] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {updatingStatus ? 'Actualizando...' : 'Actualizar Estado'}
-              </button>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Order Information */}
-          <div className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-lg shadow-black/20 p-6">
-            <h2 className="text-lg font-semibold text-[#fafafa] mb-4">Información de la Orden</h2>
-            <dl className="space-y-3">
+          <Card className="bg-[#262624]/90 backdrop-blur-sm border-[#3a3a38]">
+            <CardHeader className="border-b border-[#3a3a38]">
+              <CardTitle className="flex items-center gap-2 text-[#fafafa]">
+                <CreditCard className="h-5 w-5" />
+                Información
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Método de Pago</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{order.payment_method}</dd>
+                <p className="text-xs text-[#888888]">Método de Pago</p>
+                <p className="font-medium text-[#fafafa]">{PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method}</p>
               </div>
+              <Separator className="bg-[#3a3a38]" />
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Estado de Pago</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{order.payment_status}</dd>
+                <p className="text-xs text-[#888888]">Estado de Pago</p>
+                <Badge className={
+                  order.payment_status === PaymentStatus.COMPLETED
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                }>
+                  {order.payment_status === PaymentStatus.COMPLETED ? 'Pagado' :
+                   order.payment_status === PaymentStatus.PENDING ? 'Pendiente' :
+                   order.payment_status === PaymentStatus.FAILED ? 'Fallido' :
+                   order.payment_status === PaymentStatus.REFUNDED ? 'Reembolsado' : order.payment_status}
+                </Badge>
               </div>
+              <Separator className="bg-[#3a3a38]" />
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Fuente</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{order.source}</dd>
+                <p className="text-xs text-[#888888]">Fuente</p>
+                <p className="font-medium text-[#fafafa]">{SOURCE_LABELS[order.source] || order.source}</p>
               </div>
               {order.voucher_code && (
-                <div>
-                  <dt className="text-xs font-medium text-[#888888]">Código de Cupón</dt>
-                  <dd className="mt-1 text-sm text-[#fafafa]">{order.voucher_code}</dd>
-                </div>
+                <>
+                  <Separator className="bg-[#3a3a38]" />
+                  <div>
+                    <p className="text-xs text-[#888888]">Cupón</p>
+                    <p className="font-medium text-[#fafafa]">{order.voucher_code}</p>
+                  </div>
+                </>
               )}
               {order.notes && (
-                <div>
-                  <dt className="text-xs font-medium text-[#888888]">Notas</dt>
-                  <dd className="mt-1 text-sm text-[#fafafa]">{order.notes}</dd>
-                </div>
+                <>
+                  <Separator className="bg-[#3a3a38]" />
+                  <div>
+                    <p className="text-xs text-[#888888]">Notas</p>
+                    <p className="text-sm text-[#fafafa]">{order.notes}</p>
+                  </div>
+                </>
               )}
+              <Separator className="bg-[#3a3a38]" />
               <div>
-                <dt className="text-xs font-medium text-[#888888]">Última Actualización</dt>
-                <dd className="mt-1 text-sm text-[#fafafa]">{formatDate(order.updated_at)}</dd>
+                <p className="text-xs text-[#888888]">Última Actualización</p>
+                <p className="text-sm text-[#fafafa]">{formatDate(order.updated_at)}</p>
               </div>
-            </dl>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

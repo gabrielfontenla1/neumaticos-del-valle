@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { FileText, ChevronLeft, ChevronRight, Eye } from 'lucide-react'
 import { Order, OrderStatus } from '@/features/orders/types'
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ORDER_STATUS_STYLES } from '@/lib/constants/admin-theme'
+import { ViewOrderDialog } from './ViewOrderDialog'
 
 interface OrdersTableProps {
   orders: Order[]
@@ -30,7 +30,7 @@ interface OrdersTableProps {
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
-  onStatusChange: (orderId: string, status: OrderStatus) => Promise<void>
+  onStatusChange: (orderId: string, status: OrderStatus) => Promise<boolean>
 }
 
 const STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
@@ -51,6 +51,16 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.CANCELLED]: 'Cancelado',
 }
 
+// Valid status transitions - must match API validation
+const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+  [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+  [OrderStatus.DELIVERED]: [],
+  [OrderStatus.CANCELLED]: [],
+}
+
 export function OrdersTable({
   orders,
   loading,
@@ -60,6 +70,13 @@ export function OrdersTable({
   onStatusChange,
 }: OrdersTableProps) {
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [showViewDialog, setShowViewDialog] = useState(false)
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order)
+    setShowViewDialog(true)
+  }
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     if (window.confirm('¿Está seguro de cambiar el estado de esta orden?')) {
@@ -70,6 +87,20 @@ export function OrdersTable({
         setUpdatingOrderId(null)
       }
     }
+  }
+
+  // Handler for status change from the modal - updates selectedOrder after success
+  const handleModalStatusChange = async (orderId: string, newStatus: OrderStatus): Promise<boolean> => {
+    const success = await onStatusChange(orderId, newStatus)
+    // Only update selectedOrder if the status change was successful
+    if (success && selectedOrder && selectedOrder.id === orderId) {
+      setSelectedOrder({
+        ...selectedOrder,
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      })
+    }
+    return success
   }
 
   const formatDate = (dateString: string) => {
@@ -167,30 +198,40 @@ export function OrdersTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Select
-                    value={order.status}
-                    onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
-                    disabled={updatingOrderId === order.id}
-                  >
-                    <SelectTrigger
-                      className={`w-[140px] h-auto px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_BADGE_CLASSES[order.status]} hover:opacity-80 transition-opacity`}
+                  {VALID_TRANSITIONS[order.status].length > 0 ? (
+                    <Select
+                      value={order.status}
+                      onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                      disabled={updatingOrderId === order.id}
                     >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#262624] border-[#3a3a38]">
-                      {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                      <SelectTrigger
+                        className={`w-[140px] h-auto px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_BADGE_CLASSES[order.status]} hover:opacity-80 transition-opacity [&>span]:!text-inherit`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="!bg-[#262624] !border-[#3a3a38]">
                         <SelectItem
-                          key={value}
-                          value={value}
-                          className="text-[#fafafa] focus:bg-[#3a3a38] focus:text-[#fafafa] cursor-pointer"
+                          value={order.status}
+                          className="!text-[#fafafa] hover:!bg-[#3a3a38] focus:!bg-[#3a3a38] focus:!text-[#fafafa] cursor-pointer text-xs"
                         >
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_BADGE_CLASSES[value as OrderStatus]}`}>
-                            {label}
-                          </span>
+                          {STATUS_LABELS[order.status]}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        {VALID_TRANSITIONS[order.status].map((status) => (
+                          <SelectItem
+                            key={status}
+                            value={status}
+                            className="!text-[#fafafa] hover:!bg-[#3a3a38] focus:!bg-[#3a3a38] focus:!text-[#fafafa] cursor-pointer text-xs"
+                          >
+                            {STATUS_LABELS[status]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className={`inline-block w-[140px] px-3 py-1 rounded-full text-xs font-semibold text-center border ${STATUS_BADGE_CLASSES[order.status]}`}>
+                      {STATUS_LABELS[order.status]}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="text-sm font-medium text-[#fafafa]">
@@ -205,15 +246,13 @@ export function OrdersTable({
                 </TableCell>
                 <TableCell>
                   <Button
-                    asChild
                     variant="secondary"
                     size="sm"
-                    className="bg-[#262626] border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38] hover:border-[#d97757] transition-all"
+                    onClick={() => handleViewOrder(order)}
+                    className="bg-[#262626] border-[#3a3a38] text-[#fafafa] hover:bg-[#3a3a38] hover:border-[#d97757] transition-all gap-2"
                   >
-                    <Link href={`/admin/orders/${order.id}`} className="gap-2">
-                      <Eye className="w-4 h-4" />
-                      Ver
-                    </Link>
+                    <Eye className="w-4 h-4" />
+                    Ver
                   </Button>
                 </TableCell>
               </motion.tr>
@@ -279,6 +318,14 @@ export function OrdersTable({
           </div>
         </div>
       )}
+
+      {/* View Order Modal */}
+      <ViewOrderDialog
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        order={selectedOrder}
+        onStatusChange={handleModalStatusChange}
+      />
     </Card>
   )
 }
