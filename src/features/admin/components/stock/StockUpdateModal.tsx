@@ -577,7 +577,11 @@ export function StockUpdateModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ background: 'rgba(0,0,0,0.8)' }}
+        style={{
+          background: 'rgba(26, 24, 22, 0.6)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}
       >
         {/* Backdrop click to close (only when not running) */}
         <div
@@ -585,11 +589,26 @@ export function StockUpdateModal({
           onClick={step !== 'running' && step !== 'verifying' ? handleClose : undefined}
         />
 
-        {/* Modal */}
+        {/* Modal with dynamic scale animation */}
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
+          initial={{ scale: 0.8, opacity: 0, y: 20 }}
+          animate={{
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            transition: {
+              type: 'spring',
+              stiffness: 300,
+              damping: 25,
+              mass: 0.8,
+            }
+          }}
+          exit={{
+            scale: 0.85,
+            opacity: 0,
+            y: 10,
+            transition: { duration: 0.2, ease: 'easeIn' }
+          }}
           className="relative w-full max-w-4xl h-[85vh] max-h-[800px]"
         >
           <StockTerminal
