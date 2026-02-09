@@ -67,10 +67,10 @@ export async function getProducts(
       query = query.eq('width', filters.width)
     }
     if (filters.profile) {
-      query = query.eq('profile', filters.profile)
+      query = query.eq('aspect_ratio', filters.profile)
     }
     if (filters.diameter) {
-      query = query.eq('diameter', filters.diameter)
+      query = query.eq('rim_diameter', filters.diameter)
     }
     if (filters.minPrice !== undefined) {
       query = query.gte('price', filters.minPrice)
@@ -231,16 +231,23 @@ export async function getSizes() {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('width, profile, diameter')
+      .select('width, aspect_ratio, rim_diameter')
       .not('width', 'is', null)
       .order('width')
-      .order('profile')
-      .order('diameter')
+      .order('aspect_ratio')
+      .order('rim_diameter')
 
     if (error) throw error
 
-    const sizesData = data as DBSizeRow[] | null
-    const uniqueSizes = sizesData?.reduce((acc: SizeOption[], product) => {
+    // Map DB fields (aspect_ratio, rim_diameter) to interface fields (profile, diameter)
+    const rawData = data as Array<{ width: number | null; aspect_ratio: number | null; rim_diameter: number | null }> | null
+    const sizesData: DBSizeRow[] = rawData?.map(row => ({
+      width: row.width,
+      profile: row.aspect_ratio,
+      diameter: row.rim_diameter
+    })) || []
+
+    const uniqueSizes = sizesData.reduce((acc: SizeOption[], product) => {
       if (product.width && product.profile && product.diameter) {
         const size = `${product.width}/${product.profile}R${product.diameter}`
         if (!acc.some(s => s.display === size)) {
@@ -253,7 +260,7 @@ export async function getSizes() {
         }
       }
       return acc
-    }, []) || []
+    }, [])
 
     return uniqueSizes
   } catch (error) {

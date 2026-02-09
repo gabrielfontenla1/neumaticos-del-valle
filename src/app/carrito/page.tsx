@@ -2,22 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { MessageCircle, ShoppingBag, ArrowLeft, X, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trash2 } from 'lucide-react'
 import { useCartContext } from '@/providers/CartProvider'
 import { CartItem } from '@/features/cart/components/CartItem'
 import { CartSummary } from '@/features/cart/components/CartSummary'
 import { EmptyCart } from '@/features/cart/components/EmptyCart'
 import { CartSkeleton } from '@/features/cart/components/CartSkeleton'
-import { formatPrice, generateSimpleCartMessage, buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
+import { CheckoutModal } from '@/features/cart/components/CheckoutModal'
+import { generateAIOptimizedMessage, buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
+import type { Branch } from '@/types/branch'
 
 export default function CarritoPage() {
   const { items, totals, clearAll } = useCartContext()
   const [isLoading, setIsLoading] = useState(true)
   const [showClearConfirmation, setShowClearConfirmation] = useState(false)
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -29,18 +32,16 @@ export default function CarritoPage() {
     return () => clearTimeout(timer)
   }, [])
 
-  const handleSendToWhatsApp = () => {
+  const handleOpenCheckout = () => {
     if (items.length === 0) return
+    setShowCheckoutModal(true)
+  }
 
-    // Generar mensaje simple sin datos del cliente
-    const message = generateSimpleCartMessage(items, totals)
+  const handleCheckoutConfirm = (_qty: number, branch: Branch) => {
+    const message = generateAIOptimizedMessage(items, totals, branch.name)
     const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
-
-    // Abrir WhatsApp
     window.open(url, '_blank', 'noopener,noreferrer')
-
-    // Opcionalmente limpiar el carrito después de enviar
-    // clearAll()
+    setShowCheckoutModal(false)
   }
 
   const handleClearCart = () => {
@@ -165,7 +166,7 @@ export default function CarritoPage() {
                 {/* Actions */}
                 <div className="mt-6 space-y-3">
                   <Button
-                    onClick={handleSendToWhatsApp}
+                    onClick={handleOpenCheckout}
                     className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-semibold rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_6px_rgba(0,0,0,0.15)] transition-all"
                     size="lg"
                   >
@@ -207,6 +208,14 @@ export default function CarritoPage() {
           </div>
         )}
       </div>
+
+      {/* Checkout Modal - Branch selection only for cart */}
+      <CheckoutModal
+        open={showCheckoutModal}
+        onOpenChange={setShowCheckoutModal}
+        showQuantityStep={false}
+        onConfirm={handleCheckoutConfirm}
+      />
     </div>
   )
 }

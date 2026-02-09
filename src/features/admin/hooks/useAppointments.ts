@@ -74,13 +74,13 @@ export function useAppointments(): UseAppointmentsReturn {
     loadAppointments()
   }, [])
 
-  // Load appointments from database
+  // Load appointments from database via admin API (bypasses RLS)
   const loadAppointments = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // Load branches
+      // Load branches (public access via stores table)
       const { data: branchesData, error: branchesError } = await supabase
         .from('stores')
         .select('id, name, city, province, address, phone')
@@ -90,27 +90,17 @@ export function useAppointments(): UseAppointmentsReturn {
       if (branchesError) throw branchesError
       if (branchesData) setBranches(branchesData)
 
-      // Load appointments with store info
-      const { data: appointmentsData, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          stores:store_id (
-            id,
-            name,
-            city,
-            province,
-            address,
-            phone
-          )
-        `)
-        .gte('preferred_date', new Date().toISOString().split('T')[0])
-        .order('preferred_date')
-        .order('preferred_time')
+      // Load appointments via admin API (uses service role key, bypasses RLS)
+      const today = new Date().toISOString().split('T')[0]
+      const response = await fetch(`/api/admin/appointments?dateFrom=${today}`)
+      const result = await response.json()
 
-      if (appointmentsError) throw appointmentsError
-      if (appointmentsData) {
-        setAppointments(appointmentsData as Appointment[])
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al cargar turnos')
+      }
+
+      if (result.data) {
+        setAppointments(result.data as Appointment[])
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar los turnos'
@@ -125,34 +115,27 @@ export function useAppointments(): UseAppointmentsReturn {
   const confirmAppointment = useCallback(
     async (id: string, data: ConfirmAppointmentRequest): Promise<{ success: boolean; error?: string }> => {
       try {
-        const { error: updateError } = await supabase
-          .from('appointments')
-          // @ts-ignore - Supabase generated types missing Update for appointments
-          .update({
+        const response = await fetch('/api/admin/appointments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
             status: data.status,
             confirmed_date: data.confirmed_date,
             confirmed_time: data.confirmed_time,
             confirmation_notes: data.confirmation_notes,
-          })
-          .eq('id', id)
+          }),
+        })
 
-        if (updateError) throw updateError
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Error al confirmar el turno')
 
-        // Update local state
-        setAppointments((prev) =>
-          prev.map((apt) =>
-            apt.id === id
-              ? {
-                  ...apt,
-                  status: data.status,
-                  confirmed_date: data.confirmed_date,
-                  confirmed_time: data.confirmed_time,
-                  confirmation_notes: data.confirmation_notes || apt.confirmation_notes,
-                  updated_at: new Date().toISOString(),
-                }
-              : apt
+        // Update local state with returned data
+        if (result.data) {
+          setAppointments((prev) =>
+            prev.map((apt) => (apt.id === id ? result.data : apt))
           )
-        )
+        }
 
         toast.success('Turno confirmado correctamente')
         return { success: true }
@@ -169,30 +152,25 @@ export function useAppointments(): UseAppointmentsReturn {
   const cancelAppointment = useCallback(
     async (id: string, reason?: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        const { error: updateError } = await supabase
-          .from('appointments')
-          // @ts-ignore - Supabase generated types missing Update for appointments
-          .update({
+        const response = await fetch('/api/admin/appointments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
             status: 'cancelled',
             confirmation_notes: reason,
-          })
-          .eq('id', id)
+          }),
+        })
 
-        if (updateError) throw updateError
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Error al cancelar el turno')
 
-        // Update local state
-        setAppointments((prev) =>
-          prev.map((apt) =>
-            apt.id === id
-              ? {
-                  ...apt,
-                  status: 'cancelled',
-                  confirmation_notes: reason || apt.confirmation_notes,
-                  updated_at: new Date().toISOString(),
-                }
-              : apt
+        // Update local state with returned data
+        if (result.data) {
+          setAppointments((prev) =>
+            prev.map((apt) => (apt.id === id ? result.data : apt))
           )
-        )
+        }
 
         toast.success('Turno cancelado')
         return { success: true }
@@ -209,30 +187,25 @@ export function useAppointments(): UseAppointmentsReturn {
   const completeAppointment = useCallback(
     async (id: string, notes?: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        const { error: updateError } = await supabase
-          .from('appointments')
-          // @ts-ignore - Supabase generated types missing Update for appointments
-          .update({
+        const response = await fetch('/api/admin/appointments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
             status: 'completed',
             confirmation_notes: notes,
-          })
-          .eq('id', id)
+          }),
+        })
 
-        if (updateError) throw updateError
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Error al completar el turno')
 
-        // Update local state
-        setAppointments((prev) =>
-          prev.map((apt) =>
-            apt.id === id
-              ? {
-                  ...apt,
-                  status: 'completed',
-                  confirmation_notes: notes || apt.confirmation_notes,
-                  updated_at: new Date().toISOString(),
-                }
-              : apt
+        // Update local state with returned data
+        if (result.data) {
+          setAppointments((prev) =>
+            prev.map((apt) => (apt.id === id ? result.data : apt))
           )
-        )
+        }
 
         toast.success('Turno marcado como completado')
         return { success: true }
@@ -249,30 +222,25 @@ export function useAppointments(): UseAppointmentsReturn {
   const updateAppointmentStatus = useCallback(
     async (id: string, status: AppointmentStatus, notes?: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        const { error: updateError } = await supabase
-          .from('appointments')
-          // @ts-ignore - Supabase generated types missing Update for appointments
-          .update({
+        const response = await fetch('/api/admin/appointments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
             status,
             confirmation_notes: notes,
-          })
-          .eq('id', id)
+          }),
+        })
 
-        if (updateError) throw updateError
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Error al actualizar el turno')
 
-        // Update local state
-        setAppointments((prev) =>
-          prev.map((apt) =>
-            apt.id === id
-              ? {
-                  ...apt,
-                  status,
-                  confirmation_notes: notes || apt.confirmation_notes,
-                  updated_at: new Date().toISOString(),
-                }
-              : apt
+        // Update local state with returned data
+        if (result.data) {
+          setAppointments((prev) =>
+            prev.map((apt) => (apt.id === id ? result.data : apt))
           )
-        )
+        }
 
         toast.success('Estado del turno actualizado')
         return { success: true }

@@ -217,19 +217,19 @@ export default function TestCartPage() {
                       <div>
                         <p className="text-sm text-gray-600">Total</p>
                         <p className="text-2xl font-bold text-green-600">
-                          ${totals.total.toLocaleString('es-CL')}
+                          ${totals.total.toLocaleString('es-AR')}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Subtotal</p>
                         <p className="text-lg text-gray-900">
-                          ${totals.subtotal.toLocaleString('es-CL')}
+                          ${totals.subtotal.toLocaleString('es-AR')}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Envío</p>
                         <p className="text-lg text-gray-900">
-                          ${totals.shipping.toLocaleString('es-CL')}
+                          ${totals.shipping.toLocaleString('es-AR')}
                         </p>
                       </div>
                     </div>
@@ -275,7 +275,7 @@ export default function TestCartPage() {
                                 {item.brand} {item.name}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {item.quantity} × ${item.price.toLocaleString('es-CL')}
+                                {item.quantity} × ${item.price.toLocaleString('es-AR')}
                               </p>
                             </div>
                             <div className="flex gap-1 ml-2">

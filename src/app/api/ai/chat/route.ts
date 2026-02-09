@@ -76,8 +76,8 @@ async function searchProducts(query: string) {
       .from('products')
       .select('*')
       .eq('width', width)
-      .eq('profile', profile)
-      .eq('diameter', diameter)
+      .eq('aspect_ratio', profile)
+      .eq('rim_diameter', diameter)
       .gt('stock', 0) // Solo productos con stock
       .order('price', { ascending: true })
       .limit(10);

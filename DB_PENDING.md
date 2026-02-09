@@ -20,6 +20,13 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 <!-- Cambios ya implementados con referencia a la migración -->
 
+### 2026-02-09 - WhatsApp Checkout Payment Method
+
+- [x] **20260209_add_pending_payment_method.sql** - Enum payment_method extendido
+  - Añade: valor `'pending'` al enum `payment_method`
+  - Propósito: Soporte para checkout WhatsApp donde el método de pago se define después
+  - Código actualizado: `src/features/cart/components/CartDrawer.tsx`
+
 ### 2026-02-06 - Migraciones Aplicadas en Producción
 
 - [x] **Extensión pgvector** habilitada (v0.8.0)

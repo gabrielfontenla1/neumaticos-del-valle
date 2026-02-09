@@ -56,6 +56,169 @@ export interface FunctionCallResult {
   newState?: string
 }
 
+export interface WebPurchaseItem {
+  sku: string
+  name: string
+  size: string
+  quantity: number
+  unitPrice: string
+}
+
+export interface WebPurchase {
+  type: 'COMPRA_WEB' | 'CONSULTA_WEB'
+  items: WebPurchaseItem[]
+  total: string
+  branchName?: string
+}
+
+// ============================================================================
+// WEB PURCHASE PARSER
+// ============================================================================
+
+/**
+ * Parse web purchase message with [BOT:COMPRA_WEB] or [BOT:CONSULTA_WEB] tags
+ * These messages come from the cart checkout flow and contain pre-verified stock
+ */
+export function parseWebPurchaseMessage(text: string): WebPurchase | null {
+  // Check for bot instruction tags
+  const isCompra = text.includes('[BOT:COMPRA_WEB]')
+  const isConsulta = text.includes('[BOT:CONSULTA_WEB]')
+
+  if (!isCompra && !isConsulta) {
+    return null
+  }
+
+  const items: WebPurchaseItem[] = []
+
+  // Extract product details from message lines
+  const lines = text.split('\n')
+
+  // Extract branch name from "Sucursal:" line
+  let branchName: string | undefined
+  for (const line of lines) {
+    const branchMatch = line.match(/^Sucursal:\s*(.+)$/i)
+    if (branchMatch) {
+      branchName = branchMatch[1].trim()
+      break
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+
+    // Find lines with SKU
+    if (line.toLowerCase().includes('sku:')) {
+      const skuMatch = line.match(/SKU:\s*([^\s\n|]+)/i)
+      const sku = skuMatch ? skuMatch[1].trim() : ''
+
+      // Get product name from next line (indented with spaces)
+      const nameLine = lines[i + 1]?.trim() || ''
+      const name = nameLine.startsWith('#') ? '' : nameLine
+
+      // Get size from "Medida:" line
+      const sizeLine = lines[i + 2]?.trim() || ''
+      const sizeMatch = sizeLine.match(/Medida:\s*([^\n]+)/i)
+      const size = sizeMatch ? sizeMatch[1].trim() : ''
+
+      // Get quantity and price from "Cantidad:" line
+      const qtyLine = lines[i + 3]?.trim() || ''
+      const qtyMatch = qtyLine.match(/Cantidad:\s*(\d+)/i)
+      const quantity = qtyMatch ? parseInt(qtyMatch[1]) : 1
+
+      const priceMatch = qtyLine.match(/\$[\d.,]+/i)
+      const unitPrice = priceMatch ? priceMatch[0] : ''
+
+      if (sku) {
+        items.push({ sku, name, size, quantity, unitPrice })
+      }
+    }
+  }
+
+  // Extract total (handle *TOTAL: $xxx* format with bold asterisks)
+  const totalMatch = text.match(/\*?TOTAL:\s*(\$[\d.,]+)\*?/i)
+  const total = totalMatch ? totalMatch[1] : ''
+
+  return {
+    type: isCompra ? 'COMPRA_WEB' : 'CONSULTA_WEB',
+    items,
+    total,
+    branchName
+  }
+}
+
+/**
+ * Handle web purchase flow - skip stock check, use branch from message if provided
+ */
+export async function handleWebPurchase(
+  purchase: WebPurchase,
+  conversation: WhatsAppConversation
+): Promise<FunctionCallResult> {
+  // Format items for display
+  const itemsList = purchase.items.map(item => {
+    const sizeDisplay = item.size && item.size !== 'N/A' ? ` (${item.size})` : ''
+    const priceDisplay = item.unitPrice ? ` (${item.unitPrice} c/u)` : ''
+    return `• ${item.quantity}x ${item.name || item.sku}${sizeDisplay}${priceDisplay}`
+  }).join('\n')
+
+  // If branch is provided in the message (from CheckoutModal), use it directly
+  if (purchase.branchName) {
+    const totalDisplay = purchase.total || 'A confirmar'
+    return {
+      response: `¡Hola! Recibí tu pedido para *${purchase.branchName}*:
+
+${itemsList}
+
+💰 *Total: ${totalDisplay}*
+
+Un asesor te contactará en breve para coordinar el pago y la entrega.
+
+¿Hay algo más en lo que pueda ayudarte?`,
+      handled: true
+    }
+  }
+
+  const totalDisplay = purchase.total || 'A confirmar'
+
+  // Legacy fallback: If we already know the user's city, we can proceed
+  if (conversation.user_city) {
+    const branchCode = getBranchCodeFromCity(conversation.user_city)
+    if (branchCode) {
+      const branch = await getBranchByCode(branchCode)
+      const branchName = branch?.name || conversation.user_city
+
+      return {
+        response: `¡Hola! Recibí tu pedido web:
+
+${itemsList}
+
+💰 *Total: ${totalDisplay}*
+
+📍 Te atiende nuestra sucursal de *${branchName}*
+
+¿Confirmamos el pedido? Un asesor te contactará para coordinar pago y entrega.`,
+        handled: true
+      }
+    }
+  }
+
+  // Ask for location - the message history will contain the purchase details
+  // so we don't need to store it separately
+  await updateConversation(conversation.id, {
+    conversation_state: 'awaiting_location'
+  })
+
+  return {
+    response: `¡Hola! Recibí tu pedido web:
+
+${itemsList}
+
+💰 *Total: ${totalDisplay}*
+
+¿Desde qué ciudad nos escribís? 📍`,
+    handled: true
+  }
+}
+
 // ============================================================================
 // MAIN HANDLER
 // ============================================================================
@@ -70,6 +233,13 @@ export async function processWithFunctionCalling(
   messageHistory: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<FunctionCallResult> {
   try {
+    // Check for web purchase format first (from cart checkout)
+    const webPurchase = parseWebPurchaseMessage(messageText)
+    if (webPurchase) {
+      console.log('[FunctionHandler] Detected web purchase:', webPurchase.type, webPurchase.items.length, 'items')
+      return handleWebPurchase(webPurchase, conversation)
+    }
+
     // Load dynamic configuration
     const systemPrompt = await buildSystemPromptDynamic(conversation)
     const tools = await getWhatsAppToolsDynamic()
@@ -524,6 +694,20 @@ export async function handleCheckStock(
   conversation: WhatsAppConversation
 ): Promise<FunctionCallResult> {
   const { width, profile, diameter, brand, city } = args
+
+  // Validate that we have a complete tire size
+  if (!width || !profile || !diameter) {
+    console.log('[FunctionHandler] Incomplete tire size:', { width, profile, diameter })
+    return {
+      response: `Para buscar stock necesito la medida completa del neumático.
+
+Por ejemplo: *205/55R16* o *185/65R15*
+
+¿Cuál es la medida que necesitás?`,
+      handled: true
+    }
+  }
+
   const sizeDisplay = `${width}/${profile}R${diameter}`
 
   console.log('[FunctionHandler] Stock check:', sizeDisplay, brand, city)

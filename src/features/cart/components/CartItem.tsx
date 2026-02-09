@@ -34,9 +34,9 @@ export function CartItem({ item }: CartItemProps) {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
+    return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'CLP',
+      currency: 'ARS',
       minimumFractionDigits: 0
     }).format(price)
   }

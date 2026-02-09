@@ -32,6 +32,8 @@ export default function ConfiguracionPage() {
   const [saving, setSaving] = useState(false)
   const [configured, setConfigured] = useState(false)
   const [showTokens, setShowTokens] = useState(false)
+  const [revealed, setRevealed] = useState(false)
+  const [revealing, setRevealing] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const [settings, setSettings] = useState<TwilioSettings>({
@@ -66,6 +68,33 @@ export default function ConfiguracionPage() {
     }
   }
 
+  const handleReveal = async () => {
+    setRevealing(true)
+    try {
+      const response = await fetch('/api/admin/settings/twilio?reveal=true')
+      const data = await response.json()
+
+      if (data.configured && data.settings) {
+        setSettings({
+          accountSid: data.settings.accountSid || '',
+          authToken: data.settings.authToken || '',
+          whatsappNumber: data.settings.whatsappNumber || '',
+          enabled: data.settings.enabled || false
+        })
+        setRevealed(true)
+        setShowTokens(true)
+      }
+    } catch (error) {
+      console.error('Error revealing credentials:', error)
+      setMessage({
+        type: 'error',
+        text: 'Error al revelar credenciales'
+      })
+    } finally {
+      setRevealing(false)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setMessage(null)
@@ -85,6 +114,8 @@ export default function ConfiguracionPage() {
 
       setMessage({ type: 'success', text: 'Configuración guardada correctamente' })
       setConfigured(true)
+      setRevealed(false)
+      setShowTokens(false)
 
       // Reload to get masked values
       setTimeout(() => loadSettings(), 1000)
@@ -163,19 +194,48 @@ export default function ConfiguracionPage() {
                       Sin configurar
                     </Badge>
                   )}
+                  {revealed && (
+                    <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                      <Eye className="w-3 h-3 mr-1" />
+                      Valores visibles
+                    </Badge>
+                  )}
                 </CardTitle>
                 <CardDescription className="text-gray-400">
                   Configura las credenciales de Twilio para recibir mensajes de WhatsApp
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="enabled" className="text-gray-400 text-sm">Habilitado</Label>
-              <Switch
-                id="enabled"
-                checked={settings.enabled}
-                onCheckedChange={(checked) => handleInputChange('enabled', checked)}
-              />
+            <div className="flex items-center gap-4">
+              {configured && !revealed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReveal}
+                  disabled={revealing}
+                  className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10 hover:text-orange-300"
+                >
+                  {revealing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Revelar credenciales
+                    </>
+                  )}
+                </Button>
+              )}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="enabled" className="text-gray-400 text-sm">Habilitado</Label>
+                <Switch
+                  id="enabled"
+                  checked={settings.enabled}
+                  onCheckedChange={(checked) => handleInputChange('enabled', checked)}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -188,7 +248,7 @@ export default function ConfiguracionPage() {
             <div className="relative">
               <Input
                 id="accountSid"
-                type={showTokens ? 'text' : 'password'}
+                type={revealed || showTokens ? 'text' : 'password'}
                 placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 value={settings.accountSid}
                 onChange={(e) => handleInputChange('accountSid', e.target.value)}
@@ -216,7 +276,7 @@ export default function ConfiguracionPage() {
             <div className="relative">
               <Input
                 id="authToken"
-                type={showTokens ? 'text' : 'password'}
+                type={revealed || showTokens ? 'text' : 'password'}
                 placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 value={settings.authToken}
                 onChange={(e) => handleInputChange('authToken', e.target.value)}

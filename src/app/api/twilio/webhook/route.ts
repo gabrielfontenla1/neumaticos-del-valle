@@ -178,7 +178,7 @@ async function getSimilarSizes(size: ParsedSize): Promise<ProductResult[]> {
     const { data } = await db
       .from('products')
       .select('*')
-      .eq('diameter', size.diameter)
+      .eq('rim_diameter', size.diameter)
       .in('width', adjacentWidths)
       .gt('stock', 0)
       .order('price', { ascending: true })
@@ -193,7 +193,7 @@ async function getSimilarSizes(size: ParsedSize): Promise<ProductResult[]> {
     const { data: diffProfile } = await db
       .from('products')
       .select('*')
-      .eq('diameter', size.diameter)
+      .eq('rim_diameter', size.diameter)
       .gt('stock', 0)
       .order('price', { ascending: true })
       .limit(5)
@@ -226,8 +226,8 @@ async function getPopularProducts(): Promise<ProductResult[]> {
         .from('products')
         .select('*')
         .eq('width', size.width)
-        .eq('profile', size.profile)
-        .eq('diameter', size.diameter)
+        .eq('aspect_ratio', size.profile)
+        .eq('rim_diameter', size.diameter)
         .gt('stock', 0)
         .order('price', { ascending: true })
         .limit(5)
@@ -316,8 +316,8 @@ async function searchProducts(query: string): Promise<ProductResult[]> {
       .from('products')
       .select('*')
       .eq('width', parsedSize.width)
-      .eq('profile', parsedSize.profile)
-      .eq('diameter', parsedSize.diameter)
+      .eq('aspect_ratio', parsedSize.profile)
+      .eq('rim_diameter', parsedSize.diameter)
 
     if (foundBrand) {
       sizeQuery = sizeQuery.ilike('brand', `%${foundBrand}%`)
@@ -338,8 +338,8 @@ async function searchProducts(query: string): Promise<ProductResult[]> {
       .from('products')
       .select('*')
       .eq('width', parsedSize.width)
-      .eq('profile', parsedSize.profile)
-      .eq('diameter', parsedSize.diameter)
+      .eq('aspect_ratio', parsedSize.profile)
+      .eq('rim_diameter', parsedSize.diameter)
       .order('price', { ascending: true })
       .limit(10)
 

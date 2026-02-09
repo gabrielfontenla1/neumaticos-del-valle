@@ -147,7 +147,7 @@ export function VoucherViewer() {
                   <p><span className="font-medium">Código:</span> {validationResult.voucher.code}</p>
                   <p><span className="font-medium">Cliente:</span> {validationResult.voucher.customer_name}</p>
                   <p><span className="font-medium">Servicio:</span> Inspección gratuita</p>
-                  <p><span className="font-medium">Válido hasta:</span> {new Date(validationResult.voucher.valid_until).toLocaleDateString('es-CL')}</p>
+                  <p><span className="font-medium">Válido hasta:</span> {new Date(validationResult.voucher.valid_until).toLocaleDateString('es-AR')}</p>
                 </div>
               </div>
             ) : (
@@ -199,11 +199,11 @@ export function VoucherViewer() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                     <Calendar className="w-4 h-4" />
-                    <span>Creado: {new Date(voucher.created_at).toLocaleDateString('es-CL')}</span>
+                    <span>Creado: {new Date(voucher.created_at).toLocaleDateString('es-AR')}</span>
                   </div>
                   <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                     <Clock className="w-4 h-4" />
-                    <span>Válido hasta: {new Date(voucher.valid_until).toLocaleDateString('es-CL')}</span>
+                    <span>Válido hasta: {new Date(voucher.valid_until).toLocaleDateString('es-AR')}</span>
                   </div>
                 </div>
 

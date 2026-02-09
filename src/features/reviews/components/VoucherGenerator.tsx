@@ -52,7 +52,7 @@ export function VoucherGenerator({ onClose }: VoucherGeneratorProps) {
 
 Código: ${voucher.code}
 Servicio: Inspección gratuita de neumáticos
-Válido hasta: ${new Date(voucher.valid_until).toLocaleDateString('es-CL')}
+Válido hasta: ${new Date(voucher.valid_until).toLocaleDateString('es-AR')}
 
 Presenta este código en cualquiera de nuestras sucursales para hacer válido tu beneficio.
 
@@ -88,8 +88,8 @@ Teléfono: ${voucher.customer_phone}
 Servicio: Inspección gratuita de neumáticos
 Valor: GRATIS
 
-Válido desde: ${new Date(voucher.valid_from).toLocaleDateString('es-CL')}
-Válido hasta: ${new Date(voucher.valid_until).toLocaleDateString('es-CL')}
+Válido desde: ${new Date(voucher.valid_from).toLocaleDateString('es-AR')}
+Válido hasta: ${new Date(voucher.valid_until).toLocaleDateString('es-AR')}
 
 Instrucciones:
 1. Presenta este voucher en cualquier sucursal
@@ -166,7 +166,7 @@ Instrucciones:
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">Válido hasta:</span>
             <span className="font-medium text-green-600 dark:text-green-400">
-              {new Date(voucher.valid_until).toLocaleDateString('es-CL', {
+              {new Date(voucher.valid_until).toLocaleDateString('es-AR', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'

@@ -21,7 +21,9 @@ import { findEquivalentTires } from '@/features/tire-equivalence/api'
 import { EquivalentTire } from '@/features/tire-equivalence/types'
 import { toast } from 'sonner'
 import InstallmentTable from './InstallmentTable'
-import { buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
+import { buildWhatsAppUrl, WHATSAPP_NUMBERS, generateSingleProductMessage } from '@/lib/whatsapp'
+import { CheckoutModal } from '@/features/cart/components/CheckoutModal'
+import type { Branch } from '@/types/branch'
 
 interface ProductDetailProps {
   productId: string
@@ -46,6 +48,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
   const [equivalentTires, setEquivalentTires] = useState<EquivalentTire[]>([])
   const [loadingEquivalents, setLoadingEquivalents] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const { addItem, items, totals, isLoading: cartLoading } = useCartContext()
 
   // Function to get clean product name without dimension duplication
@@ -161,6 +164,24 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
     }
 
     console.log('🔵 [ProductDetail] handleAddToCart FIN')
+  }
+
+  const handleCheckoutConfirm = (qty: number, branch: Branch) => {
+    if (!product) return
+
+    const productSku = product.id.slice(0, 8).toUpperCase()
+    const message = generateSingleProductMessage({
+      sku: productSku,
+      brand: product.brand || '',
+      name: product.name,
+      price: product.price,
+      width: product.width,
+      aspect_ratio: product.profile,
+      rim_diameter: product.diameter
+    }, qty, branch.name)
+    const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setShowCheckoutModal(false)
   }
 
   if (loading) {
@@ -409,11 +430,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                 <div className="px-4 mb-4 lg:hidden">
                   <div className="flex flex-col gap-3">
                     <Button
-                      onClick={() => {
-                        const message = `Hola! Me interesa este producto:\n\n${getCleanProductName(product)}\nPrecio: $${Number(product.price).toLocaleString('es-AR')}\nCantidad: ${quantity}\n\n¿Está disponible?`
-                        const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
-                        window.open(url, '_blank', 'noopener,noreferrer')
-                      }}
+                      onClick={() => setShowCheckoutModal(true)}
                       className="w-full bg-green-600 hover:bg-green-700 text-white h-11 text-base font-semibold"
                     >
                       <MessageCircle className="h-5 w-5 mr-2" />
@@ -465,11 +482,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                   {/* Botones principales - Similar a ML */}
                   <div className="flex flex-col gap-3 mb-4">
                     <Button
-                      onClick={() => {
-                        const message = `Hola! Me interesa este producto:\n\n${getCleanProductName(product)}\nPrecio: $${Number(product.price).toLocaleString('es-AR')}\nCantidad: ${quantity}\n\n¿Está disponible?`
-                        const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
-                        window.open(url, '_blank', 'noopener,noreferrer')
-                      }}
+                      onClick={() => setShowCheckoutModal(true)}
                       className="w-full bg-green-600 hover:bg-green-700 text-white h-11 lg:h-10 text-base lg:text-sm font-semibold"
                     >
                       <MessageCircle className="h-5 w-5 mr-2" />
@@ -820,6 +833,15 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
           </div>
         )}
       </div>
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        open={showCheckoutModal}
+        onOpenChange={setShowCheckoutModal}
+        initialQuantity={quantity}
+        showQuantityStep={true}
+        onConfirm={handleCheckoutConfirm}
+      />
     </div>
   )
 }

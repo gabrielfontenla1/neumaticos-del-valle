@@ -11,7 +11,12 @@ Allow: /equivalencias
 Allow: /aceites
 Allow: /sucursales
 
-# Block internal tools
+# Block admin and internal tools
+Disallow: /admin/
+Disallow: /admin
+Disallow: /panel/
+Disallow: /panel
+Disallow: /api/admin/
 Disallow: /sys/
 Disallow: /internal/
 Disallow: /tools/
@@ -19,19 +24,29 @@ Disallow: /_/
 
 # Specific bot rules
 User-agent: Googlebot
+Disallow: /admin/
+Disallow: /panel/
 Disallow: /sys/
 Crawl-delay: 10
 
 User-agent: Googlebot-Image
+Disallow: /admin/
+Disallow: /panel/
 Disallow: /sys/
 
 User-agent: Bingbot
+Disallow: /admin/
+Disallow: /panel/
 Disallow: /sys/
 
 User-agent: Slurp
+Disallow: /admin/
+Disallow: /panel/
 Disallow: /sys/
 
 User-agent: DuckDuckBot
+Disallow: /admin/
+Disallow: /panel/
 Disallow: /sys/
 
 # Block aggressive scrapers

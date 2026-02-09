@@ -214,9 +214,9 @@ export default function AdminProductsPage() {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CL', {
+    return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'CLP',
+      currency: 'ARS',
       minimumFractionDigits: 0
     }).format(amount)
   }

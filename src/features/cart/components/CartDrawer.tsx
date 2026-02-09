@@ -8,34 +8,81 @@ import { useCartContext } from '@/providers/CartProvider'
 import { CartItem } from './CartItem'
 import { CartSummary } from './CartSummary'
 import { EmptyCart } from './EmptyCart'
-import { formatPrice, generateSimpleCartMessage, buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
+import { CheckoutModal } from './CheckoutModal'
+import { generateAIOptimizedMessage, buildWhatsAppUrl, WHATSAPP_NUMBERS } from '@/lib/whatsapp'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
+import type { Branch } from '@/types/branch'
 
 export function CartDrawer() {
   const { isOpen, closeCart, items, totals, clearAll, isLoading } = useCartContext()
   const [isSending, setIsSending] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false)
 
-  const handleSendToWhatsApp = async () => {
-    if (items.length === 0) return
-
+  const handleCheckoutConfirm = async (_qty: number, branch: Branch) => {
     setIsSending(true)
+    let orderNumber: string | null = null
+
     try {
-      // Generar mensaje simple sin datos del cliente
-      const message = generateSimpleCartMessage(items, totals)
-      const url = buildWhatsAppUrl(WHATSAPP_NUMBERS.default, message)
+      // 1. Create order in database
+      const orderResponse = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name: 'Cliente WhatsApp',
+          customer_email: 'pendiente@whatsapp.temp',
+          customer_phone: 'pendiente',
+          items: items.map(item => ({
+            product_id: item.id,
+            product_name: `${item.brand} ${item.name}`,
+            sku: item.sku,
+            quantity: item.quantity,
+            unit_price: item.sale_price || item.price,
+            total_price: (item.sale_price || item.price) * item.quantity,
+            image_url: item.image_url,
+            brand: item.brand,
+          })),
+          subtotal: totals.subtotal,
+          tax: totals.tax,
+          shipping: totals.shipping,
+          payment_method: 'pending',
+          source: 'whatsapp',
+          store_id: branch.id,
+          notes: `Pedido desde web - Sucursal: ${branch.name}`,
+        }),
+      })
 
-      // Abrir WhatsApp
-      window.open(url, '_blank', 'noopener,noreferrer')
+      const orderData = await orderResponse.json()
 
-      // Simular pequeño delay antes de cerrar
-      await new Promise(resolve => setTimeout(resolve, 500))
-    } finally {
-      setIsSending(false)
-      // Cerrar el drawer
-      closeCart()
+      if (orderData.success && orderData.order) {
+        orderNumber = orderData.order.order_number
+      }
+    } catch (error) {
+      console.error('Error creating order:', error)
+      // Continue without order number - don't block the customer
     }
+
+    // 2. Generate message with order number (if available)
+    const message = generateAIOptimizedMessage(items, totals, branch.name, orderNumber)
+    const url = buildWhatsAppUrl(branch.whatsapp || WHATSAPP_NUMBERS.default, message)
+
+    // 3. Open WhatsApp
+    window.open(url, '_blank', 'noopener,noreferrer')
+
+    // 4. Clear cart if order was created successfully
+    if (orderNumber) {
+      await clearAll()
+    }
+
+    setIsSending(false)
+    setShowCheckoutModal(false)
+    closeCart()
+  }
+
+  const handleOpenCheckout = () => {
+    if (items.length === 0) return
+    setShowCheckoutModal(true)
   }
 
   const handleClearCart = async () => {
@@ -147,7 +194,7 @@ export function CartDrawer() {
                       transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                     >
                       <Button
-                        onClick={handleSendToWhatsApp}
+                        onClick={handleOpenCheckout}
                         disabled={isSending || items.length === 0}
                         className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white h-12 text-base font-medium gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         size="lg"
@@ -216,6 +263,14 @@ export function CartDrawer() {
           )}
         </div>
       </SheetContent>
+
+      {/* Checkout Modal - Branch selection only for cart */}
+      <CheckoutModal
+        open={showCheckoutModal}
+        onOpenChange={setShowCheckoutModal}
+        showQuantityStep={false}
+        onConfirm={handleCheckoutConfirm}
+      />
     </Sheet>
   )
 }

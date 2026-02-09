@@ -132,26 +132,63 @@ export function openWhatsApp(voucher: VoucherData, storePhone?: string, orderNum
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+// Product data for quick message generation
+export interface QuickMessageProduct {
+  name: string
+  brand: string
+  sku: string
+  width?: number | null
+  aspect_ratio?: number | null
+  rim_diameter?: number | null
+}
+
 // Generate simple message for quick inquiries
 export function generateQuickMessage(
-  productName: string,
-  productSku: string,
+  product: QuickMessageProduct | string,
+  productSku?: string,
   customerName?: string
 ): string {
+  // Support legacy signature: (productName: string, productSku: string, customerName?: string)
+  if (typeof product === 'string') {
+    const productName = product
+    const sku = productSku || ''
+    const lines = [
+      `*CONSULTA WEB*`,
+      ``,
+      `SKU: ${sku}`,
+      `Producto: ${productName}`,
+      ``,
+      `Quisiera saber precio y disponibilidad.`,
+      ``,
+      `[BOT:CONSULTA_WEB]`
+    ]
+
+    if (customerName) {
+      lines.splice(lines.length - 1, 0, `Nombre: ${customerName}`, ``)
+    }
+
+    return lines.join('\n')
+  }
+
+  // New signature with full product data
+  const tireSize = (product.width && product.aspect_ratio && product.rim_diameter)
+    ? `${product.width}/${product.aspect_ratio}R${product.rim_diameter}`
+    : 'N/A'
+
   const lines = [
-    `Hola! Me interesa el siguiente producto:`,
+    `*CONSULTA WEB*`,
     ``,
-    `🛞 ${productName}`,
-    `SKU: ${productSku}`,
+    `SKU: ${product.sku}`,
+    `${product.brand} ${product.name}`,
+    `Medida: ${tireSize}`,
     ``,
-    `Quisiera saber:`,
-    `- Precio`,
-    `- Disponibilidad`,
-    `- Opciones de instalación`,
+    `Quisiera saber precio y disponibilidad.`,
+    ``,
+    `[BOT:CONSULTA_WEB]`
   ]
 
   if (customerName) {
-    lines.push(``, `Saludos,`, customerName)
+    lines.splice(lines.length - 1, 0, `Nombre: ${customerName}`, ``)
   }
 
   return lines.join('\n')
@@ -172,39 +209,115 @@ export function openWhatsAppQuickInquiry(
 }
 
 // Generate simple cart message (no customer data required)
+// @deprecated Use generateAIOptimizedMessage instead
 export function generateSimpleCartMessage(
   items: CartItem[],
   totals: CartTotals
 ): string {
+  // Redirect to AI-optimized version
+  return generateAIOptimizedMessage(items, totals)
+}
+
+/**
+ * Generate AI-optimized WhatsApp message for cart checkout
+ * Includes SKU, complete tire size, branch name, order number, and bot instruction tags
+ */
+export function generateAIOptimizedMessage(
+  items: CartItem[],
+  totals: CartTotals,
+  branchName?: string,
+  orderNumber?: string | null
+): string {
   const lines = [
-    `🛞 *PEDIDO NEUMÁTICOS DEL VALLE*`,
-    `━━━━━━━━━━━━━━━━━━━━`,
-    ``,
-    `📦 *PRODUCTOS:*`,
-    ``
+    `[BOT:COMPRA_WEB]`
   ]
 
-  // Add items
+  // Add order number if provided
+  if (orderNumber) {
+    lines.push(`📋 *Pedido: ${orderNumber}*`)
+  }
+
+  // Add branch if provided
+  if (branchName) {
+    lines.push(`Sucursal: ${branchName}`)
+  }
+
+  lines.push(
+    ``,
+    `*PEDIDO WEB*`,
+    ``
+  )
+
+  // Add items with SKU and complete tire info
   items.forEach((item, index) => {
-    const tire = generateTireDescription(item)
     const price = item.sale_price || item.price
+    const tireSize = generateTireDescription(item)
+
     lines.push(
-      `${index + 1}. *${item.brand} ${item.name}*`,
-      `   ${tire}`,
-      `   Cantidad: ${item.quantity}`,
-      `   ${formatPrice(price)} c/u`,
+      `#${index + 1} | SKU: ${item.sku}`,
+      `   ${item.brand} ${item.name}`,
+      `   Medida: ${tireSize}`,
+      `   Cantidad: ${item.quantity} | ${formatPrice(price)} c/u`,
       ``
     )
   })
 
-  // Add totals
+  // Add total
   lines.push(
-    `━━━━━━━━━━━━━━━━━━━━`,
-    `💰 *TOTAL: ${formatPrice(totals.total)}*`,
-    `━━━━━━━━━━━━━━━━━━━━`,
+    `*TOTAL: ${formatPrice(totals.total)}*`
+  )
+
+  return lines.join('\n')
+}
+
+/**
+ * Product data for single product WhatsApp message
+ */
+export interface SingleProductData {
+  sku: string
+  brand: string
+  name: string
+  price: number
+  sale_price?: number | null
+  width?: number | null
+  aspect_ratio?: number | null
+  rim_diameter?: number | null
+}
+
+/**
+ * Generate AI-optimized WhatsApp message for single product purchase
+ * Used by "Comprar por WhatsApp" button on product detail page
+ */
+export function generateSingleProductMessage(
+  product: SingleProductData,
+  quantity: number,
+  branchName?: string
+): string {
+  const price = product.sale_price || product.price
+  const tireSize = (product.width && product.aspect_ratio && product.rim_diameter)
+    ? `${product.width}/${product.aspect_ratio}R${product.rim_diameter}`
+    : product.sku
+  const total = price * quantity
+
+  const lines = [
+    `[BOT:COMPRA_WEB]`
+  ]
+
+  // Add branch if provided
+  if (branchName) {
+    lines.push(`Sucursal: ${branchName}`)
+  }
+
+  lines.push(
     ``,
-    `Hola! Me gustaría cotizar estos productos.`,
-    `¿Tienen disponibilidad?`
+    `*PEDIDO WEB*`,
+    ``,
+    `#1 | SKU: ${product.sku}`,
+    `   ${product.brand} ${product.name}`,
+    `   Medida: ${tireSize}`,
+    `   Cantidad: ${quantity} | ${formatPrice(price)} c/u`,
+    ``,
+    `*TOTAL: ${formatPrice(total)}*`
   )
 
   return lines.join('\n')

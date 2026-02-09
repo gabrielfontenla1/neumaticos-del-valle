@@ -32,12 +32,14 @@ export const orderSourceSchema = z.enum([
   'admin',
 ])
 
-// Payment method enum
+// Payment method enum (must match DB enum: payment_method)
 export const paymentMethodSchema = z.enum([
   'cash',
-  'card',
+  'credit_card',
+  'debit_card',
   'transfer',
   'mercadopago',
+  'other', // Used for WhatsApp orders where payment method is TBD
 ])
 
 // Order item schema (aligned with OrderItem from @/features/orders/types)

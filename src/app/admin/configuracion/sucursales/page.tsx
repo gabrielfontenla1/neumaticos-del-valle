@@ -949,7 +949,7 @@ export default function SucursalesPage() {
                           }}
                         >
                           <SelectTrigger
-                            className={`!bg-[#30302e] !text-[#fafafa] h-12 focus:ring-[#d97757] [&>svg]:!text-[#888888] ${
+                            className={`!bg-[#30302e] !text-[#fafafa] h-12 focus:ring-[#d97757] [&>svg]:!text-[#888888] [&>span]:!text-[#fafafa] ${
                               fieldErrors.province ? '!border-red-500' : '!border-[#3a3a38]'
                             } ${!newBranch.province ? '[&>span]:!text-[#666666]' : ''}`}
                           >
@@ -1660,7 +1660,7 @@ export default function SucursalesPage() {
                           onValueChange={(value) => setBranchToEdit({ ...branchToEdit, province: value })}
                         >
                           <SelectTrigger
-                            className={`!bg-[#1a1a18] !border-[#3a3a38] !text-[#fafafa] h-11 focus:ring-[#d97757] [&>svg]:!text-[#888888] ${
+                            className={`!bg-[#1a1a18] !border-[#3a3a38] !text-[#fafafa] h-11 focus:ring-[#d97757] [&>svg]:!text-[#888888] [&>span]:!text-[#fafafa] ${
                               !branchToEdit.province ? '[&>span]:!text-[#666666]' : ''
                             }`}
                           >

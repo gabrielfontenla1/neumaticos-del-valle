@@ -563,7 +563,7 @@ export default function VouchersPage() {
               {/* Service Value */}
               <div className="space-y-2">
                 <label htmlFor="service_value" className="text-sm font-medium" style={{ color: colors.foreground }}>
-                  Valor del Servicio (CLP) *
+                  Valor del Servicio (ARS) *
                 </label>
                 <input
                   id="service_value"

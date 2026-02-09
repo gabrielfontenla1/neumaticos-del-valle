@@ -20,15 +20,19 @@ interface TwilioSettings {
 
 /**
  * GET /api/admin/settings/twilio
- * Get Twilio configuration (masked for security)
+ * Get Twilio configuration (masked by default, reveal=true for actual values)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Verify admin authentication
     const authResult = await requireAdminAuth()
     if (!authResult.authorized) {
       return authResult.response
     }
+
+    // Check if reveal parameter is set
+    const { searchParams } = new URL(request.url)
+    const reveal = searchParams.get('reveal') === 'true'
 
     const { data, error } = await db
       .from('app_settings')
@@ -50,7 +54,21 @@ export async function GET() {
 
     const settings = data.value as TwilioSettings
 
-    // Mask sensitive values for display
+    // If reveal=true, return actual values (for editing)
+    if (reveal) {
+      return NextResponse.json({
+        configured: true,
+        settings: {
+          accountSid: settings.accountSid || '',
+          authToken: settings.authToken || '',
+          whatsappNumber: settings.whatsappNumber || '',
+          enabled: settings.enabled ?? false,
+          updatedAt: settings.updatedAt
+        }
+      })
+    }
+
+    // Default: Mask sensitive values for display
     return NextResponse.json({
       configured: true,
       settings: {
