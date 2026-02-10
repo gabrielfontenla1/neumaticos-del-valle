@@ -13,7 +13,7 @@ import { Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { adminLogin } from '@/features/admin/api'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,9 +21,13 @@ import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
 // Dynamic import to avoid SSR hydration issues with PIXI.js
-const AnimatedBackground = dynamic(() => import('@/components/effects/AnimatedBackground'), {
-  ssr: false
-})
+const AnimatedBackground = dynamic(
+  () => import('@/components/effects/AnimatedBackground').catch(() => {
+    // Gracefully handle chunk load failures (Turbopack issue with pixi.js)
+    return { default: () => null }
+  }),
+  { ssr: false }
+)
 
 // Access key from environment variable
 const ACCESS_KEY = process.env.NEXT_PUBLIC_ADMIN_ACCESS_KEY || 'ndv2024'
@@ -52,9 +56,20 @@ function LoginForm() {
     setIsLoading(true)
 
     try {
-      const session = await adminLogin(email, password)
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
 
-      if (session) {
+      if (result?.ok) {
+        // Store session in sessionStorage for AdminLayout UI compatibility
+        const session = {
+          user: { id: '1', email, name: 'Administrador', role: 'admin', created_at: new Date().toISOString() },
+          token: 'nextauth-session',
+          expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+        }
+        sessionStorage.setItem('admin_session', JSON.stringify(session))
         router.push('/admin')
       } else {
         setError('Credenciales inválidas. Por favor intente de nuevo.')

@@ -49,9 +49,13 @@ import { Input } from '@/components/ui/input'
 import { useState } from 'react'
 
 // Dynamic import to avoid SSR hydration issues with PIXI.js
-const AnimatedBackground = dynamic(() => import('@/components/effects/AnimatedBackground'), {
-  ssr: false
-})
+const AnimatedBackground = dynamic(
+  () => import('@/components/effects/AnimatedBackground').catch(() => {
+    // Gracefully handle chunk load failures (Turbopack issue with pixi.js)
+    return { default: () => null }
+  }),
+  { ssr: false }
+)
 
 // Theme definitions
 const themes = {

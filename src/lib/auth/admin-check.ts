@@ -28,22 +28,6 @@ type RequireAdminAuthResult = AuthResult | UnauthorizedResult
  * }
  */
 export async function requireAdminAuth(): Promise<RequireAdminAuthResult> {
-  // DEV MODE: Bypass authentication in development environment
-  const isDevelopment = process.env.NODE_ENV === 'development'
-
-  if (isDevelopment) {
-    console.log('[DEV] Bypassing admin auth check in development mode')
-    // Create a mock session for development
-    const mockSession: Session = {
-      user: {
-        email: 'dev@neumaticoselvalle.com',
-        name: 'Dev Admin',
-      },
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    }
-    return { authorized: true, session: mockSession }
-  }
-
   const session = await auth()
 
   if (!session?.user) {
@@ -59,13 +43,16 @@ export async function requireAdminAuth(): Promise<RequireAdminAuthResult> {
   // Check if user has admin role
   // Admin users are identified by:
   // 1. Email domain @neumaticoselvalle.com (or @neumaticosdelvallesrl.com.ar)
-  // 2. Role set to 'admin' in the session
+  // 2. Role set to 'admin' in the session (set by CredentialsProvider)
+  // 3. Admin email from env variable (for credentials login)
   const userEmail = session.user.email?.toLowerCase() || ''
   const userRole = (session.user as { role?: string }).role
+  const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@neumaticosdelvalleocr.cl').toLowerCase()
 
   const isAdminByEmail =
     userEmail.endsWith('@neumaticoselvalle.com') ||
-    userEmail.endsWith('@neumaticosdelvallesrl.com.ar')
+    userEmail.endsWith('@neumaticosdelvallesrl.com.ar') ||
+    userEmail === adminEmail
 
   const isAdminByRole = userRole === 'admin'
 

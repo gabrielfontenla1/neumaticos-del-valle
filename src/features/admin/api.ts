@@ -12,35 +12,17 @@ interface VoucherWithFinalPrice {
   final_price: number
 }
 
-// Simple admin authentication (using sessionStorage)
-// SECURITY: Credentials moved to environment variables
+// Admin authentication now uses NextAuth CredentialsProvider
+// This function is kept for backward compatibility but login should go through
+// signIn('credentials', ...) from next-auth/react on the panel page.
+// sessionStorage is used as a UI cache for AdminLayout.
 export async function adminLogin(email: string, password: string): Promise<AdminSession | null> {
   try {
-    console.log('📧 adminLogin llamado con email:', email)
+    // Import signIn dynamically to avoid server-side issues
+    const { signIn } = await import('next-auth/react')
+    const result = await signIn('credentials', { email, password, redirect: false })
 
-    // Get credentials from environment variables
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@neumaticosdelvalleocr.cl'
-    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
-
-    // SECURITY NOTE: In production, use bcrypt to hash and compare passwords
-    // For now, using a simple hash comparison as placeholder
-    // TODO: Implement proper bcrypt password hashing
-    const isValidEmail = email === adminEmail
-    const isValidPassword = adminPasswordHash
-      ? password === 'admin2024' // Temporary - should use bcrypt.compare(password, adminPasswordHash)
-      : password === 'admin2024'
-
-    if (isValidEmail && isValidPassword) {
-      console.log('✓ Credenciales correctas, creando sesión...')
-
-      // Generate a more secure token (still should use JWT in production)
-      const tokenData = {
-        email,
-        timestamp: Date.now(),
-        random: Math.random().toString(36).substring(2, 15)
-      }
-      const token = btoa(JSON.stringify(tokenData))
-
+    if (result?.ok) {
       const session: AdminSession = {
         user: {
           id: '1',
@@ -49,26 +31,20 @@ export async function adminLogin(email: string, password: string): Promise<Admin
           role: 'admin',
           created_at: new Date().toISOString()
         },
-        token,
-        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
+        token: 'nextauth-session',
+        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString()
       }
 
-      // Store in sessionStorage
       if (typeof window !== 'undefined') {
-        console.log('💾 Guardando sesión en sessionStorage...')
         sessionStorage.setItem('admin_session', JSON.stringify(session))
-        console.log('✓ Sesión guardada exitosamente')
-      } else {
-        console.warn('⚠️ window no está definido, no se puede guardar en sessionStorage')
       }
 
       return session
     }
 
-    console.log('❌ Credenciales incorrectas')
     return null
   } catch (error) {
-    console.error('💥 Error en adminLogin:', error)
+    console.error('Error en adminLogin:', error)
     return null
   }
 }
@@ -94,9 +70,15 @@ export function getAdminSession(): AdminSession | null {
   }
 }
 
-export function adminLogout() {
+export async function adminLogout() {
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem('admin_session')
+    try {
+      const { signOut } = await import('next-auth/react')
+      await signOut({ redirect: false })
+    } catch {
+      // Silently handle if signOut fails
+    }
   }
 }
 
