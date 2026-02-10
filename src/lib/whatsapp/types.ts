@@ -7,6 +7,9 @@ export type ConversationStatus = 'active' | 'resolved' | 'archived'
 
 export type MessageRole = 'user' | 'assistant'
 
+// WhatsApp provider source
+export type WhatsAppSource = 'twilio' | 'baileys'
+
 // Stock flow states
 export type StockFlowState = 'idle' | 'awaiting_location' | 'showing_results' | 'awaiting_transfer_confirm'
 
@@ -59,6 +62,8 @@ export interface WhatsAppConversation {
   pending_tire_search: PendingTireSearch | null
   // Appointment flow fields
   pending_appointment: PendingAppointment | null
+  // Provider source
+  source?: WhatsAppSource
   created_at: Date
   updated_at: Date
 }
@@ -72,6 +77,7 @@ export interface WhatsAppMessage {
   sent_by_user_id: string | null
   intent: string | null
   response_time_ms: number | null
+  source?: WhatsAppSource
   created_at: Date
 }
 
@@ -92,6 +98,7 @@ export interface DbConversation {
   conversation_state: string
   pending_tire_search: PendingTireSearch | null
   pending_appointment: PendingAppointment | null
+  source?: string
   created_at: string
   updated_at: string
 }
@@ -105,6 +112,7 @@ export interface DbMessage {
   sent_by_user_id: string | null
   intent: string | null
   response_time_ms: number | null
+  source?: string
   created_at: string
 }
 

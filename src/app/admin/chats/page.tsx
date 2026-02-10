@@ -17,10 +17,12 @@ import {
   UserCheck,
   Settings,
   CheckCheck,
+  Radio,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
 import { AIConfigPanel } from '@/components/admin/ai-config/AIConfigPanel'
+import { SourceConfigPanel } from '@/components/admin/source-config/SourceConfigPanel'
 
 // Types
 interface Conversation {
@@ -36,6 +38,7 @@ interface Conversation {
   last_message_at: string | null
   created_at: string
   updated_at: string
+  source?: 'twilio' | 'baileys' // Which provider the conversation is using
 }
 
 interface Message {
@@ -48,6 +51,30 @@ interface Message {
   intent: string | null
   response_time_ms: number | null
   created_at: string
+  source?: 'twilio' | 'baileys' // Which provider the message came through
+}
+
+// Source badge component - very small indicator
+// Twilio: Red (#F22F46), Baileys: Teal (#25D9A3)
+function SourceBadge({ source }: { source?: 'twilio' | 'baileys' }) {
+  // Default to twilio since that's the only working provider
+  const displaySource = source || 'twilio'
+
+  return (
+    <span
+      className={`
+        inline-flex items-center gap-0.5 text-[8px] font-medium uppercase tracking-wider
+        px-1 py-0.5 rounded
+        ${displaySource === 'twilio'
+          ? 'bg-[#F22F46]/20 text-[#F22F46]'
+          : 'bg-[#25D9A3]/20 text-[#25D9A3]'
+        }
+      `}
+      title={displaySource === 'twilio' ? 'Via Twilio API' : 'Via Baileys (WhatsApp Web)'}
+    >
+      {displaySource === 'twilio' ? 'T' : 'B'}
+    </span>
+  )
 }
 
 // Supabase client for realtime
@@ -304,13 +331,20 @@ export default function ChatsPage() {
               <Settings className="h-4 w-4 mr-2" />
               Configuración IA
             </TabsTrigger>
+            <TabsTrigger
+              value="source-config"
+              className="h-8 px-4 text-sm text-[#8696a0] data-[state=active]:bg-[#2a3942] data-[state=active]:text-[#00a884] rounded"
+            >
+              <Radio className="h-4 w-4 mr-2" />
+              Source Configuration
+            </TabsTrigger>
           </TabsList>
         </div>
 
         {/* Conversations Tab - Contains BOTH panels */}
         <TabsContent value="conversations" className="flex-1 flex min-h-0 mt-0 data-[state=inactive]:hidden">
           {/* Left Panel - Chat List */}
-          <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-[320px] bg-[#111b21] border-r border-[#2a3942] flex-shrink-0`}>
+          <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-[380px] bg-[#111b21] border-r border-[#2a3942] flex-shrink-0`}>
             {/* Search */}
             <div className="px-3 py-2">
               <div className="relative">
@@ -369,9 +403,12 @@ export default function ChatsPage() {
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between mb-0.5">
-                          <span className="font-medium text-[#e9edef] truncate">
-                            {conv.contact_name || conv.phone || 'Sin nombre'}
-                          </span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-medium text-[#e9edef] truncate">
+                              {conv.contact_name || conv.phone || 'Sin nombre'}
+                            </span>
+                            <SourceBadge source={conv.source} />
+                          </div>
                           <span className="text-xs text-[#8696a0] flex-shrink-0 ml-2">
                             {formatTime(conv.last_message_at)}
                           </span>
@@ -412,9 +449,12 @@ export default function ChatsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-[#e9edef] truncate">
-                      {selectedConversation.contact_name || selectedConversation.phone || 'Sin nombre'}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-[#e9edef] truncate">
+                        {selectedConversation.contact_name || selectedConversation.phone || 'Sin nombre'}
+                      </h3>
+                      <SourceBadge source={selectedConversation.source} />
+                    </div>
                     <p className="text-xs text-[#8696a0]">
                       {selectedConversation.is_paused ? 'Control humano activo' : 'Bot activo'}
                     </p>
@@ -504,6 +544,7 @@ export default function ChatsPage() {
                             <div className={`flex items-center justify-end gap-1 mt-1 ${
                               message.role === 'user' ? 'text-[#ffffff99]' : 'text-[#8696a0]'
                             }`}>
+                              <SourceBadge source={message.source} />
                               <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
                               {message.role === 'user' && (
                                 <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]" />
@@ -562,6 +603,11 @@ export default function ChatsPage() {
         {/* AI Config Tab */}
         <TabsContent value="ai-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden bg-[#111b21]">
           <AIConfigPanel />
+        </TabsContent>
+
+        {/* Source Config Tab */}
+        <TabsContent value="source-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden bg-[#111b21]">
+          <SourceConfigPanel />
         </TabsContent>
       </Tabs>
     </div>
