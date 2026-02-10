@@ -11,6 +11,7 @@ const BRANCH_STOCK_COLUMNS = [
   'CATAMARCA',
   'LA_BANDA',
   'SALTA',
+  'SANTIAGO',
   'TUCUMAN',
   'VIRGEN'
 ]
@@ -389,7 +390,7 @@ export function convertToProduct(row: Record<string, any>) {
     diameter: tireSize.diameter,
     price: finalPrice,
     price_list: finalPriceList,
-    stock: totalStock || parseInt(row.stock || 0),
+    stock: totalStock ?? parseInt(String(row.stock ?? 0)),
     description: modelNormalized,
     features: {
       codigo_propio: codigoPropio,

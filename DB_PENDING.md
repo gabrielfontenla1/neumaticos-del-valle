@@ -6,7 +6,12 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 ## ⏳ Pendiente
 
-<!-- No hay tareas pendientes actualmente -->
+- [ ] **Recalcular stock sumando SANTIAGO** (solicitado por Terminal App Code)
+  - Contexto: La columna SANTIAGO del Excel no se leía durante la importación. 151 productos tienen stock en Santiago (1200 unidades totales). 33 productos figuran como stock=0 pero tienen unidades en Santiago.
+  - El fix en código ya está aplicado (`importHelpers.ts` ahora incluye SANTIAGO). Pero los 741 productos ya importados necesitan recalcular su stock desde `features.stock_por_sucursal` + la data de SANTIAGO del Excel.
+  - Opción 1: Re-importar el Excel (recomendado, usa el código ya corregido)
+  - Opción 2: SQL manual basado en features.stock_por_sucursal (no tiene SANTIAGO, habría que parsearlo del Excel)
+  - **Recomendación**: Re-importar el Excel `stock12.xlsx` desde el admin panel para que el código corregido calcule todo bien
 
 ---
 
@@ -19,6 +24,15 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 ## ✅ Completado
 
 <!-- Cambios ya implementados con referencia a la migración -->
+
+### 2026-02-10 - Sync stock_quantity desde stock
+
+- [x] **20260210_sync_stock_quantity.sql** - Sync stock_quantity = stock
+  - UPDATE: 84 productos actualizados
+  - Corrige: 84 productos con stock_quantity stale, 5 con ghost stock (stock=0, stock_quantity>0)
+  - Verificación: 0 desync restantes
+  - Solicitado por: Terminal App Code
+  - ✅ Aplicada en producción
 
 ### 2026-02-10 - Sync price_list desde features
 

@@ -76,7 +76,7 @@ export default function ExcelImporter() {
 
       // Detectar si tiene columnas de sucursales
       const hasSucursales = headers.some(h =>
-        ['BELGRANO', 'CATAMARCA', 'LA_BANDA', 'SALTA', 'TUCUMAN', 'VIRGEN'].includes(h.toUpperCase())
+        ['BELGRANO', 'CATAMARCA', 'LA_BANDA', 'SALTA', 'SANTIAGO', 'TUCUMAN', 'VIRGEN'].includes(h.toUpperCase())
       )
 
       // Agregar metadata al preview

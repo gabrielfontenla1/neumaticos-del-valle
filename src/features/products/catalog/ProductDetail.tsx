@@ -277,9 +277,9 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
       <div className="pt-4 lg:pt-0 bg-white lg:bg-[#EDEDED]"></div>
 
       <div className="lg:max-w-[1440px] lg:mx-auto lg:px-4 sm:px-6 lg:px-8 lg:py-6">
-        {/* Desktop Breadcrumb */}
-        <div className="hidden lg:block mb-4">
-          <Button variant="ghost" size="sm" asChild className="h-auto py-1 px-2">
+        {/* Desktop Breadcrumb - above grid so columns align */}
+        <div className="hidden lg:block mb-3">
+          <Button variant="ghost" size="sm" asChild className="h-auto py-1 px-2 -ml-2">
             <Link href={backUrl} className="inline-flex items-center gap-2">
               <ArrowLeft className="h-3 w-3" />
               <span className="text-xs">{backLabel}</span>

@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     const hasSucursales = rows.length > 0 &&
       (rows[0].BELGRANO !== undefined ||
        rows[0].CATAMARCA !== undefined ||
-       rows[0].LA_BANDA !== undefined)
+       rows[0].LA_BANDA !== undefined ||
+       rows[0].SANTIAGO !== undefined)
 
     const products = rows.map(row => {
       // Si tiene formato de sucursales, usar la lógica de normalización completa
