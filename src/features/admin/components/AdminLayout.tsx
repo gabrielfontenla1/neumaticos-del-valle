@@ -247,7 +247,7 @@ function AdminLayout({ children }: AdminLayoutProps) {
         animate={{
           backgroundColor: theme.card,
           borderBottom: `1px solid ${theme.border}`,
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.2)',
+          boxShadow: currentTheme === 'chat' ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.2)',
         }}
         transition={colorTransition}
       >
@@ -461,7 +461,7 @@ function AdminLayout({ children }: AdminLayoutProps) {
         animate={{
           backgroundColor: theme.card,
           borderRight: `1px solid ${theme.border}`,
-          boxShadow: '4px 0 25px rgba(0, 0, 0, 0.5), 8px 0 40px rgba(0, 0, 0, 0.3)',
+          boxShadow: currentTheme === 'chat' ? 'none' : '4px 0 25px rgba(0, 0, 0, 0.5), 8px 0 40px rgba(0, 0, 0, 0.3)',
         }}
         transition={colorTransition}
       >

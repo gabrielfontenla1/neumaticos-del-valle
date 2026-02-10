@@ -52,6 +52,7 @@ function mapDbToConversation(row: DbConversation): WhatsAppConversation {
     conversation_state: (row.conversation_state || 'idle') as ConversationState,
     pending_tire_search: row.pending_tire_search,
     pending_appointment: row.pending_appointment,
+    source: (row.source as 'twilio' | 'baileys') || 'twilio',
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at)
   }
@@ -67,6 +68,7 @@ function mapDbToMessage(row: DbMessage): WhatsAppMessage {
     sent_by_user_id: row.sent_by_user_id,
     intent: row.intent,
     response_time_ms: row.response_time_ms,
+    source: (row.source as 'twilio' | 'baileys') || 'twilio',
     created_at: new Date(row.created_at)
   }
 }

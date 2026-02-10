@@ -55,7 +55,7 @@ interface Message {
 }
 
 // Source badge component - very small indicator
-// Twilio: Red (#F22F46), Baileys: Teal (#25D9A3)
+// Twilio: Blue (#6366F1 indigo), Baileys: Teal (#25D9A3)
 function SourceBadge({ source }: { source?: 'twilio' | 'baileys' }) {
   // Default to twilio since that's the only working provider
   const displaySource = source || 'twilio'
@@ -66,7 +66,7 @@ function SourceBadge({ source }: { source?: 'twilio' | 'baileys' }) {
         inline-flex items-center gap-0.5 text-[8px] font-medium uppercase tracking-wider
         px-1 py-0.5 rounded
         ${displaySource === 'twilio'
-          ? 'bg-[#F22F46]/20 text-[#F22F46]'
+          ? 'bg-[#6366F1]/20 text-[#6366F1]'
           : 'bg-[#25D9A3]/20 text-[#25D9A3]'
         }
       `}
@@ -403,25 +403,25 @@ export default function ChatsPage() {
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between mb-0.5">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-medium text-[#e9edef] truncate">
-                              {conv.contact_name || conv.phone || 'Sin nombre'}
-                            </span>
-                            <SourceBadge source={conv.source} />
-                          </div>
+                          <span className="font-medium text-[#e9edef] truncate">
+                            {conv.contact_name || conv.phone || 'Sin nombre'}
+                          </span>
                           <span className="text-xs text-[#8696a0] flex-shrink-0 ml-2">
                             {formatTime(conv.last_message_at)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {conv.is_paused ? (
-                            <Pause className="h-3 w-3 text-amber-500 flex-shrink-0" />
-                          ) : (
-                            <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb] flex-shrink-0" />
-                          )}
-                          <span className="text-sm text-[#8696a0] truncate">
-                            {getLastMessagePreview(conv)}
-                          </span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 min-w-0">
+                            {conv.is_paused ? (
+                              <Pause className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                            ) : (
+                              <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb] flex-shrink-0" />
+                            )}
+                            <span className="text-sm text-[#8696a0] truncate">
+                              {getLastMessagePreview(conv)}
+                            </span>
+                          </div>
+                          <SourceBadge source={conv.source} />
                         </div>
                       </div>
                     </button>
@@ -449,12 +449,9 @@ export default function ChatsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-[#e9edef] truncate">
-                        {selectedConversation.contact_name || selectedConversation.phone || 'Sin nombre'}
-                      </h3>
-                      <SourceBadge source={selectedConversation.source} />
-                    </div>
+                    <h3 className="font-medium text-[#e9edef] truncate">
+                      {selectedConversation.contact_name || selectedConversation.phone || 'Sin nombre'}
+                    </h3>
                     <p className="text-xs text-[#8696a0]">
                       {selectedConversation.is_paused ? 'Control humano activo' : 'Bot activo'}
                     </p>
@@ -544,7 +541,6 @@ export default function ChatsPage() {
                             <div className={`flex items-center justify-end gap-1 mt-1 ${
                               message.role === 'user' ? 'text-[#ffffff99]' : 'text-[#8696a0]'
                             }`}>
-                              <SourceBadge source={message.source} />
                               <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
                               {message.role === 'user' && (
                                 <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]" />
