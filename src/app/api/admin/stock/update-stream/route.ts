@@ -1,4 +1,4 @@
-// Streaming Stock Update API - Real-time progress via SSE
+// Streaming Stock Update API - Batch parallel RPC for ~90% speedup
 import { NextRequest } from 'next/server'
 import * as XLSX from 'xlsx'
 import { createClient } from '@supabase/supabase-js'
@@ -55,6 +55,7 @@ type StreamEvent =
   | { type: 'not_found'; codigo: string; descripcion: string }
   | { type: 'skipped'; codigo: string; reason: string }
   | { type: 'error'; codigo: string; message: string }
+  | { type: 'batch_progress'; batchIndex: number; totalBatches: number; batchUpdated: number; message: string }
   | { type: 'complete'; result: UpdateResult }
 
 interface UpdateResult {
@@ -162,6 +163,141 @@ function detectColumns(jsonData: ExcelRow[]) {
 
   return { hasPrices, hasStock, stockColumns, hasCorvenColumns }
 }
+
+// Build update payload for a single product row
+interface ProductUpdate {
+  id: number
+  codigo: string
+  descripcion: string
+  price?: number
+  price_list?: number
+  stock?: number
+  features?: Record<string, unknown>
+  category?: string
+  brand?: string
+}
+
+function buildUpdatePayload(
+  row: ExcelRow,
+  product: { id: string; features: Record<string, unknown> },
+  detection: { hasPrices: boolean; hasStock: boolean; hasCorvenColumns: boolean },
+  userSource: SourceType
+): { update: ProductUpdate; hasPriceUpdate: boolean; hasStockUpdate: boolean } | null {
+  const codigo = cleanCodigo(row.CODIGO_PROPIO)
+  const descripcion = row.DESCRIPCION?.substring(0, 50) || ''
+  const features = { ...product.features }
+  let hasPriceUpdate = false
+  let hasStockUpdate = false
+
+  const update: ProductUpdate = {
+    id: Number(product.id),
+    codigo,
+    descripcion,
+  }
+
+  // Update prices if available
+  if (detection.hasPrices) {
+    const contado = safeNumber(row.CONTADO, 0)
+    const publico = safeNumber(row.PUBLICO, 0)
+
+    if (contado > 0) {
+      update.price = contado
+      hasPriceUpdate = true
+    }
+    if (publico > 0) {
+      features.price_list = publico
+      update.price_list = publico
+    }
+  }
+
+  // Update stock if available
+  if (detection.hasStock) {
+    const totalStock = calculateTotalStock(row)
+    const stockByBranch = getStockByBranch(row)
+
+    update.stock = totalStock
+    features.stock_by_branch = stockByBranch
+    if ('stock_por_sucursal' in features) {
+      delete features.stock_por_sucursal
+    }
+    hasStockUpdate = true
+  }
+
+  // Save codigo_proveedor if available
+  if (row.CODIGO_PROVEEDOR) {
+    const codigoProveedor = String(row.CODIGO_PROVEEDOR).trim()
+    if (codigoProveedor && codigoProveedor !== 'nan' && codigoProveedor !== '') {
+      features.codigo_proveedor = codigoProveedor
+    }
+  }
+
+  // For Corven: update category and brand
+  if (userSource === 'corven' && detection.hasCorvenColumns) {
+    if (row.CATEGORIA) {
+      update.category = mapCorvenCategory(row.CATEGORIA)
+    }
+    if (row.MARCA) {
+      update.brand = String(row.MARCA).trim()
+    }
+    if (row.RUBRO) features.rubro = row.RUBRO
+    if (row.SUBRUBRO) features.subrubro = row.SUBRUBRO
+    if (row.PROVEEDOR) features.proveedor = row.PROVEEDOR
+  }
+
+  // Check if features changed
+  if (JSON.stringify(features) !== JSON.stringify(product.features)) {
+    update.features = features
+  }
+
+  // Only return if there's something to update
+  const hasChanges = update.price !== undefined ||
+    update.price_list !== undefined ||
+    update.stock !== undefined ||
+    update.features !== undefined ||
+    update.category !== undefined ||
+    update.brand !== undefined
+
+  if (!hasChanges) return null
+
+  return { update, hasPriceUpdate, hasStockUpdate }
+}
+
+// Split array into chunks
+function chunk<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
+// Run promises with concurrency limit
+async function parallelLimit<T>(
+  tasks: (() => Promise<T>)[],
+  limit: number
+): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = new Array(tasks.length)
+  let nextIndex = 0
+
+  async function runNext(): Promise<void> {
+    while (nextIndex < tasks.length) {
+      const index = nextIndex++
+      try {
+        const value = await tasks[index]()
+        results[index] = { status: 'fulfilled', value }
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason }
+      }
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(limit, tasks.length) }, () => runNext())
+  await Promise.all(workers)
+  return results
+}
+
+const BATCH_SIZE = 150
+const MAX_CONCURRENCY = 3
 
 export async function POST(request: NextRequest) {
   // Verify admin authentication
@@ -304,7 +440,14 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString()
       })
 
-      // Process each row
+      // ============================================================
+      // PHASE 1: Preparation (CPU only) — iterate rows, build payloads
+      // ============================================================
+      const updatePayloads: ProductUpdate[] = []
+      const branchStockRecords: Array<{ product_id: number; branch_code: string; quantity: number }> = []
+      // Track codigo→descripcion for success/error events
+      const codigoMap = new Map<number, { codigo: string; descripcion: string; precio: number; stock: number }>()
+
       for (let i = 0; i < normalizedData.length; i++) {
         const row = normalizedData[i]
         const codigo = cleanCodigo(row.CODIGO_PROPIO)
@@ -316,143 +459,216 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Emit processing event
-        emit({
-          type: 'processing',
-          codigo,
-          descripcion
-        })
-
-        // Small delay every 5 items for UI responsiveness
-        if (i % 5 === 0) {
-          await new Promise(r => setTimeout(r, 5))
-        }
-
         const product = productMap.get(codigo)
 
         if (!product) {
           result.notFound++
-          emit({
-            type: 'not_found',
-            codigo,
-            descripcion
-          })
-
-          // Emit progress every 10 items
-          if ((i + 1) % 10 === 0) {
-            emit({
-              type: 'progress',
-              current: i + 1,
-              total: normalizedData.length,
-              percent: Math.round(((i + 1) / normalizedData.length) * 100)
-            })
-          }
+          emit({ type: 'not_found', codigo, descripcion })
           continue
         }
 
-        // Prepare update data
-        const updateData: Record<string, unknown> = {}
-        const features = { ...product.features }
-        let contado = 0
-        let totalStock = 0
-
-        // Update prices if available
-        if (detection.hasPrices) {
-          contado = safeNumber(row.CONTADO, 0)
-          const publico = safeNumber(row.PUBLICO, 0)
-
-          if (contado > 0) {
-            updateData.price = contado
-            result.priceUpdates++
-          }
-          if (publico > 0) {
-            features.price_list = publico
-            updateData.price_list = publico
-          }
+        const payload = buildUpdatePayload(row, product, detection, userSource)
+        if (!payload) {
+          result.skipped++
+          continue
         }
 
-        // Update stock if available
+        updatePayloads.push(payload.update)
+        if (payload.hasPriceUpdate) result.priceUpdates++
+        if (payload.hasStockUpdate) result.stockUpdates++
+
+        codigoMap.set(Number(product.id), {
+          codigo,
+          descripcion,
+          precio: payload.update.price || 0,
+          stock: payload.update.stock || 0,
+        })
+
+        // Collect branch_stock records
         if (detection.hasStock) {
-          totalStock = calculateTotalStock(row)
           const stockByBranch = getStockByBranch(row)
-
-          updateData.stock = totalStock
-          features.stock_by_branch = stockByBranch
-          if ('stock_por_sucursal' in features) {
-            delete features.stock_por_sucursal
-          }
-          result.stockUpdates++
-        }
-
-        // Save codigo_proveedor if available
-        if (row.CODIGO_PROVEEDOR) {
-          const codigoProveedor = String(row.CODIGO_PROVEEDOR).trim()
-          if (codigoProveedor && codigoProveedor !== 'nan' && codigoProveedor !== '') {
-            features.codigo_proveedor = codigoProveedor
-          }
-        }
-
-        // For Corven: update category and brand
-        if (userSource === 'corven' && detection.hasCorvenColumns) {
-          if (row.CATEGORIA) {
-            updateData.category = mapCorvenCategory(row.CATEGORIA)
-          }
-          if (row.MARCA) {
-            updateData.brand = String(row.MARCA).trim()
-          }
-          if (row.RUBRO) features.rubro = row.RUBRO
-          if (row.SUBRUBRO) features.subrubro = row.SUBRUBRO
-          if (row.PROVEEDOR) features.proveedor = row.PROVEEDOR
-        }
-
-        // Update features if changed
-        if (JSON.stringify(features) !== JSON.stringify(product.features)) {
-          updateData.features = features
-        }
-
-        // Execute update
-        if (Object.keys(updateData).length > 0) {
-          try {
-            const { error: updateError } = await supabaseAdmin
-              .from('products')
-              .update(updateData)
-              .eq('id', product.id)
-
-            if (updateError) {
-              result.errors.push({ codigo, error: updateError.message })
-              emit({
-                type: 'error',
-                codigo,
-                message: updateError.message
-              })
-            } else {
-              result.updated++
-              emit({
-                type: 'success',
-                codigo,
-                precio: contado,
-                stock: totalStock,
-                descripcion
-              })
-            }
-          } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-            result.errors.push({ codigo, error: errorMsg })
-            emit({
-              type: 'error',
-              codigo,
-              message: errorMsg
+          for (const [branchCode, quantity] of Object.entries(stockByBranch)) {
+            branchStockRecords.push({
+              product_id: Number(product.id),
+              branch_code: branchCode,
+              quantity,
             })
           }
         }
+      }
 
-        // Emit progress every 10 items
-        if ((i + 1) % 10 === 0) {
+      // Progress: preparation complete (30%)
+      emit({
+        type: 'progress',
+        current: 0,
+        total: normalizedData.length,
+        percent: 30
+      })
+
+      emit({
+        type: 'batch_progress',
+        batchIndex: 0,
+        totalBatches: Math.ceil(updatePayloads.length / BATCH_SIZE),
+        batchUpdated: 0,
+        message: `Preparacion: ${updatePayloads.length} productos para actualizar, ${result.notFound} no encontrados`
+      })
+
+      // ============================================================
+      // PHASE 2: Batch updates via RPC (parallel, max 3 concurrent)
+      // ============================================================
+      if (updatePayloads.length > 0) {
+        const batches = chunk(updatePayloads, BATCH_SIZE)
+        const totalBatches = batches.length
+        let completedBatches = 0
+
+        const tasks = batches.map((batch, batchIdx) => {
+          return async () => {
+            // Build the JSONB payload for the RPC
+            const rpcPayload = batch.map(item => {
+              const obj: Record<string, unknown> = { id: item.id }
+              if (item.price !== undefined) obj.price = item.price
+              if (item.price_list !== undefined) obj.price_list = item.price_list
+              if (item.stock !== undefined) obj.stock = item.stock
+              if (item.features !== undefined) obj.features = item.features
+              if (item.category !== undefined) obj.category = item.category
+              if (item.brand !== undefined) obj.brand = item.brand
+              return obj
+            })
+
+            const { data, error } = await supabaseAdmin.rpc('bulk_update_products', {
+              p_updates: rpcPayload
+            })
+
+            completedBatches++
+            const percent = 30 + Math.round((completedBatches / totalBatches) * 50)
+
+            if (error) {
+              // Entire batch failed — record errors for all items
+              for (const item of batch) {
+                const info = codigoMap.get(item.id)
+                result.errors.push({
+                  codigo: info?.codigo || String(item.id),
+                  error: error.message
+                })
+                if (info) {
+                  emit({ type: 'error', codigo: info.codigo, message: error.message })
+                }
+              }
+
+              emit({
+                type: 'batch_progress',
+                batchIndex: batchIdx + 1,
+                totalBatches,
+                batchUpdated: 0,
+                message: `Lote ${batchIdx + 1}/${totalBatches} ERROR: ${error.message}`
+              })
+            } else {
+              const batchUpdated = data?.updated ?? batch.length
+              result.updated += batchUpdated
+
+              // Emit individual success events for UI
+              for (const item of batch) {
+                const info = codigoMap.get(item.id)
+                if (info) {
+                  emit({
+                    type: 'success',
+                    codigo: info.codigo,
+                    precio: info.precio,
+                    stock: info.stock,
+                    descripcion: info.descripcion
+                  })
+                }
+              }
+
+              // Handle per-item errors from RPC response
+              const rpcErrors = data?.errors || []
+              if (Array.isArray(rpcErrors)) {
+                for (const rpcErr of rpcErrors) {
+                  if (rpcErr && typeof rpcErr === 'object' && 'id' in rpcErr) {
+                    const errId = Number(rpcErr.id)
+                    const info = codigoMap.get(errId)
+                    result.errors.push({
+                      codigo: info?.codigo || String(errId),
+                      error: String(rpcErr.error || 'Unknown RPC error')
+                    })
+                    if (info) {
+                      emit({ type: 'error', codigo: info.codigo, message: String(rpcErr.error) })
+                    }
+                  }
+                }
+              }
+
+              emit({
+                type: 'batch_progress',
+                batchIndex: batchIdx + 1,
+                totalBatches,
+                batchUpdated,
+                message: `Lote ${batchIdx + 1}/${totalBatches}: ${batchUpdated} actualizados`
+              })
+            }
+
+            // Progress update
+            emit({
+              type: 'progress',
+              current: Math.min(
+                Math.round((completedBatches / totalBatches) * normalizedData.length),
+                normalizedData.length
+              ),
+              total: normalizedData.length,
+              percent
+            })
+
+            return data
+          }
+        })
+
+        await parallelLimit(tasks, MAX_CONCURRENCY)
+      }
+
+      // ============================================================
+      // PHASE 3: Sync branch_stock via RPC (single call)
+      // ============================================================
+      if (branchStockRecords.length > 0) {
+        emit({
+          type: 'batch_progress',
+          batchIndex: 0,
+          totalBatches: 1,
+          batchUpdated: 0,
+          message: `Sincronizando stock por sucursal: ${branchStockRecords.length} registros...`
+        })
+
+        try {
+          const { data: branchResult, error: branchError } = await supabaseAdmin.rpc(
+            'bulk_upsert_branch_stock',
+            { p_records: branchStockRecords }
+          )
+
+          if (branchError) {
+            emit({
+              type: 'batch_progress',
+              batchIndex: 1,
+              totalBatches: 1,
+              batchUpdated: 0,
+              message: `Error sincronizando branch_stock: ${branchError.message}`
+            })
+          } else {
+            const upserted = branchResult?.upserted ?? branchStockRecords.length
+            emit({
+              type: 'batch_progress',
+              batchIndex: 1,
+              totalBatches: 1,
+              batchUpdated: upserted,
+              message: `branch_stock sincronizado: ${upserted} registros`
+            })
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Unknown error'
           emit({
-            type: 'progress',
-            current: i + 1,
-            total: normalizedData.length,
-            percent: Math.round(((i + 1) / normalizedData.length) * 100)
+            type: 'batch_progress',
+            batchIndex: 1,
+            totalBatches: 1,
+            batchUpdated: 0,
+            message: `Error branch_stock: ${msg}`
           })
         }
       }

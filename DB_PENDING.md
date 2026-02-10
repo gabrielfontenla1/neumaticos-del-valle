@@ -25,6 +25,15 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 <!-- Cambios ya implementados con referencia a la migración -->
 
+### 2026-02-11 - Funciones RPC bulk para stock import
+
+- [x] **20260211_bulk_stock_update.sql** - 2 funciones RPC para importación batch
+  - `bulk_update_products(p_updates JSONB)` — Update masivo de products en 1 transacción
+  - `bulk_upsert_branch_stock(p_records JSONB)` — UPSERT branch_stock por branch code
+  - Verificación: 2 funciones confirmadas en information_schema.routines
+  - Solicitado por: Terminal App Code
+  - ✅ Aplicada en producción
+
 ### 2026-02-10 - Sync stock_quantity desde stock
 
 - [x] **20260210_sync_stock_quantity.sql** - Sync stock_quantity = stock

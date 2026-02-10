@@ -71,6 +71,7 @@ type StreamEvent =
   | { type: 'not_found'; codigo: string; descripcion: string }
   | { type: 'skipped'; codigo: string; reason: string }
   | { type: 'error'; codigo: string; message: string }
+  | { type: 'batch_progress'; batchIndex: number; totalBatches: number; batchUpdated: number; message: string }
   | { type: 'complete'; result: UpdateResult }
 
 // ===========================================
@@ -445,6 +446,10 @@ export function StockUpdateModal({
                 case 'error':
                   setStats(prev => ({ ...prev, errors: prev.errors + 1 }))
                   addLog('error', data.message, { codigo: data.codigo })
+                  break
+
+                case 'batch_progress':
+                  addLog('info', data.message)
                   break
 
                 case 'complete': {
