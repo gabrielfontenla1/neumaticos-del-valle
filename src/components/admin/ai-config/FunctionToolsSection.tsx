@@ -181,87 +181,93 @@ export function FunctionToolsSection({
                   <Switch
                     checked={tool.enabled}
                     onCheckedChange={(checked) => updateTool(index, { enabled: checked })}
+                    className="data-[state=checked]:bg-[#00a884]"
                   />
                 </div>
 
                 <CollapsibleContent>
-                  <div className="p-4 pt-0 space-y-4 border-t border-[#2a3942]">
-                    {/* Function Name */}
-                    <div>
-                      <label className="text-sm font-medium text-white">Nombre</label>
-                      <Input
-                        value={tool.name}
-                        onChange={(e) => updateTool(index, { name: e.target.value })}
-                        placeholder="function_name"
-                        className="bg-[#202c33] border-[#2a3942] text-gray-100 font-mono"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Formato: snake_case (ej: book_appointment)
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label className="text-sm font-medium text-white">Descripción</label>
-                      <Textarea
-                        value={tool.description}
-                        onChange={(e) => updateTool(index, { description: e.target.value })}
-                        placeholder="¿Qué hace esta función?"
-                        className="bg-[#202c33] border-[#2a3942] text-gray-100 min-h-[60px]"
-                      />
-                    </div>
-
-                    {/* Parameters JSON */}
-                    <div>
-                      <label className="text-sm font-medium text-white">Parámetros (JSON Schema)</label>
-                      <JsonEditor
-                        value={JSON.stringify(tool.parameters, null, 2)}
-                        onChange={(value) => updateToolParameters(index, value)}
-                        minHeight="200px"
-                      />
-                    </div>
-
-                    {/* Test Function */}
-                    <div className="border-t border-[#2a3942] pt-4 space-y-3">
-                      <h5 className="text-sm font-medium text-white">Probar Función</h5>
-                      <Textarea
-                        value={testMessage}
-                        onChange={(e) => setTestMessage(e.target.value)}
-                        placeholder="Mensaje de prueba que debería invocar esta función..."
-                        className="bg-[#202c33] border-[#2a3942] text-gray-100 min-h-[60px]"
-                      />
-                      <Button
-                        onClick={() => testTool(index)}
-                        disabled={testingTool === index || !testMessage}
-                        variant="outline"
-                        size="sm"
-                        className="border-blue-500 text-blue-400 hover:bg-blue-500/20"
-                      >
-                        {testingTool === index ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <TestTube2 className="h-4 w-4 mr-2" />
-                        )}
-                        Probar con OpenAI
-                      </Button>
-                      {testResult && (
-                        <div className="bg-[#202c33] border border-[#2a3942] rounded-lg p-3">
-                          <pre className="text-xs text-gray-300 whitespace-pre-wrap">{testResult}</pre>
+                  <div className="p-4 pt-0 border-t border-[#2a3942]">
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      {/* Left Column - Name, Description, Actions */}
+                      <div className="space-y-4">
+                        {/* Function Name */}
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-[#e9edef]">Nombre</label>
+                          <Input
+                            value={tool.name}
+                            onChange={(e) => updateTool(index, { name: e.target.value })}
+                            placeholder="function_name"
+                            className="bg-[#202c33] border-[#2a3942] text-[#e9edef] font-mono h-9 text-sm"
+                          />
+                          <p className="text-[10px] text-[#8696a0]">
+                            Formato: snake_case (ej: book_appointment)
+                          </p>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Delete Button */}
-                    <div className="border-t border-[#2a3942] pt-4">
-                      <Button
-                        onClick={() => deleteTool(index)}
-                        variant="outline"
-                        size="sm"
-                        className="border-red-500 text-red-400 hover:bg-red-500/20"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Eliminar Función
-                      </Button>
+                        {/* Description */}
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-[#e9edef]">Descripción</label>
+                          <Textarea
+                            value={tool.description}
+                            onChange={(e) => updateTool(index, { description: e.target.value })}
+                            placeholder="¿Qué hace esta función?"
+                            className="bg-[#202c33] border-[#2a3942] text-[#e9edef] min-h-[60px] text-sm resize-none"
+                          />
+                        </div>
+
+                        {/* Test Function */}
+                        <div className="border-t border-[#2a3942] pt-4 space-y-2">
+                          <h5 className="text-sm font-medium text-[#e9edef]">Probar Función</h5>
+                          <Textarea
+                            value={testMessage}
+                            onChange={(e) => setTestMessage(e.target.value)}
+                            placeholder="Mensaje de prueba..."
+                            className="bg-[#202c33] border-[#2a3942] text-[#e9edef] min-h-[60px] text-sm resize-none"
+                          />
+                          <Button
+                            onClick={() => testTool(index)}
+                            disabled={testingTool === index || !testMessage}
+                            variant="outline"
+                            size="sm"
+                            className="border-blue-500/50 text-blue-400 hover:bg-blue-500/20"
+                          >
+                            {testingTool === index ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <TestTube2 className="h-4 w-4 mr-2" />
+                            )}
+                            Probar con OpenAI
+                          </Button>
+                          {testResult && (
+                            <div className="bg-[#202c33] border border-[#2a3942] rounded-lg p-3">
+                              <pre className="text-xs text-[#e9edef] whitespace-pre-wrap">{testResult}</pre>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Delete Button */}
+                        <div className="border-t border-[#2a3942] pt-3">
+                          <Button
+                            onClick={() => deleteTool(index)}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-500/50 text-red-400 hover:bg-red-500/20"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar Función
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Right Column - Parameters JSON */}
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-[#e9edef]">Parámetros (JSON Schema)</label>
+                        <JsonEditor
+                          value={JSON.stringify(tool.parameters, null, 2)}
+                          onChange={(value) => updateToolParameters(index, value)}
+                          minHeight="340px"
+                        />
+                      </div>
                     </div>
                   </div>
                 </CollapsibleContent>

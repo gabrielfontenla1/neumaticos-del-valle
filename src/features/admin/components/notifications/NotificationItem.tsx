@@ -110,14 +110,6 @@ function NotificationItemComponent({
         backgroundColor: notification.is_read ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
       }}
     >
-      {/* Unread indicator */}
-      {!notification.is_read && (
-        <div
-          className="absolute left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
-          style={{ backgroundColor: theme.primary }}
-        />
-      )}
-
       {/* Dismiss button */}
       {onDismiss && (
         <button
@@ -130,7 +122,17 @@ function NotificationItemComponent({
         </button>
       )}
 
-      <div className="flex items-start gap-3 pl-2">
+      <div className="flex items-start gap-3">
+        {/* Unread indicator - aligned to icon center */}
+        <div className="w-2 flex-shrink-0 flex items-center" style={{ height: 36 }}>
+          {!notification.is_read && (
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: theme.primary }}
+            />
+          )}
+        </div>
+
         {/* Icon */}
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Product } from '../types'
 import { AddToCartButton } from '@/features/cart/components/AddToCartButton'
+import { resolvePriceList, resolveDiscountPercentage } from '../utils/priceUtils'
 
 interface ProductCardProps {
   product: Product
@@ -52,14 +53,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     return product.model || product.description || product.name
   }
 
-  // Access price_list from features if not directly on product
-  // Fallback: calcular precio de lista para 25% de descuento (price / 0.75)
-  const priceListFromFeatures = (product.features as Record<string, unknown>)?.price_list as number | undefined
-  const priceList = priceListFromFeatures || product.price_list || Math.round(product.price / 0.75)
-
-  const discount = priceList && priceList > product.price
-    ? Math.round(((priceList - product.price) / priceList) * 100)
-    : 25
+  const priceList = resolvePriceList(product)
+  const discount = resolveDiscountPercentage(product)
 
   // Calculate installments (6 cuotas)
   const installmentPrice = product.price / 6

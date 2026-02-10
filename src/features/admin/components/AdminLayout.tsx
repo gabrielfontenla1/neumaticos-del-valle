@@ -4,7 +4,7 @@
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { memo, useMemo, useCallback } from 'react'
+import { memo, useMemo, useCallback, useRef, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -194,6 +194,34 @@ function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname()
   const { session, logout } = useAuth()
   const [isDarkTheme, setIsDarkTheme] = useState(true)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [msgOpen, setMsgOpen] = useState(false)
+  const notifRef = useRef<HTMLDivElement>(null)
+  const msgRef = useRef<HTMLDivElement>(null)
+
+  // Close notification panel on click outside
+  useEffect(() => {
+    if (!notifOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [notifOpen])
+
+  // Close messages panel on click outside
+  useEffect(() => {
+    if (!msgOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (msgRef.current && !msgRef.current.contains(e.target as Node)) {
+        setMsgOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [msgOpen])
 
   // Get current theme based on pathname
   const currentTheme = useMemo(() => getThemeForPath(pathname), [pathname])
@@ -276,112 +304,145 @@ function AdminLayout({ children }: AdminLayoutProps) {
         {/* Right Section - Actions and Profile */}
         <div className="flex items-center gap-3">
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="relative p-2 rounded-lg hover:bg-white/10 transition-colors">
-                <motion.div animate={{ color: theme.mutedForeground }} transition={quickColorTransition}>
-                  <Bell className="w-5 h-5" />
+          <div className="relative" ref={notifRef}>
+            <button
+              className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+              onClick={() => setNotifOpen((prev) => !prev)}
+            >
+              <motion.div animate={{ color: theme.mutedForeground }} transition={quickColorTransition}>
+                <Bell className="w-5 h-5" />
+              </motion.div>
+              <AnimatePresence>
+                {unreadCount > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1, backgroundColor: theme.primary }}
+                    exit={{ scale: 0 }}
+                    transition={quickColorTransition}
+                    className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+            <AnimatePresence>
+              {notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="absolute right-0 top-full mt-2 z-50 rounded-xl overflow-hidden"
+                  style={{
+                    backgroundColor: theme.card,
+                    border: `1px solid ${theme.border}`,
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  <NotificationDropdown
+                    notifications={notifications}
+                    loading={notificationsLoading}
+                    error={notificationsError}
+                    onMarkAsRead={handleMarkAsRead}
+                    onMarkAllAsRead={handleMarkAllAsRead}
+                    theme={theme}
+                  />
                 </motion.div>
-                <AnimatePresence>
-                  {unreadCount > 0 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1, backgroundColor: theme.primary }}
-                      exit={{ scale: 0 }}
-                      transition={quickColorTransition}
-                      className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
-                    >
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="p-0" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
-              <NotificationDropdown
-                notifications={notifications}
-                loading={notificationsLoading}
-                error={notificationsError}
-                onMarkAsRead={handleMarkAsRead}
-                onMarkAllAsRead={handleMarkAllAsRead}
-                theme={theme}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Messages (System Notifications) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="relative p-2 rounded-lg hover:bg-white/10 transition-colors">
-                <motion.div animate={{ color: theme.mutedForeground }} transition={quickColorTransition}>
-                  <Mail className="w-5 h-5" />
-                </motion.div>
-                <AnimatePresence>
-                  {unreadSystemCount > 0 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1, backgroundColor: theme.primary }}
-                      exit={{ scale: 0 }}
-                      transition={quickColorTransition}
-                      className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
-                    >
-                      {unreadSystemCount > 99 ? '99+' : unreadSystemCount}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
-              <DropdownMenuLabel style={{ color: theme.foreground }}>Mensajes del Sistema</DropdownMenuLabel>
-              <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
-              <div className="p-2 space-y-2">
-                {systemMessages.length === 0 ? (
-                  <div className="px-4 py-6 text-center">
-                    <div
-                      className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                      style={{ backgroundColor: `${theme.mutedForeground}20` }}
-                    >
-                      <Mail className="w-6 h-6" style={{ color: theme.mutedForeground }} />
-                    </div>
-                    <p className="text-sm font-medium" style={{ color: theme.foreground }}>
-                      Sin mensajes
-                    </p>
-                    <p className="text-xs mt-1" style={{ color: theme.mutedForeground }}>
-                      Los mensajes del sistema aparecerán aquí
-                    </p>
-                  </div>
-                ) : (
-                  systemMessages.slice(0, 5).map((msg) => (
-                    <div
-                      key={msg.id}
-                      className="p-3 rounded hover:bg-white/5 cursor-pointer"
-                      onClick={() => handleMarkAsRead(msg.id)}
-                      style={{
-                        backgroundColor: msg.is_read ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
-                      }}
-                    >
-                      <p className="text-sm font-medium" style={{ color: theme.foreground }}>
-                        {msg.title}
-                      </p>
-                      <p className="text-xs mt-1 line-clamp-2" style={{ color: theme.mutedForeground }}>
-                        {msg.message}
-                      </p>
-                    </div>
-                  ))
+          <div className="relative" ref={msgRef}>
+            <button
+              className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+              onClick={() => setMsgOpen((prev) => !prev)}
+            >
+              <motion.div animate={{ color: theme.mutedForeground }} transition={quickColorTransition}>
+                <Mail className="w-5 h-5" />
+              </motion.div>
+              <AnimatePresence>
+                {unreadSystemCount > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1, backgroundColor: theme.primary }}
+                    exit={{ scale: 0 }}
+                    transition={quickColorTransition}
+                    className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-medium text-white rounded-full"
+                  >
+                    {unreadSystemCount > 99 ? '99+' : unreadSystemCount}
+                  </motion.div>
                 )}
-              </div>
-              <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
-              <div className="p-2">
-                <Link
-                  href="/admin/mensajes"
-                  className="text-xs font-medium hover:opacity-80 transition-opacity block text-center py-1"
-                  style={{ color: theme.primary }}
+              </AnimatePresence>
+            </button>
+            <AnimatePresence>
+              {msgOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="absolute right-0 top-full mt-2 z-50 w-80 rounded-xl overflow-hidden"
+                  style={{
+                    backgroundColor: theme.card,
+                    border: `1px solid ${theme.border}`,
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3)',
+                  }}
                 >
-                  Ver todos los mensajes
-                </Link>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <div className="px-4 py-3" style={{ borderBottom: `1px solid ${theme.border}` }}>
+                    <p className="text-sm font-semibold" style={{ color: theme.foreground }}>Mensajes del Sistema</p>
+                  </div>
+                  <div className="p-2 space-y-1">
+                    {systemMessages.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <div
+                          className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
+                          style={{ backgroundColor: `${theme.mutedForeground}20` }}
+                        >
+                          <Mail className="w-6 h-6" style={{ color: theme.mutedForeground }} />
+                        </div>
+                        <p className="text-sm font-medium" style={{ color: theme.foreground }}>
+                          Sin mensajes
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: theme.mutedForeground }}>
+                          Los mensajes del sistema aparecerán aquí
+                        </p>
+                      </div>
+                    ) : (
+                      systemMessages.slice(0, 5).map((msg) => (
+                        <div
+                          key={msg.id}
+                          className="p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors"
+                          onClick={() => handleMarkAsRead(msg.id)}
+                          style={{
+                            backgroundColor: msg.is_read ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+                          }}
+                        >
+                          <p className="text-sm font-medium" style={{ color: theme.foreground }}>
+                            {msg.title}
+                          </p>
+                          <p className="text-xs mt-1 line-clamp-2" style={{ color: theme.mutedForeground }}>
+                            {msg.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="p-2" style={{ borderTop: `1px solid ${theme.border}` }}>
+                    <Link
+                      href="/admin/mensajes"
+                      className="text-xs font-medium hover:opacity-80 transition-opacity block text-center py-1"
+                      style={{ color: theme.primary }}
+                      onClick={() => setMsgOpen(false)}
+                    >
+                      Ver todos los mensajes
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* User Profile */}
           <DropdownMenu>

@@ -82,7 +82,7 @@ export default function UsersManagementPage() {
   }
 
   return (
-    <main className="p-6 space-y-6 bg-[#30302e] min-h-screen">
+    <main className="p-6 pl-10 space-y-6 min-h-screen">
       {/* Header */}
       <UsersHeader
         totalUsers={stats.total}

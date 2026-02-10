@@ -136,14 +136,14 @@ export default function ConfiguracionPage() {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
+      <div className="p-6 pl-10 flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 pl-10 space-y-6 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

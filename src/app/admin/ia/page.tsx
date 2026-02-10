@@ -146,7 +146,7 @@ export default function IAPage() {
   ];
 
   return (
-    <div className="h-full flex flex-col p-6">
+    <div className="h-full flex flex-col p-6 pl-10">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2 text-white">Asistente IA</h1>
         <p className="text-gray-400">

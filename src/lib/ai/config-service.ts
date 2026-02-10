@@ -97,14 +97,17 @@ async function setConfig<T>(
     .eq('key', key)
     .single();
 
-  // Upsert new value
+  // Upsert new value (conflict on unique 'key' column, not the UUID primary key)
   const { error } = await supabase
     .from('app_settings')
-    .upsert({
-      key,
-      value: value as unknown as Record<string, unknown>,
-      updated_at: new Date().toISOString(),
-    });
+    .upsert(
+      {
+        key,
+        value: value as unknown as Record<string, unknown>,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'key' }
+    );
 
   if (error) throw error;
 

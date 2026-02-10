@@ -95,13 +95,13 @@ export function CartItem({ item }: CartItemProps) {
           </p>
 
           {/* Stock info */}
-          {item.stock_quantity > 5 ? (
+          {item.stock_quantity >= 10 ? (
             <p className="text-xs text-gray-500 mt-1 font-medium">
-              +{item.stock_quantity} disponibles
+              +10 disponibles
             </p>
-          ) : item.stock_quantity <= 5 && item.stock_quantity > 0 ? (
+          ) : item.stock_quantity > 0 ? (
             <p className="text-xs text-orange-600 mt-1 font-medium">
-              Últimos {item.stock_quantity} disponibles
+              {item.stock_quantity === 1 ? 'Última unidad' : `${item.stock_quantity} disponibles`}
             </p>
           ) : null}
 
@@ -185,13 +185,13 @@ export function CartItem({ item }: CartItemProps) {
             </p>
 
             {/* Stock info */}
-            {item.stock_quantity > 5 ? (
+            {item.stock_quantity >= 10 ? (
               <p className="text-xs text-gray-500 mt-2 font-medium">
-                +{item.stock_quantity} disponibles
+                +10 disponibles
               </p>
-            ) : item.stock_quantity <= 5 && item.stock_quantity > 0 ? (
+            ) : item.stock_quantity > 0 ? (
               <p className="text-xs text-orange-600 mt-2 font-medium">
-                Últimos {item.stock_quantity} disponibles
+                {item.stock_quantity === 1 ? 'Última unidad' : `${item.stock_quantity} disponibles`}
               </p>
             ) : null}
 

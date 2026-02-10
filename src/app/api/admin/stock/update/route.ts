@@ -580,6 +580,7 @@ export async function POST(request: NextRequest) {
         }
         if (publico > 0) {
           features.price_list = publico
+          updateData.price_list = publico
         }
       }
 

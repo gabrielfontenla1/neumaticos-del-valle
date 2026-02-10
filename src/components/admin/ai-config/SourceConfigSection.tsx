@@ -192,20 +192,23 @@ export function SourceConfigSection() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Section: Providers */}
-      <Card className="bg-[#202c33] border-[#2a3942]">
-        <div className="p-4 border-b border-[#2a3942]">
-          <div className="flex items-center gap-3">
-            <Radio className="h-5 w-5 text-[#00a884]" />
-            <h3 className="text-lg font-semibold text-white">Proveedores de WhatsApp</h3>
-          </div>
-          <p className="text-sm text-[#8696a0] mt-1 ml-8">
-            Selecciona los proveedores de mensajería activos
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Radio className="h-5 w-5 text-[#00a884]" />
+        <div>
+          <h3 className="text-lg font-semibold text-white">Proveedores de WhatsApp</h3>
+          <p className="text-sm text-[#8696a0]">
+            Configura los proveedores de mensajería activos
           </p>
         </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-3">
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Twilio Column */}
+        <Card className="bg-[#202c33] border-[#2a3942] flex flex-col">
+          <div className="p-4 border-b border-[#2a3942]">
             <ProviderCard
               provider="twilio"
               enabled={config.twilio_enabled}
@@ -213,6 +216,22 @@ export function SourceConfigSection() {
               isSaving={isSaving}
               onToggle={(enabled) => handleToggle('twilio', enabled)}
             />
+          </div>
+          <div className="p-4 flex-1">
+            {config.twilio_enabled ? (
+              <TwilioConfigPanel />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-8 text-[#8696a0]">
+                <MessageSquare className="h-10 w-10 mb-3 opacity-30" />
+                <p className="text-sm">Habilita Twilio para configurar</p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Baileys Column */}
+        <Card className="bg-[#202c33] border-[#2a3942] flex flex-col">
+          <div className="p-4 border-b border-[#2a3942]">
             <ProviderCard
               provider="baileys"
               enabled={config.baileys_enabled}
@@ -221,38 +240,22 @@ export function SourceConfigSection() {
               onToggle={(enabled) => handleToggle('baileys', enabled)}
             />
           </div>
-        </div>
-      </Card>
-
-      {/* Section: Twilio Configuration */}
-      {config.twilio_enabled && (
-        <Card className="bg-[#202c33] border-[#2a3942]">
-          <div className="p-4 border-b border-[#2a3942]">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-5 w-5 text-[#6366F1]" />
-              <h3 className="text-lg font-semibold text-white">Configuración de Twilio</h3>
-            </div>
-          </div>
-          <div className="p-4">
-            <TwilioConfigPanel />
-          </div>
-        </Card>
-      )}
-
-      {/* Section: Baileys Configuration (when available) */}
-      {config.baileys_enabled && (
-        <Card className="bg-[#202c33] border-[#2a3942]">
-          <div className="p-4 border-b border-[#2a3942]">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-[#25D9A3]" />
-              <h3 className="text-lg font-semibold text-white">Configuración de Baileys</h3>
-            </div>
-          </div>
-          <div className="p-4">
-            <BaileysConfigPanel />
+          <div className="p-4 flex-1">
+            {config.baileys_enabled ? (
+              <BaileysConfigPanel />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-8 text-[#8696a0]">
+                <Smartphone className="h-10 w-10 mb-3 opacity-30" />
+                <p className="text-sm text-center">Próximamente disponible</p>
+                <div className="flex flex-wrap justify-center gap-2 text-xs mt-3">
+                  <span className="px-2 py-1 rounded bg-[#2a3942] text-[#6a7a82]">Sin costo mensual</span>
+                  <span className="px-2 py-1 rounded bg-[#2a3942] text-[#6a7a82]">Conexión directa</span>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
-      )}
+      </div>
     </div>
   )
 }

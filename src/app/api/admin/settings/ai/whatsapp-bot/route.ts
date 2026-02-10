@@ -80,8 +80,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[WhatsApp Bot Config] POST Error:', error);
+    const message = error instanceof Error
+      ? error.message
+      : (error && typeof error === 'object' && 'message' in error)
+        ? String((error as { message: unknown }).message)
+        : 'Unknown error';
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: message },
       { status: 500 }
     );
   }

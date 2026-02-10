@@ -388,6 +388,7 @@ export function convertToProduct(row: Record<string, any>) {
     profile: tireSize.profile,
     diameter: tireSize.diameter,
     price: finalPrice,
+    price_list: finalPriceList,
     stock: totalStock || parseInt(row.stock || 0),
     description: modelNormalized,
     features: {

@@ -6,16 +6,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { toast } from 'sonner'
 import {
   MessageSquare,
   Wrench,
   Settings,
   Bot,
   AlertCircle,
-  CheckCircle2,
   Radio,
   Sparkles,
 } from 'lucide-react'
@@ -37,7 +38,6 @@ type Section = 'prompts' | 'specialized' | 'functions' | 'models' | 'bot' | 'sou
 export function AIConfigPanel() {
   const [activeSection, setActiveSection] = useState<Section>('prompts')
   const [isDirty, setIsDirty] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Configuration states
   const [promptsConfig, setPromptsConfig] = useState<AIPromptsConfig | null>(null)
@@ -47,7 +47,6 @@ export function AIConfigPanel() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Load configurations
   useEffect(() => {
@@ -56,7 +55,6 @@ export function AIConfigPanel() {
 
   const loadConfigs = async () => {
     setIsLoading(true)
-    setError(null)
 
     try {
       const [promptsRes, functionsRes, modelsRes, botRes] = await Promise.all([
@@ -67,7 +65,7 @@ export function AIConfigPanel() {
       ])
 
       if (!promptsRes.ok || !functionsRes.ok || !modelsRes.ok || !botRes.ok) {
-        throw new Error('Failed to load configurations')
+        throw new Error('Error al cargar las configuraciones')
       }
 
       const [promptsData, functionsData, modelsData, botData] = await Promise.all([
@@ -82,7 +80,7 @@ export function AIConfigPanel() {
       setModelsConfig(modelsData.config)
       setBotConfig(botData.config)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading configurations')
+      toast.error(err instanceof Error ? err.message : 'Error al cargar las configuraciones')
     } finally {
       setIsLoading(false)
     }
@@ -91,7 +89,6 @@ export function AIConfigPanel() {
   const handleSavePrompts = async () => {
     if (!promptsConfig) return
     setIsSaving(true)
-    setError(null)
 
     try {
       const response = await fetch('/api/admin/settings/ai/prompts', {
@@ -102,12 +99,11 @@ export function AIConfigPanel() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to save')
+        throw new Error(data.error || 'Error al guardar')
       }
 
-      setSaveSuccess(true)
       setIsDirty(false)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      toast.success('Prompts guardados correctamente')
 
       // Invalidate cache
       await fetch('/api/admin/settings/ai/invalidate', {
@@ -116,7 +112,7 @@ export function AIConfigPanel() {
         body: JSON.stringify({ key: 'ai_prompts_config' }),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error saving')
+      toast.error(err instanceof Error ? err.message : 'Error al guardar prompts')
     } finally {
       setIsSaving(false)
     }
@@ -125,7 +121,6 @@ export function AIConfigPanel() {
   const handleSaveFunctions = async () => {
     if (!functionsConfig) return
     setIsSaving(true)
-    setError(null)
 
     try {
       const response = await fetch('/api/admin/settings/ai/function-tools', {
@@ -136,12 +131,11 @@ export function AIConfigPanel() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to save')
+        throw new Error(data.error || 'Error al guardar')
       }
 
-      setSaveSuccess(true)
       setIsDirty(false)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      toast.success('Funciones guardadas correctamente')
 
       // Invalidate cache
       await fetch('/api/admin/settings/ai/invalidate', {
@@ -150,7 +144,7 @@ export function AIConfigPanel() {
         body: JSON.stringify({ key: 'whatsapp_function_tools' }),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error saving')
+      toast.error(err instanceof Error ? err.message : 'Error al guardar funciones')
     } finally {
       setIsSaving(false)
     }
@@ -159,7 +153,6 @@ export function AIConfigPanel() {
   const handleSaveModels = async () => {
     if (!modelsConfig) return
     setIsSaving(true)
-    setError(null)
 
     try {
       const response = await fetch('/api/admin/settings/ai/models', {
@@ -170,12 +163,11 @@ export function AIConfigPanel() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to save')
+        throw new Error(data.error || 'Error al guardar')
       }
 
-      setSaveSuccess(true)
       setIsDirty(false)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      toast.success('Modelos guardados correctamente')
 
       // Invalidate cache
       await fetch('/api/admin/settings/ai/invalidate', {
@@ -184,7 +176,7 @@ export function AIConfigPanel() {
         body: JSON.stringify({ key: 'ai_models_config' }),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error saving')
+      toast.error(err instanceof Error ? err.message : 'Error al guardar modelos')
     } finally {
       setIsSaving(false)
     }
@@ -193,7 +185,6 @@ export function AIConfigPanel() {
   const handleSaveBot = async () => {
     if (!botConfig) return
     setIsSaving(true)
-    setError(null)
 
     try {
       const response = await fetch('/api/admin/settings/ai/whatsapp-bot', {
@@ -204,12 +195,11 @@ export function AIConfigPanel() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to save')
+        throw new Error(data.error || 'Error al guardar')
       }
 
-      setSaveSuccess(true)
       setIsDirty(false)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      toast.success('Configuración del bot guardada correctamente')
 
       // Invalidate cache
       await fetch('/api/admin/settings/ai/invalidate', {
@@ -218,7 +208,7 @@ export function AIConfigPanel() {
         body: JSON.stringify({ key: 'whatsapp_bot_config' }),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error saving')
+      toast.error(err instanceof Error ? err.message : 'Error al guardar configuración del bot')
     } finally {
       setIsSaving(false)
     }
@@ -258,7 +248,7 @@ export function AIConfigPanel() {
   return (
     <div className="h-full grid grid-cols-[280px_1fr] gap-6 overflow-hidden p-4">
       {/* Sidebar Navigation - Fixed width, full height */}
-      <Card className="bg-[#202c33] border-[#2a3942] p-4 overflow-hidden flex flex-col">
+      <Card className="bg-[#202c33]/80 backdrop-blur-sm border-[#2a3942] p-4 overflow-hidden flex flex-col">
         <div className="space-y-2">
           {sections.map((section) => {
             const Icon = section.icon
@@ -282,99 +272,94 @@ export function AIConfigPanel() {
         {/* Spacer - pushes status to bottom */}
         <div className="flex-1 min-h-0" />
 
-        {/* Status Indicators - sticky at bottom */}
-        <div className="pt-4 border-t border-[#2a3942] space-y-3 mt-auto">
+        {/* Status Indicator - sticky at bottom */}
+        <div className="pt-4 border-t border-[#2a3942] mt-auto">
           {isDirty && (
             <Badge variant="outline" className="w-full bg-amber-500/20 text-amber-400 border-amber-500/30">
               Cambios sin guardar
-            </Badge>
-          )}
-          {saveSuccess && (
-            <Badge variant="outline" className="w-full bg-[#00a884]/20 text-[#00a884] border-[#00a884]/30">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              Guardado exitoso
             </Badge>
           )}
         </div>
       </Card>
 
       {/* Main Content Area - Grid column 2, full height with internal scroll */}
-      <div className="overflow-hidden flex flex-col">
-        {/* Error Alert - Fixed at top */}
-        {error && (
-          <Alert className="bg-red-500/10 border-red-500/30 mb-4 flex-shrink-0">
-            <AlertCircle className="h-4 w-4 text-red-400" />
-            <AlertDescription className="text-red-300">{error}</AlertDescription>
-          </Alert>
-        )}
-
+      <div className="overflow-hidden flex flex-col relative">
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto pr-2">
-          <div className="space-y-6">
-            {activeSection === 'prompts' && (
-              <PromptsSection
-                config={promptsConfig}
-                onChange={(config) => {
-                  setPromptsConfig(config)
-                  setIsDirty(true)
-                }}
-                onSave={handleSavePrompts}
-                isSaving={isSaving}
-              />
-            )}
+        <div className="flex-1 overflow-y-auto pr-2 relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="space-y-6"
+            >
+              {activeSection === 'prompts' && (
+                <PromptsSection
+                  config={promptsConfig}
+                  onChange={(config) => {
+                    setPromptsConfig(config)
+                    setIsDirty(true)
+                  }}
+                  onSave={handleSavePrompts}
+                  isSaving={isSaving}
+                />
+              )}
 
-            {activeSection === 'specialized' && (
-              <SpecializedPromptsSection
-                config={promptsConfig}
-                onChange={(config) => {
-                  setPromptsConfig(config)
-                  setIsDirty(true)
-                }}
-                onSave={handleSavePrompts}
-                isSaving={isSaving}
-              />
-            )}
+              {activeSection === 'specialized' && (
+                <SpecializedPromptsSection
+                  config={promptsConfig}
+                  onChange={(config) => {
+                    setPromptsConfig(config)
+                    setIsDirty(true)
+                  }}
+                  onSave={handleSavePrompts}
+                  isSaving={isSaving}
+                />
+              )}
 
-            {activeSection === 'functions' && (
-              <FunctionToolsSection
-                config={functionsConfig}
-                onChange={(config) => {
-                  setFunctionsConfig(config)
-                  setIsDirty(true)
-                }}
-                onSave={handleSaveFunctions}
-                isSaving={isSaving}
-              />
-            )}
+              {activeSection === 'functions' && (
+                <FunctionToolsSection
+                  config={functionsConfig}
+                  onChange={(config) => {
+                    setFunctionsConfig(config)
+                    setIsDirty(true)
+                  }}
+                  onSave={handleSaveFunctions}
+                  isSaving={isSaving}
+                />
+              )}
 
-            {activeSection === 'models' && (
-              <ModelsSection
-                config={modelsConfig}
-                onChange={(config) => {
-                  setModelsConfig(config)
-                  setIsDirty(true)
-                }}
-                onSave={handleSaveModels}
-                isSaving={isSaving}
-              />
-            )}
+              {activeSection === 'models' && (
+                <ModelsSection
+                  config={modelsConfig}
+                  onChange={(config) => {
+                    setModelsConfig(config)
+                    setIsDirty(true)
+                  }}
+                  onSave={handleSaveModels}
+                  isSaving={isSaving}
+                />
+              )}
 
-            {activeSection === 'bot' && (
-              <BotConfigSection
-                config={botConfig}
-                onChange={(config) => {
-                  setBotConfig(config)
-                  setIsDirty(true)
-                }}
-                onSave={handleSaveBot}
-                isSaving={isSaving}
-              />
-            )}
+              {activeSection === 'bot' && (
+                <BotConfigSection
+                  config={botConfig}
+                  onChange={(config) => {
+                    setBotConfig(config)
+                    setIsDirty(true)
+                  }}
+                  onSave={handleSaveBot}
+                  isSaving={isSaving}
+                />
+              )}
 
-            {activeSection === 'sources' && (
-              <SourceConfigSection />
-            )}
-          </div>
+              {activeSection === 'sources' && (
+                <SourceConfigSection />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>

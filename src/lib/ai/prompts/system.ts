@@ -169,7 +169,7 @@ export const formatSystemPrompt = (basePrompt: string, context?: PromptContext):
 
       // Calcular precio de lista y descuento (igual que en la web)
       const currentPrice = p.price ?? 0
-      const priceList = p.price_list || p.features?.price_list || (currentPrice > 0 ? Math.round(currentPrice / 0.75) : null)
+      const priceList = p.features?.price_list || p.price_list || (currentPrice > 0 ? Math.round(currentPrice / 0.75) : null)
       const hasDiscount = priceList && currentPrice > 0 && priceList > currentPrice
       const discountPercentage = hasDiscount
         ? Math.round(((priceList - currentPrice) / priceList) * 100)

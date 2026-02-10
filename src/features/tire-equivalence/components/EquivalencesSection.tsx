@@ -61,10 +61,8 @@ export function EquivalencesSection({
   // Función para mostrar el stock en rangos
   const getStockDisplay = (stock: number) => {
     if (stock === 1) return 'Última unidad'
-    if (stock <= 10) return `${stock} unidades`
-    if (stock <= 50) return `${stock} unidades`
-    if (stock <= 100) return '+50 unidades'
-    return '+100 unidades'
+    if (stock < 10) return `${stock} unidades`
+    return '+10 unidades'
   }
 
   return (

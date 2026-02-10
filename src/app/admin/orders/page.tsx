@@ -47,14 +47,14 @@ export default function AdminOrdersPage() {
 
   if (loading && orders.length === 0) {
     return (
-      <div className="p-6 bg-[#30302e] min-h-screen">
+      <div className="p-6 pl-10 min-h-screen">
         <TableSkeleton rows={8} columns={6} />
       </div>
     )
   }
 
   return (
-    <main className="p-6 space-y-6 bg-[#30302e] min-h-screen">
+    <main className="p-6 pl-10 space-y-6 min-h-screen">
       {/* Header Card */}
       <Card className="bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20">
         <CardHeader>

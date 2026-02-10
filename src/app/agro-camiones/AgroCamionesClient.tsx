@@ -22,6 +22,7 @@ import { useEquivalentTires } from "@/features/tire-equivalence/hooks/useEquival
 import { EquivalencesSection } from "@/features/tire-equivalence/components/EquivalencesSection"
 import { useURLFilters } from "@/hooks/useURLFilters"
 import { useFilterPersistence } from "@/hooks/useFilterPersistence"
+import { resolvePriceList, resolveDiscountPercentage } from "@/features/products/utils/priceUtils"
 import { generateShareableURL } from "@/lib/products/url-filters"
 import { StockInfoPopup } from "@/components/ui/stock-info-popup"
 
@@ -1169,9 +1170,8 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                   {paginatedProducts.map((product) => {
-                    const priceListFromFeatures = (product.features as ProductFeatures | undefined)?.price_list
-                    const listPrice = priceListFromFeatures || product.price_list || Math.round(product.price / 0.75)
-                    const discountPercentage = Math.round(((listPrice - product.price) / listPrice) * 100)
+                    const listPrice = resolvePriceList(product)
+                    const discountPercentage = resolveDiscountPercentage(product)
 
                     return (
                       <div key={product.id} className="group">
@@ -1241,10 +1241,8 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                                     }`}>
                                       Stock: {(() => {
                                         if (product.stock === 1) return 'Última unidad'
-                                        if (product.stock <= 10) return `${product.stock} unidades`
-                                        if (product.stock <= 50) return `${product.stock} unidades`
-                                        if (product.stock <= 100) return '+50 unidades'
-                                        return '+100 unidades'
+                                        if (product.stock < 10) return `${product.stock} unidades`
+                                        return '+10 unidades'
                                       })()}
                                     </span>
                                     {product.stock > 15 && (

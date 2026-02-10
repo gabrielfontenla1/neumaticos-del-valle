@@ -22,6 +22,7 @@ import { EquivalentTire } from '@/features/tire-equivalence/types'
 import { toast } from 'sonner'
 import InstallmentTable from './InstallmentTable'
 import { buildWhatsAppUrl, WHATSAPP_NUMBERS, generateSingleProductMessage } from '@/lib/whatsapp'
+import { resolvePriceList, resolveDiscountPercentage } from '../utils/priceUtils'
 import { CheckoutModal } from '@/features/cart/components/CheckoutModal'
 import type { Branch } from '@/types/branch'
 
@@ -260,15 +261,9 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
     )
   }
 
-  // Get price_list from features if available
-  // Fallback: calcular precio de lista para 25% de descuento (price / 0.75)
   const features = product.features as ProductFeatures | undefined
-  const priceList = product.price_list || features?.price_list || Math.round(product.price / 0.75)
-
-  // Calculate actual discount percentage
-  const discountPercentage = priceList && priceList > product.price
-    ? Math.round(((priceList - product.price) / priceList) * 100)
-    : 25
+  const priceList = resolvePriceList(product)
+  const discountPercentage = resolveDiscountPercentage(product)
 
   const previousPrice = priceList || product.price
   // Use product's actual image or fallback to no-image
@@ -451,7 +446,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                           <span className="text-base font-semibold text-gray-900">
                             <SelectValue />
                           </span>
-                          <span className="text-base text-gray-500">({product.stock} disponibles)</span>
+                          <span className="text-base text-gray-500">({product.stock > 10 ? '+10' : product.stock} disponibles)</span>
                         </div>
                         <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -495,7 +490,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
               {product.stock > 0 && (
                 <div className="hidden lg:block">
                   <label className="block text-sm lg:text-[11px] font-medium text-gray-900 mb-2">
-                    Cantidad: <span className="text-gray-500">({product.stock} disponibles)</span>
+                    Cantidad: <span className="text-gray-500">({product.stock > 10 ? '+10' : product.stock} disponibles)</span>
                   </label>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex items-center border border-gray-300 rounded-lg">
@@ -564,10 +559,8 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
 
                     const getStockDisplay = (stock: number) => {
                       if (stock === 1) return 'Última unidad'
-                      if (stock <= 10) return `${stock} unidades`
-                      if (stock <= 50) return `${stock} unidades`
-                      if (stock <= 100) return '+50 unidades'
-                      return '+100 unidades'
+                      if (stock < 10) return `${stock} unidades`
+                      return '+10 unidades'
                     }
 
                     return sucursales.map(({ key, name }) => {
@@ -812,10 +805,8 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                                 }`}>
                                   {tire.stock === 0 ? 'Sin stock' :
                                    tire.stock === 1 ? 'Stock: Última unidad' :
-                                   tire.stock <= 10 ? `Stock: ${tire.stock} unidades` :
-                                   tire.stock <= 50 ? 'Stock: +10 unidades' :
-                                   tire.stock <= 100 ? 'Stock: +50 unidades' :
-                                   'Stock: +100 unidades'}
+                                   tire.stock < 10 ? `Stock: ${tire.stock} unidades` :
+                                   'Stock: +10 unidades'}
                                 </span>
                               </div>
                             )}

@@ -59,7 +59,7 @@ export const DEFAULT_WHATSAPP_BOT_CONFIG: WhatsAppBotConfig = {
   welcomeMessage: '¡Hola! Soy el asistente virtual de Neumáticos del Valle. ¿En qué puedo ayudarte?',
   errorMessage: 'Disculpa, hubo un error. Por favor, intenta nuevamente o contacta con un operador.',
   maintenanceMessage: 'El bot está en mantenimiento. Por favor, intenta más tarde.',
-  respectBusinessHours: true,
+  respectBusinessHours: false,
   businessHours: {
     monday: { start: '08:00', end: '18:00', enabled: true },
     tuesday: { start: '08:00', end: '18:00', enabled: true },

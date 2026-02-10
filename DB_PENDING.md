@@ -20,6 +20,15 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 <!-- Cambios ya implementados con referencia a la migración -->
 
+### 2026-02-10 - Sync price_list desde features
+
+- [x] **20260210_sync_price_list_from_features.sql** - Sync columna price_list desde JSONB features
+  - UPDATE: 741 productos actualizados
+  - Corrige: `products.price_list` calculado con `price * 1.25` (incorrecto) → usa `features->>'price_list'` del Excel (correcto)
+  - Ejemplo fix: PIRELLI P400EV 175/70R14 mostraba 37% OFF vs 25% OFF por inconsistencia
+  - Solicitado por: Terminal App Code
+  - ✅ Aplicada en producción
+
 ### 2026-02-09 - WhatsApp Source Field
 
 - [x] **20260209_add_whatsapp_source.sql** - Campo source para proveedores WhatsApp

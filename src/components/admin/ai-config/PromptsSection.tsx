@@ -57,22 +57,16 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
   const isValidLength = charCount >= 100 && charCount <= 50000
 
   return (
-    <div className="relative">
-      {/* Animated Grid Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,168,132,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,168,132,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,168,132,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,168,132,0.02)_1px,transparent_1px)] bg-[size:25px_25px] animate-pulse" />
-      </div>
-
-      <div className="relative space-y-6">
-        {/* WhatsApp System Prompt */}
-        <Card className="bg-[#202c33] border-[#2a3942] p-6">
-          <div className="space-y-4">
-            <div className="flex items-start justify-between">
+    <div className="space-y-4">
+        {/* Two-column layout */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Left Column - System Prompt Editor */}
+          <Card className="bg-[#202c33] border-[#2a3942] p-5 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-white">System Prompt de WhatsApp</h3>
-                <p className="text-sm text-gray-400">
-                  Instrucciones principales para el asistente de WhatsApp
+                <h3 className="text-base font-semibold text-white">System Prompt de WhatsApp</h3>
+                <p className="text-xs text-[#8696a0] mt-1">
+                  Instrucciones principales para el asistente
                 </p>
               </div>
               <Badge
@@ -83,18 +77,9 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
                     : 'bg-red-500/20 text-red-400 border-red-500/30'
                 }
               >
-                {charCount.toLocaleString()} caracteres
+                {charCount.toLocaleString()} chars
               </Badge>
             </div>
-
-            <Alert className="bg-blue-500/10 border-blue-500/30">
-              <AlertCircle className="h-4 w-4 text-blue-400" />
-              <AlertDescription className="text-blue-300 text-sm">
-                Variables disponibles: <code className="text-blue-200">{'{customer_name}'}</code>,{' '}
-                <code className="text-blue-200">{'{branch_name}'}</code>,{' '}
-                <code className="text-blue-200">{'{service_type}'}</code>
-              </AlertDescription>
-            </Alert>
 
             <Textarea
               value={config.whatsappSystemPrompt}
@@ -105,30 +90,52 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
                 })
               }
               placeholder="Sos un asistente virtual de..."
-              className="font-mono text-sm bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[300px]"
+              className="font-mono text-sm bg-[#111b21] border-[#2a3942] text-[#e9edef] flex-1 min-h-[380px] resize-none"
             />
 
             {!isValidLength && (
-              <p className="text-xs text-red-400">
+              <p className="text-xs text-red-400 mt-2">
                 El prompt debe tener entre 100 y 50,000 caracteres
               </p>
             )}
+          </Card>
+
+          {/* Right Column - Info + Test */}
+          <div className="space-y-4 flex flex-col">
+            {/* Variables Info */}
+            <Card className="bg-[#202c33] border-[#2a3942] p-5">
+              <h4 className="text-sm font-medium text-white mb-3">Variables Disponibles</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-2 bg-[#111b21] rounded-md border border-[#2a3942]">
+                  <code className="text-[#00a884] text-xs font-mono">{'{customer_name}'}</code>
+                  <span className="text-[10px] text-[#8696a0]">Nombre del cliente</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 bg-[#111b21] rounded-md border border-[#2a3942]">
+                  <code className="text-[#00a884] text-xs font-mono">{'{branch_name}'}</code>
+                  <span className="text-[10px] text-[#8696a0]">Nombre de la sucursal</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 bg-[#111b21] rounded-md border border-[#2a3942]">
+                  <code className="text-[#00a884] text-xs font-mono">{'{service_type}'}</code>
+                  <span className="text-[10px] text-[#8696a0]">Tipo de servicio</span>
+                </div>
+              </div>
+            </Card>
 
             {/* Test Prompt */}
-            <div className="border-t border-[#2a3942] pt-4 space-y-3">
-              <h4 className="text-sm font-medium text-white">Probar Prompt</h4>
+            <Card className="bg-[#202c33] border-[#2a3942] p-5 flex-1 flex flex-col">
+              <h4 className="text-sm font-medium text-white mb-3">Probar Prompt</h4>
               <Textarea
                 value={testMessage}
                 onChange={(e) => setTestMessage(e.target.value)}
                 placeholder="Mensaje de prueba del usuario..."
-                className="bg-[#111b21] border-[#2a3942] text-gray-100 min-h-[80px]"
+                className="bg-[#111b21] border-[#2a3942] text-[#e9edef] min-h-[80px] text-sm"
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-3">
                 <Button
                   onClick={handleTest}
                   disabled={isTesting || !testMessage}
                   variant="outline"
-                  className="border-blue-500 text-blue-400 hover:bg-blue-500/20"
+                  className="border-blue-500/50 text-blue-400 hover:bg-blue-500/20"
                 >
                   {isTesting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -139,35 +146,29 @@ export function PromptsSection({ config, onChange, onSave, isSaving }: PromptsSe
                 </Button>
               </div>
               {testResponse && (
-                <div className="bg-[#111b21] border border-[#2a3942] rounded-lg p-4">
-                  <p className="text-sm text-gray-300 whitespace-pre-wrap">{testResponse}</p>
+                <div className="bg-[#111b21] border border-[#2a3942] rounded-lg p-3 mt-3 flex-1 overflow-y-auto">
+                  <p className="text-sm text-[#e9edef] whitespace-pre-wrap">{testResponse}</p>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
-        </Card>
+        </div>
 
-        {/* Save Button - Inside the section */}
-        <Card className="bg-[#202c33] border-[#2a3942] p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-400">
-              Este es el prompt principal que define la personalidad del bot
-            </p>
-            <Button
-              onClick={onSave}
-              disabled={isSaving || !isValidLength}
-              className="bg-[#00a884] hover:bg-[#02906f] text-white"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Guardar Prompt
-            </Button>
-          </div>
-        </Card>
-      </div>
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button
+            onClick={onSave}
+            disabled={isSaving || !isValidLength}
+            className="bg-[#00a884] hover:bg-[#02906f] text-white"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Guardar Prompt
+          </Button>
+        </div>
     </div>
   )
 }

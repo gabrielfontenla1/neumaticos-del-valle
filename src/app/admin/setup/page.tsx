@@ -218,18 +218,18 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen p-6 pl-10">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Database Setup</h1>
+        <h1 className="text-3xl font-bold mb-8 text-[#d4d4d8]">Database Setup</h1>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Setup Instructions</h2>
+        <div className="bg-[#262624] rounded-xl border border-[#3a3a38] p-6" style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+          <h2 className="text-xl font-semibold mb-4 text-[#d4d4d8]">Setup Instructions</h2>
 
           <div className="space-y-4">
             <button
               onClick={createStoresTable}
               disabled={loading}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-6 py-3 bg-[#d97757] text-white rounded-lg hover:bg-[#c56645] disabled:opacity-50"
             >
               1. Show Setup Instructions
             </button>
@@ -252,20 +252,20 @@ export default function SetupPage() {
           </div>
 
           {message && (
-            <div className={`mt-6 p-4 rounded-lg ${success ? 'bg-green-50 text-green-800' : 'bg-yellow-50 text-yellow-800'}`}>
-              <pre className="whitespace-pre-wrap font-mono text-sm">{message}</pre>
+            <div className={`mt-6 p-4 rounded-lg ${success ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+              <pre className="whitespace-pre-wrap font-mono text-sm text-[#d4d4d8]">{message}</pre>
             </div>
           )}
 
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold mb-2">Quick Links:</h3>
+          <div className="mt-8 p-4 bg-[#1e1e1c] border border-[#3a3a38] rounded-lg">
+            <h3 className="font-semibold mb-2 text-[#d4d4d8]">Quick Links:</h3>
             <ul className="space-y-2">
               <li>
                 <a
                   href="https://supabase.com/dashboard/project/oyiwyzmaxgnzyhmmkstr/editor"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-[#d97757] hover:underline hover:text-[#ff9966]"
                 >
                   → Supabase SQL Editor
                 </a>
@@ -273,7 +273,7 @@ export default function SetupPage() {
               <li>
                 <a
                   href="/turnos"
-                  className="text-blue-600 hover:underline"
+                  className="text-[#d97757] hover:underline hover:text-[#ff9966]"
                 >
                   → Test Appointments Page
                 </a>

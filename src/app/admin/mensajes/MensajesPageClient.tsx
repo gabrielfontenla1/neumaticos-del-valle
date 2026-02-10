@@ -40,7 +40,7 @@ import { toast } from 'sonner'
 
 const theme = {
   background: '#30302e',
-  foreground: '#fafafa',
+  foreground: '#d4d4d8',
   card: '#262624',
   primary: '#d97757',
   mutedForeground: '#a1a1aa',
@@ -49,6 +49,11 @@ const theme = {
 }
 
 const PAGE_SIZE = 20
+
+// Dark theme overrides for shadcn Select (which defaults to light mode)
+const selectTriggerClass = '!bg-[#262626] !border-[#3a3a38] !text-[#d4d4d8] [&>span]:!text-[#d4d4d8] [&_svg]:!text-[#a1a1aa] focus:!ring-[#d97757]/30 !py-2'
+const selectContentClass = '!bg-[#262624] !border-[#3a3a38] !text-[#d4d4d8]'
+const selectItemClass = '!text-[#d4d4d8] hover:!bg-white/10 focus:!bg-white/10 focus:!text-[#d4d4d8] [&_svg]:!text-[#d4d4d8]'
 
 const priorityLabels: Record<NotificationPriority, string> = {
   low: 'Baja',
@@ -209,7 +214,7 @@ export default function MensajesPageClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 pl-10 space-y-6 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -281,115 +286,66 @@ export default function MensajesPageClient() {
         </div>
       </div>
 
-      {/* Filter bar */}
+      {/* Filter bar - single row */}
       <div
-        className="rounded-xl p-4"
+        className="rounded-xl px-4 py-3 flex items-center gap-3"
         style={{
           backgroundColor: theme.card,
           border: `1px solid ${theme.border}`,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2)',
         }}
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Filter className="w-4 h-4" style={{ color: theme.mutedForeground }} />
-          <span
-            className="text-sm font-medium"
-            style={{ color: theme.mutedForeground }}
-          >
-            Filtros
-          </span>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-1 text-xs font-medium ml-auto hover:opacity-80 transition-opacity"
-              style={{ color: theme.primary }}
-            >
-              <X className="w-3.5 h-3.5" />
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {/* Priority filter */}
-          <Select
-            value={priorityFilter}
-            onValueChange={(val) => setPriorityFilter(val as NotificationPriority | 'all')}
-          >
-            <SelectTrigger
-              className="w-[180px] text-sm"
-              style={{
-                backgroundColor: theme.secondary,
-                borderColor: theme.border,
-                color: theme.foreground,
-              }}
-            >
-              <SelectValue placeholder="Prioridad" />
-            </SelectTrigger>
-            <SelectContent
-              style={{
-                backgroundColor: theme.card,
-                borderColor: theme.border,
-              }}
-            >
-              <SelectItem
-                value="all"
-                style={{ color: theme.foreground }}
-              >
-                Todas las prioridades
-              </SelectItem>
-              {ALL_PRIORITIES.map((priority) => (
-                <SelectItem
-                  key={priority}
-                  value={priority}
-                  style={{ color: theme.foreground }}
-                >
-                  {priorityLabels[priority]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Filter className="w-4 h-4 flex-shrink-0" style={{ color: theme.mutedForeground }} />
 
-          {/* Read status filter */}
-          <Select
-            value={readFilter}
-            onValueChange={(val) => setReadFilter(val as ReadFilter)}
+        <Select
+          value={priorityFilter}
+          onValueChange={(val) => setPriorityFilter(val as NotificationPriority | 'all')}
+        >
+          <SelectTrigger className={`w-[200px] text-sm ${selectTriggerClass}`}>
+            <SelectValue placeholder="Nivel de prioridad" />
+          </SelectTrigger>
+          <SelectContent className={selectContentClass}>
+            <SelectItem value="all" className={selectItemClass}>
+              Todas las prioridades
+            </SelectItem>
+            {ALL_PRIORITIES.map((priority) => (
+              <SelectItem key={priority} value={priority} className={selectItemClass}>
+                {priorityLabels[priority]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={readFilter}
+          onValueChange={(val) => setReadFilter(val as ReadFilter)}
+        >
+          <SelectTrigger className={`w-[190px] text-sm ${selectTriggerClass}`}>
+            <SelectValue placeholder="Estado de lectura" />
+          </SelectTrigger>
+          <SelectContent className={selectContentClass}>
+            <SelectItem value="all" className={selectItemClass}>
+              Todos los mensajes
+            </SelectItem>
+            <SelectItem value="unread" className={selectItemClass}>
+              No leídos
+            </SelectItem>
+            <SelectItem value="read" className={selectItemClass}>
+              Leídos
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1 text-xs font-medium ml-auto hover:opacity-80 transition-opacity flex-shrink-0"
+            style={{ color: theme.primary }}
           >
-            <SelectTrigger
-              className="w-[180px] text-sm"
-              style={{
-                backgroundColor: theme.secondary,
-                borderColor: theme.border,
-                color: theme.foreground,
-              }}
-            >
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent
-              style={{
-                backgroundColor: theme.card,
-                borderColor: theme.border,
-              }}
-            >
-              <SelectItem
-                value="all"
-                style={{ color: theme.foreground }}
-              >
-                Todos
-              </SelectItem>
-              <SelectItem
-                value="unread"
-                style={{ color: theme.foreground }}
-              >
-                No leidos
-              </SelectItem>
-              <SelectItem
-                value="read"
-                style={{ color: theme.foreground }}
-              >
-                Leidos
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            <X className="w-3.5 h-3.5" />
+            Limpiar
+          </button>
+        )}
       </div>
 
       {/* Message list */}
@@ -398,6 +354,7 @@ export default function MensajesPageClient() {
         style={{
           backgroundColor: theme.card,
           border: `1px solid ${theme.border}`,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2)',
         }}
       >
         {loading ? (
@@ -486,7 +443,7 @@ export default function MensajesPageClient() {
             )}
           </div>
         ) : (
-          <div className="divide-y" style={{ borderColor: `${theme.border}80` }}>
+          <div className="divide-y divide-white/5">
             {paginatedMessages.map((message) => {
               const isExpanded = expandedId === message.id
               const priorityColor = priorityColors[message.priority] || priorityColors.medium
@@ -747,28 +704,12 @@ export default function MensajesPageClient() {
                 value={newPriority}
                 onValueChange={(val) => setNewPriority(val as NotificationPriority)}
               >
-                <SelectTrigger
-                  className="w-full text-sm"
-                  style={{
-                    backgroundColor: theme.secondary,
-                    borderColor: theme.border,
-                    color: theme.foreground,
-                  }}
-                >
+                <SelectTrigger className={`w-full text-sm ${selectTriggerClass}`}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent
-                  style={{
-                    backgroundColor: theme.card,
-                    borderColor: theme.border,
-                  }}
-                >
+                <SelectContent className={selectContentClass}>
                   {ALL_PRIORITIES.map((priority) => (
-                    <SelectItem
-                      key={priority}
-                      value={priority}
-                      style={{ color: theme.foreground }}
-                    >
+                    <SelectItem key={priority} value={priority} className={selectItemClass}>
                       {priorityLabels[priority]}
                     </SelectItem>
                   ))}

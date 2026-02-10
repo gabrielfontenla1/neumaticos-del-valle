@@ -36,178 +36,166 @@ const AVAILABLE_MODELS = [
 
 export function ModelsSection({ config, onChange, onSave, isSaving }: ModelsSectionProps) {
   return (
-    <div className="space-y-6">
-      <Card className="bg-[#202c33] border-[#2a3942] p-6">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Modelos de IA</h3>
-            <p className="text-sm text-gray-400">Configuración de modelos OpenAI</p>
+    <div className="space-y-4">
+      {/* Two-column layout */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Left Column - Model Selection */}
+        <Card className="bg-[#202c33] border-[#2a3942] p-5">
+          <div className="mb-5">
+            <h3 className="text-base font-semibold text-white">Modelos de IA</h3>
+            <p className="text-xs text-[#8696a0] mt-1">Configuración de modelos OpenAI</p>
           </div>
 
-          <Alert className="bg-blue-500/10 border-blue-500/30">
+          <Alert className="bg-blue-500/10 border-blue-500/30 mb-5">
             <Info className="h-4 w-4 text-blue-400" />
-            <AlertDescription className="text-blue-300 text-sm">
-              Los modelos más potentes ofrecen mejor calidad pero cuestan más. GPT-4o-mini es
-              recomendado para la mayoría de casos de uso.
+            <AlertDescription className="text-blue-300 text-xs">
+              GPT-4o-mini es recomendado para la mayoría de casos. Los modelos más potentes cuestan más.
             </AlertDescription>
           </Alert>
 
-          {/* Chat Model */}
-          <div className="space-y-2">
-            <Label className="text-white">Modelo Principal (Chat)</Label>
-            <Select value={config.chatModel} onValueChange={(value) => onChange({ ...config, chatModel: value })}>
-              <SelectTrigger className="bg-[#111b21] border-[#2a3942] text-gray-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-[#202c33] border-[#2a3942]">
-                {AVAILABLE_MODELS.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>
-                    {model.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">Modelo usado para conversaciones principales</p>
-          </div>
-
-          {/* Fast Model */}
-          <div className="space-y-2">
-            <Label className="text-white">Modelo Rápido</Label>
-            <Select value={config.fastModel} onValueChange={(value) => onChange({ ...config, fastModel: value })}>
-              <SelectTrigger className="bg-[#111b21] border-[#2a3942] text-gray-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-[#202c33] border-[#2a3942]">
-                {AVAILABLE_MODELS.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>
-                    {model.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">Modelo para respuestas rápidas y simples</p>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="bg-[#202c33] border-[#2a3942] p-6">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Parámetros del Modelo</h3>
-            <p className="text-sm text-gray-400">Ajusta el comportamiento de las respuestas</p>
-          </div>
-
-          {/* Temperature */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-white">Temperature</Label>
-              <span className="text-sm text-gray-400">{config.temperature}</span>
+          <div className="space-y-4">
+            {/* Chat Model */}
+            <div className="space-y-1.5">
+              <Label className="text-[#e9edef] text-sm">Modelo Principal (Chat)</Label>
+              <Select value={config.chatModel} onValueChange={(value) => onChange({ ...config, chatModel: value })}>
+                <SelectTrigger className="bg-[#111b21] border-[#2a3942] text-[#e9edef] [&>span]:text-[#e9edef] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#202c33] border-[#2a3942] text-[#e9edef]">
+                  {AVAILABLE_MODELS.map((model) => (
+                    <SelectItem key={model.value} value={model.value} className="text-[#e9edef] hover:bg-[#2a3942] focus:bg-[#2a3942] focus:text-[#e9edef]">
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-[#8696a0]">Para conversaciones principales</p>
             </div>
-            <Input
-              type="range"
-              min="0"
-              max="2"
-              step="0.1"
-              value={config.temperature}
-              onChange={(e) => onChange({ ...config, temperature: parseFloat(e.target.value) })}
-              className="bg-[#111b21] border-[#2a3942]"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Preciso (0)</span>
-              <span>Balanceado (0.7)</span>
-              <span>Creativo (2)</span>
+
+            {/* Fast Model */}
+            <div className="space-y-1.5">
+              <Label className="text-[#e9edef] text-sm">Modelo Rápido</Label>
+              <Select value={config.fastModel} onValueChange={(value) => onChange({ ...config, fastModel: value })}>
+                <SelectTrigger className="bg-[#111b21] border-[#2a3942] text-[#e9edef] [&>span]:text-[#e9edef] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#202c33] border-[#2a3942] text-[#e9edef]">
+                  {AVAILABLE_MODELS.map((model) => (
+                    <SelectItem key={model.value} value={model.value} className="text-[#e9edef] hover:bg-[#2a3942] focus:bg-[#2a3942] focus:text-[#e9edef]">
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-[#8696a0]">Para respuestas rápidas y simples</p>
             </div>
-            <p className="text-xs text-gray-500">
-              Controla la creatividad: valores bajos (0-0.5) son más determinísticos, valores altos
-              (1-2) más creativos
-            </p>
+
+            {/* Max Tokens */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-[#e9edef] text-sm">Max Tokens</Label>
+                <span className="text-xs text-[#8696a0]">{config.maxTokens.toLocaleString()}</span>
+              </div>
+              <Input
+                type="number"
+                min="100"
+                max="100000"
+                step="100"
+                value={config.maxTokens}
+                onChange={(e) => onChange({ ...config, maxTokens: parseInt(e.target.value) })}
+                className="bg-[#111b21] border-[#2a3942] text-[#e9edef] h-9 text-sm"
+              />
+              <p className="text-[10px] text-[#8696a0]">Recomendado: 500-2000 para WhatsApp</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Right Column - Parameters */}
+        <Card className="bg-[#202c33] border-[#2a3942] p-5">
+          <div className="mb-5">
+            <h3 className="text-base font-semibold text-white">Parámetros del Modelo</h3>
+            <p className="text-xs text-[#8696a0] mt-1">Ajusta el comportamiento de las respuestas</p>
           </div>
 
-          {/* Max Tokens */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-white">Max Tokens</Label>
-              <span className="text-sm text-gray-400">{config.maxTokens.toLocaleString()}</span>
+          <div className="space-y-5">
+            {/* Temperature */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-[#e9edef] text-sm">Temperature</Label>
+                <span className="text-xs text-[#8696a0] font-mono">{config.temperature}</span>
+              </div>
+              <Input
+                type="range"
+                min="0"
+                max="2"
+                step="0.1"
+                value={config.temperature}
+                onChange={(e) => onChange({ ...config, temperature: parseFloat(e.target.value) })}
+                className="bg-[#111b21] border-[#2a3942]"
+              />
+              <div className="flex justify-between text-[10px] text-[#8696a0]">
+                <span>Preciso (0)</span>
+                <span>Balanceado (0.7)</span>
+                <span>Creativo (2)</span>
+              </div>
             </div>
-            <Input
-              type="number"
-              min="100"
-              max="100000"
-              step="100"
-              value={config.maxTokens}
-              onChange={(e) => onChange({ ...config, maxTokens: parseInt(e.target.value) })}
-              className="bg-[#111b21] border-[#2a3942] text-gray-100"
-            />
-            <p className="text-xs text-gray-500">
-              Máximo de tokens por respuesta (recomendado: 500-2000 para WhatsApp)
-            </p>
-          </div>
 
-          {/* Top P */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-white">Top P</Label>
-              <span className="text-sm text-gray-400">{config.topP}</span>
+            {/* Top P */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-[#e9edef] text-sm">Top P</Label>
+                <span className="text-xs text-[#8696a0] font-mono">{config.topP}</span>
+              </div>
+              <Input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.topP}
+                onChange={(e) => onChange({ ...config, topP: parseFloat(e.target.value) })}
+                className="bg-[#111b21] border-[#2a3942]"
+              />
+              <p className="text-[10px] text-[#8696a0]">Diversidad de tokens (recomendado: 1)</p>
             </div>
-            <Input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={config.topP}
-              onChange={(e) => onChange({ ...config, topP: parseFloat(e.target.value) })}
-              className="bg-[#111b21] border-[#2a3942]"
-            />
-            <p className="text-xs text-gray-500">
-              Controla la diversidad de tokens considerados (recomendado: 1)
-            </p>
-          </div>
 
-          {/* Frequency Penalty */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-white">Frequency Penalty</Label>
-              <span className="text-sm text-gray-400">{config.frequencyPenalty}</span>
+            {/* Frequency Penalty */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-[#e9edef] text-sm">Frequency Penalty</Label>
+                <span className="text-xs text-[#8696a0] font-mono">{config.frequencyPenalty}</span>
+              </div>
+              <Input
+                type="range"
+                min="-2"
+                max="2"
+                step="0.1"
+                value={config.frequencyPenalty}
+                onChange={(e) => onChange({ ...config, frequencyPenalty: parseFloat(e.target.value) })}
+                className="bg-[#111b21] border-[#2a3942]"
+              />
+              <p className="text-[10px] text-[#8696a0]">Positivo reduce repeticiones</p>
             </div>
-            <Input
-              type="range"
-              min="-2"
-              max="2"
-              step="0.1"
-              value={config.frequencyPenalty}
-              onChange={(e) =>
-                onChange({ ...config, frequencyPenalty: parseFloat(e.target.value) })
-              }
-              className="bg-[#111b21] border-[#2a3942]"
-            />
-            <p className="text-xs text-gray-500">
-              Penaliza tokens que ya aparecieron (positivo reduce repeticiones)
-            </p>
-          </div>
 
-          {/* Presence Penalty */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-white">Presence Penalty</Label>
-              <span className="text-sm text-gray-400">{config.presencePenalty}</span>
+            {/* Presence Penalty */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-[#e9edef] text-sm">Presence Penalty</Label>
+                <span className="text-xs text-[#8696a0] font-mono">{config.presencePenalty}</span>
+              </div>
+              <Input
+                type="range"
+                min="-2"
+                max="2"
+                step="0.1"
+                value={config.presencePenalty}
+                onChange={(e) => onChange({ ...config, presencePenalty: parseFloat(e.target.value) })}
+                className="bg-[#111b21] border-[#2a3942]"
+              />
+              <p className="text-[10px] text-[#8696a0]">Positivo fomenta temas nuevos</p>
             </div>
-            <Input
-              type="range"
-              min="-2"
-              max="2"
-              step="0.1"
-              value={config.presencePenalty}
-              onChange={(e) =>
-                onChange({ ...config, presencePenalty: parseFloat(e.target.value) })
-              }
-              className="bg-[#111b21] border-[#2a3942]"
-            />
-            <p className="text-xs text-gray-500">
-              Penaliza tokens nuevos (positivo fomenta hablar de temas nuevos)
-            </p>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* Save Button */}
       <div className="flex justify-end">

@@ -4,7 +4,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 import {
   MessageCircle,
   User,
@@ -17,6 +28,7 @@ import {
   UserCheck,
   Settings,
   CheckCheck,
+  AlertTriangle,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
@@ -81,6 +93,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function ChatsPage() {
+  const [activeTab, setActiveTab] = useState('conversations')
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -91,6 +104,7 @@ export default function ChatsPage() {
   const [messageInput, setMessageInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isPausing, setIsPausing] = useState(false)
+  const [showPauseDialog, setShowPauseDialog] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
@@ -137,12 +151,6 @@ export default function ChatsPage() {
   // Pause conversation
   const handlePauseConversation = async () => {
     if (!selectedConversation) return
-
-    const confirmed = window.confirm(
-      '¿Estás seguro de que querés tomar el control de esta conversación?\n\n' +
-      'El bot dejará de responder automáticamente hasta que lo reactives.'
-    )
-    if (!confirmed) return
 
     setIsPausing(true)
     try {
@@ -310,10 +318,10 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#111b21]">
-      <Tabs defaultValue="conversations" className="flex-1 flex flex-col min-h-0">
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         {/* Header with Tabs */}
-        <div className="h-12 px-3 flex items-center bg-[#202c33] border-b border-[#2a3942] flex-shrink-0">
+        <div className="h-12 px-3 flex items-center bg-[#202c33]/80 backdrop-blur-sm border-b border-[#2a3942] flex-shrink-0">
           <TabsList className="bg-transparent h-9 p-0 gap-1">
             <TabsTrigger
               value="conversations"
@@ -332,8 +340,17 @@ export default function ChatsPage() {
           </TabsList>
         </div>
 
-        {/* Conversations Tab - Contains BOTH panels */}
-        <TabsContent value="conversations" className="flex-1 flex min-h-0 mt-0 data-[state=inactive]:hidden">
+        {/* Animated Tab Content */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'conversations' && (
+            <motion.div
+              key="conversations"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="flex-1 flex min-h-0"
+            >
           {/* Left Panel - Chat List */}
           <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-[380px] bg-[#111b21] border-r border-[#2a3942] flex-shrink-0`}>
             {/* Search */}
@@ -461,14 +478,13 @@ export default function ChatsPage() {
                       </Button>
                     ) : (
                       <Button
-                        onClick={handlePauseConversation}
+                        onClick={() => setShowPauseDialog(true)}
                         disabled={isPausing}
                         size="sm"
-                        variant="outline"
-                        className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10 h-8"
+                        className="bg-red-500/15 text-red-400 hover:bg-red-500/25 border-0 h-8"
                       >
                         <Pause className="h-3.5 w-3.5 mr-1" />
-                        Tomar Control
+                        Pausar Bot
                       </Button>
                     )}
                   </div>
@@ -548,8 +564,15 @@ export default function ChatsPage() {
                 {/* Message Input */}
                 <div className="px-4 py-3 bg-[#202c33] flex items-center gap-2 flex-shrink-0">
                   <div className="flex-1 relative">
+                    {!selectedConversation.is_paused && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPauseDialog(true)}
+                        className="absolute inset-0 z-10 cursor-pointer"
+                      />
+                    )}
                     <Input
-                      placeholder={selectedConversation.is_paused ? "Escribe un mensaje" : "Pausá el bot para escribir..."}
+                      placeholder={selectedConversation.is_paused ? "Escribe un mensaje..." : "Pausá el bot para escribir..."}
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -558,19 +581,26 @@ export default function ChatsPage() {
                           handleSendMessage()
                         }
                       }}
-                      disabled={!selectedConversation.is_paused}
-                      className="bg-[#2a3942] border-0 text-[#e9edef] placeholder:text-[#8696a0] rounded-lg h-10 focus-visible:ring-0 disabled:opacity-50"
+                      readOnly={!selectedConversation.is_paused}
+                      className={`bg-[#2a3942] border-0 text-[#e9edef] placeholder:text-[#8696a0] rounded-lg h-10 focus-visible:ring-0 ${
+                        !selectedConversation.is_paused ? 'opacity-50 cursor-pointer' : ''
+                      }`}
                     />
                   </div>
 
-                  <Button
+                  <button
                     onClick={handleSendMessage}
                     disabled={isSending || !messageInput.trim() || !selectedConversation.is_paused}
-                    size="icon"
-                    className="bg-[#00a884] hover:bg-[#02906f] text-white h-10 w-10 rounded-full disabled:opacity-50"
+                    className={`flex items-center justify-center h-10 w-10 rounded-full transition-all shrink-0 ${
+                      selectedConversation.is_paused && messageInput.trim()
+                        ? 'bg-[#00a884] hover:bg-[#02906f] text-white shadow-lg shadow-[#00a884]/30 scale-100 hover:scale-105'
+                        : selectedConversation.is_paused
+                          ? 'bg-[#00a884]/40 text-white/50'
+                          : 'bg-[#2a3942] text-[#8696a0]'
+                    } disabled:cursor-not-allowed`}
                   >
-                    <Send className="h-5 w-5" />
-                  </Button>
+                    <Send className="h-4 w-4 ml-0.5" />
+                  </button>
                 </div>
               </>
             ) : (
@@ -585,13 +615,57 @@ export default function ChatsPage() {
               </div>
             )}
           </div>
-        </TabsContent>
+            </motion.div>
+          )}
 
-        {/* AI Config Tab */}
-        <TabsContent value="ai-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden bg-[#111b21]">
-          <AIConfigPanel />
-        </TabsContent>
+          {activeTab === 'ai-config' && (
+            <motion.div
+              key="ai-config"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="flex-1 overflow-auto min-h-0"
+            >
+              <AIConfigPanel />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Tabs>
+
+      {/* Pause Bot Confirmation Dialog */}
+      <AlertDialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
+        <AlertDialogContent className="bg-[#202c33] border-[#2a3942] max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="h-10 w-10 rounded-full bg-red-500/15 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+              </div>
+              <AlertDialogTitle className="text-[#e9edef]">
+                Pausar Bot
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-[#8696a0] leading-relaxed">
+              Para enviar mensajes manualmente necesitás pausar el bot primero.
+              <span className="block mt-2 text-[#aebac1]">
+                El bot seguirá leyendo el contexto de la conversación y retomará con normalidad una vez que lo vuelvas a activar.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="bg-[#2a3942] border-[#3b4a54] text-[#e9edef] hover:bg-[#3b4a54] hover:text-[#e9edef]">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handlePauseConversation()}
+              className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30"
+            >
+              <Pause className="h-3.5 w-3.5 mr-1.5" />
+              Pausar Bot
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

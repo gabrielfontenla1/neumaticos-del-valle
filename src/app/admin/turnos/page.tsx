@@ -94,14 +94,14 @@ export default function TurnosPage() {
   // Loading state
   if (isLoading && filteredAppointments.length === 0) {
     return (
-      <div className="p-6 bg-[#30302e] min-h-screen">
+      <div className="p-6 pl-10 min-h-screen">
         <TableSkeleton rows={8} columns={7} />
       </div>
     )
   }
 
   return (
-    <main className="p-6 space-y-6 bg-[#30302e] min-h-screen">
+    <main className="p-6 pl-10 space-y-6 min-h-screen">
       {/* Header */}
       <AppointmentsHeader
         totalAppointments={stats.total}
