@@ -49,6 +49,9 @@ export async function getProducts(
       .from('products')
       .select('*', { count: 'exact' })
 
+    // Excluir motos del catálogo público
+    query = query.neq('category', 'moto')
+
     // Aplicar filtros
     if (filters.search) {
       // Search in name, brand, and model fields
@@ -175,6 +178,7 @@ export async function getBrands() {
     const { data, error } = await supabase
       .from('products')
       .select('brand')
+      .neq('category', 'moto')
       .order('brand')
 
     if (error) throw error
@@ -194,6 +198,7 @@ export async function getCategories() {
     const { data, error } = await supabase
       .from('products')
       .select('category')
+      .neq('category', 'moto')
       .order('category')
 
     if (error) throw error
@@ -213,6 +218,7 @@ export async function getModels() {
     const { data, error } = await supabase
       .from('products')
       .select('model')
+      .neq('category', 'moto')
       .order('model')
 
     if (error) throw error
@@ -232,6 +238,7 @@ export async function getSizes() {
     const { data, error } = await supabase
       .from('products')
       .select('width, aspect_ratio, rim_diameter')
+      .neq('category', 'moto')
       .not('width', 'is', null)
       .order('width')
       .order('aspect_ratio')
@@ -313,6 +320,7 @@ export async function searchProducts(query: string, limit = 10) {
     const { data, error } = await supabase
       .from('products')
       .select('id, name, brand, size, price')
+      .neq('category', 'moto')
       .ilike('name', `%${query}%`)
       .limit(limit)
 
@@ -330,6 +338,7 @@ export async function getFeaturedProducts() {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .neq('category', 'moto')
       .gt('stock', 0)
       .order('created_at', { ascending: false })
       .limit(8)
