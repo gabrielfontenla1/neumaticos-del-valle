@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { Product } from '../types'
 import { AddToCartButton } from '@/features/cart/components/AddToCartButton'
 import { resolvePriceList, resolveDiscountPercentage } from '../utils/priceUtils'
@@ -60,7 +61,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   const installmentPrice = product.price / 6
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 hover:border-[#FFC700] hover:shadow-lg transition-all duration-300 group overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="bg-white rounded-xl border border-gray-200 hover:border-[#FFC700] hover:shadow-lg transition-all duration-300 group overflow-hidden"
+    >
       <Link href={`/productos/${product.id}`}>
         <div className="relative aspect-square p-6 bg-gray-50">
           {product.is_featured && (
@@ -157,6 +163,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           variant="full"
         />
       </div>
-    </div>
+    </motion.div>
   )
 }

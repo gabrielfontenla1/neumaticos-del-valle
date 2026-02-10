@@ -289,7 +289,12 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
 
         <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
           {/* Mobile: Image First (order-1) / Desktop: Left Column */}
-          <div className="order-1 lg:space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="order-1 lg:space-y-4"
+          >
             {/* Mobile Back Button and Title */}
             <div className="lg:hidden px-4 py-3">
               <Button
@@ -354,10 +359,15 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                 <p className="text-[10px] text-gray-600">Calidad premium</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Mobile: Info Second (order-2) / Desktop: Right Column */}
-          <div className="order-2 space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
+            className="order-2 space-y-4"
+          >
             {/* Main Info Card - Full width on mobile without padding */}
             <div className="bg-[#FFFFFF] lg:rounded-lg lg:border lg:border-gray-200 lg:p-5 lg:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">
               {/* Mobile padding wrapper - only for content that needs padding */}
@@ -696,7 +706,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Installment Table - Full Width */}

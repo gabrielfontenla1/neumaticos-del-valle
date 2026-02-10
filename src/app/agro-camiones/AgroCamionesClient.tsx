@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Search, X, Package, RotateCcw, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, Share2, Copy, Truck, ArrowRight, Calendar } from "lucide-react"
+import { motion } from "framer-motion"
 import {
   Select,
   SelectContent,
@@ -1169,12 +1170,18 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
             ) : (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-                  {paginatedProducts.map((product) => {
+                  {paginatedProducts.map((product, index) => {
                     const listPrice = resolvePriceList(product)
                     const discountPercentage = resolveDiscountPercentage(product)
 
                     return (
-                      <div key={product.id} className="group">
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3), ease: 'easeOut' }}
+                        className="group"
+                      >
                         <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 hover:border-gray-300 overflow-hidden shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out h-full">
                           <div className="flex flex-col h-full">
                             <div className="w-full aspect-square bg-[#FFFFFF] relative overflow-hidden">
@@ -1314,7 +1321,7 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     )
                   })}
                 </div>
