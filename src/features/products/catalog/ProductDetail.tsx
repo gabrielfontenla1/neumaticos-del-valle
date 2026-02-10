@@ -290,9 +290,9 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
         <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
           {/* Mobile: Image First (order-1) / Desktop: Left Column */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
             className="order-1 lg:space-y-4"
           >
             {/* Mobile Back Button and Title */}
@@ -363,9 +363,9 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
 
           {/* Mobile: Info Second (order-2) / Desktop: Right Column */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
             className="order-2 space-y-4"
           >
             {/* Main Info Card - Full width on mobile without padding */}
