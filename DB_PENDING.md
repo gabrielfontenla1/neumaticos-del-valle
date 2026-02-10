@@ -6,7 +6,7 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 ## ⏳ Pendiente
 
-*No hay cambios pendientes*
+<!-- No hay tareas pendientes actualmente -->
 
 ---
 
@@ -19,6 +19,15 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 ## ✅ Completado
 
 <!-- Cambios ya implementados con referencia a la migración -->
+
+### 2026-02-09 - WhatsApp Source Field
+
+- [x] **20260209_add_whatsapp_source.sql** - Campo source para proveedores WhatsApp
+  - Añade: columna `source` a `whatsapp_conversations` y `whatsapp_messages`
+  - Valores: 'twilio' (default) | 'baileys'
+  - Índices: `idx_whatsapp_conversations_source`, `idx_whatsapp_messages_source`
+  - Propósito: Distinguir mensajes de Twilio Business API vs Baileys Web
+  - ✅ Aplicada en producción
 
 ### 2026-02-09 - WhatsApp Checkout & Order Triggers Fix
 
