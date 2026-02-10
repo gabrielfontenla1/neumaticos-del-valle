@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { AdminSession } from '../types'
 import { getAdminSession, adminLogout } from '../api'
 
@@ -10,18 +11,28 @@ export function useAuth(requireAuth = true) {
   const [session, setSession] = useState<AdminSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const { status: nextAuthStatus } = useSession()
 
   useEffect(() => {
     const checkAuth = () => {
       const currentSession = getAdminSession()
 
-      if (requireAuth && !currentSession) {
-        router.push('/admin/login')
+      // Require both: sessionStorage cache AND real NextAuth session
+      const hasNextAuth = nextAuthStatus === 'authenticated'
+      const isValid = currentSession && hasNextAuth
+
+      if (requireAuth && !isValid) {
+        // If NextAuth says unauthenticated (not loading), redirect
+        if (nextAuthStatus !== 'loading') {
+          router.push('/admin/login')
+        }
       } else {
         setSession(currentSession)
       }
 
-      setIsLoading(false)
+      if (nextAuthStatus !== 'loading') {
+        setIsLoading(false)
+      }
     }
 
     checkAuth()
@@ -29,7 +40,7 @@ export function useAuth(requireAuth = true) {
     // Check session every minute
     const interval = setInterval(checkAuth, 60000)
     return () => clearInterval(interval)
-  }, [requireAuth, router])
+  }, [requireAuth, router, nextAuthStatus])
 
   const logout = () => {
     adminLogout()
@@ -39,7 +50,7 @@ export function useAuth(requireAuth = true) {
   return {
     session,
     isLoading,
-    isAuthenticated: !!session,
+    isAuthenticated: !!session && nextAuthStatus === 'authenticated',
     logout
   }
 }

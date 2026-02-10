@@ -5,11 +5,20 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const isAuthPage = req.nextUrl.pathname.startsWith("/auth")
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin")
+  const isAdminLoginPage = req.nextUrl.pathname === "/admin/login"
+  const isPanelPage = req.nextUrl.pathname === "/panel"
   const isProtectedRoute = req.nextUrl.pathname.startsWith("/dashboard") ||
                           req.nextUrl.pathname.startsWith("/profile")
 
-  // Skip middleware for admin routes - they have their own auth
-  if (isAdminRoute) {
+  // Admin routes: require NextAuth session (except login page and panel)
+  if (isAdminRoute && !isAdminLoginPage) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/admin/login", req.url))
+    }
+  }
+
+  // Don't block panel page (it has its own access key check)
+  if (isPanelPage) {
     return NextResponse.next()
   }
 
