@@ -370,6 +370,16 @@ function AdminLayout({ children }: AdminLayoutProps) {
                   ))
                 )}
               </div>
+              <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
+              <div className="p-2">
+                <Link
+                  href="/admin/mensajes"
+                  className="text-xs font-medium hover:opacity-80 transition-opacity block text-center py-1"
+                  style={{ color: theme.primary }}
+                >
+                  Ver todos los mensajes
+                </Link>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
