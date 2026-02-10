@@ -198,9 +198,8 @@ export function TwilioConfigPanel() {
 
   return (
     <div className="space-y-4">
-      {/* Header with status */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-[#e9edef] font-medium">Configuración de Twilio</h3>
+      {/* Status badge - aligned to the right */}
+      <div className="flex justify-end">
         {getStatusBadge()}
       </div>
 

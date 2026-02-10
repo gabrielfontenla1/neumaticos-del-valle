@@ -17,12 +17,10 @@ import {
   UserCheck,
   Settings,
   CheckCheck,
-  Radio,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
 import { AIConfigPanel } from '@/components/admin/ai-config/AIConfigPanel'
-import { SourceConfigPanel } from '@/components/admin/source-config/SourceConfigPanel'
 
 // Types
 interface Conversation {
@@ -331,13 +329,6 @@ export default function ChatsPage() {
               <Settings className="h-4 w-4 mr-2" />
               Configuración IA
             </TabsTrigger>
-            <TabsTrigger
-              value="source-config"
-              className="h-8 px-4 text-sm text-[#8696a0] data-[state=active]:bg-[#2a3942] data-[state=active]:text-[#00a884] rounded"
-            >
-              <Radio className="h-4 w-4 mr-2" />
-              Source Configuration
-            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -599,11 +590,6 @@ export default function ChatsPage() {
         {/* AI Config Tab */}
         <TabsContent value="ai-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden bg-[#111b21]">
           <AIConfigPanel />
-        </TabsContent>
-
-        {/* Source Config Tab */}
-        <TabsContent value="source-config" className="flex-1 mt-0 overflow-auto min-h-0 data-[state=inactive]:hidden bg-[#111b21]">
-          <SourceConfigPanel />
         </TabsContent>
       </Tabs>
     </div>

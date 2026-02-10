@@ -1,91 +1,60 @@
 #!/bin/bash
 
-# Open 4 iTerm2 terminals in 2x2 grid with Claude Code
-# Terminal 1 (top-left): DATABASE - color cálido
-# Terminal 2 (top-right): azul
-# Terminal 3 (bottom-left): verde
-# Terminal 4 (bottom-right): púrpura
+PROJECT="/Users/gabrielfontenla/Desktop/Proyectos/Apps/NeumaticosDelValle/neumaticos-del-valle"
+CMD="cd $PROJECT && claude --dangerously-skip-permissions"
 
-PROJECT_PATH="/Users/gabrielfontenla/Desktop/Proyectos/Apps/NeumaticosDelValle/neumaticos-del-valle"
-
-osascript <<EOF
-tell application "iTerm2"
+osascript -e "
+tell application \"iTerm\"
     activate
-
+    delay 0.3
     create window with default profile
+    delay 0.3
+
+    -- Split horizontal: arriba y abajo
+    tell current session of current window
+        split horizontally with default profile
+    end tell
+    delay 0.3
+
+    -- Ir al panel de arriba y split vertical
+    tell first session of current tab of current window
+        split vertically with default profile
+    end tell
+    delay 0.3
+
+    -- Ir al panel de abajo y split vertical
+    tell last session of current tab of current window
+        split vertically with default profile
+    end tell
+    delay 0.5
+
+    -- Poner nombre en cada sesion
+    repeat with s in sessions of current tab of current window
+        tell s
+            set name to \"neumaticos-del-valle\"
+            write text \"$CMD\"
+        end tell
+    end repeat
+
+    -- Esperar a que Claude cargue
+    delay 6
+
+    -- Enviar instruccion a terminal DATABASE (primera sesion)
+    tell first session of current tab of current window
+        select
+        write text \"Sos la terminal DATABASE. Solo vos modificas archivos de BD (supabase/migrations/, src/lib/supabase*.ts). Lee DB_PENDING.md para ver cambios pendientes.\"
+    end tell
 
     delay 0.2
 
-    tell application "System Events"
-        tell process "iTerm2"
-            keystroke "d" using command down
-            delay 0.4
-            keystroke "d" using {command down, shift down}
-            delay 0.4
-            key code 123 using {command down, option down}
-            delay 0.3
-            keystroke "d" using {command down, shift down}
-            delay 0.4
-        end tell
-    end tell
-
-    delay 0.5
-
-    tell current window
-        tell session 1 of current tab
-            write text "cd $PROJECT_PATH"
-            set background color to {7500, 6000, 6000}
-            write text "claude --dangerously-skip-permissions"
-        end tell
-
-        delay 0.3
-
-        tell session 2 of current tab
-            write text "cd $PROJECT_PATH"
-            set background color to {6000, 6000, 7500}
-            write text "claude --dangerously-skip-permissions"
-        end tell
-
-        delay 0.3
-
-        tell session 3 of current tab
-            write text "cd $PROJECT_PATH"
-            set background color to {6000, 7000, 6000}
-            write text "claude --dangerously-skip-permissions"
-        end tell
-
-        delay 0.3
-
-        tell session 4 of current tab
-            write text "cd $PROJECT_PATH"
-            set background color to {7000, 6000, 7000}
-            write text "claude --dangerously-skip-permissions"
-        end tell
-    end tell
-
-    delay 5
-
-    tell current window
-        tell session 1 of current tab
-            select
-        end tell
-    end tell
-
-    delay 0.3
-
-    tell application "System Events"
-        tell process "iTerm2"
-            keystroke "Sos la terminal DATABASE. Solo vos modificás archivos de BD (supabase/migrations/, src/lib/supabase*.ts, src/lib/db/). Antes de trabajar, leé DB_PENDING.md para ver cambios pendientes."
-            delay 0.2
+    tell application \"System Events\"
+        tell process \"iTerm\"
             key code 36
         end tell
     end tell
-
 end tell
-EOF
+"
 
-echo "✅ 4 terminales abiertas en 2x2"
-echo "🗄️  Terminal 1 (top-left): DATABASE"
-echo "🔵 Terminal 2 (top-right)"
-echo "🟢 Terminal 3 (bottom-left)"
-echo "🟣 Terminal 4 (bottom-right)"
+echo "4 terminales 2x2 - neumaticos-del-valle"
+echo "Terminal 1: DATABASE     Terminal 2: BACKEND"
+echo "Terminal 3: FRONTEND     Terminal 4: QA"

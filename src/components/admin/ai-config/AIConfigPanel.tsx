@@ -16,11 +16,15 @@ import {
   Bot,
   AlertCircle,
   CheckCircle2,
+  Radio,
+  Sparkles,
 } from 'lucide-react'
 import { PromptsSection } from './PromptsSection'
+import { SpecializedPromptsSection } from './SpecializedPromptsSection'
 import { FunctionToolsSection } from './FunctionToolsSection'
 import { ModelsSection } from './ModelsSection'
 import { BotConfigSection } from './BotConfigSection'
+import { SourceConfigSection } from './SourceConfigSection'
 import type {
   AIPromptsConfig,
   WhatsAppFunctionToolsConfig,
@@ -28,7 +32,7 @@ import type {
   WhatsAppBotConfig,
 } from '@/lib/ai/config-types'
 
-type Section = 'prompts' | 'functions' | 'models' | 'bot'
+type Section = 'prompts' | 'specialized' | 'functions' | 'models' | 'bot' | 'sources'
 
 export function AIConfigPanel() {
   const [activeSection, setActiveSection] = useState<Section>('prompts')
@@ -221,10 +225,12 @@ export function AIConfigPanel() {
   }
 
   const sections = [
-    { id: 'prompts' as const, label: 'Prompts del Sistema', icon: MessageSquare },
+    { id: 'prompts' as const, label: 'Prompt Principal', icon: MessageSquare },
+    { id: 'specialized' as const, label: 'Prompts Especializados', icon: Sparkles },
     { id: 'functions' as const, label: 'Function Calling', icon: Wrench },
     { id: 'models' as const, label: 'Modelos y Parámetros', icon: Bot },
     { id: 'bot' as const, label: 'Config Bot WhatsApp', icon: Settings },
+    { id: 'sources' as const, label: 'Fuentes WhatsApp', icon: Radio },
   ]
 
   if (isLoading) {
@@ -317,6 +323,18 @@ export function AIConfigPanel() {
               />
             )}
 
+            {activeSection === 'specialized' && (
+              <SpecializedPromptsSection
+                config={promptsConfig}
+                onChange={(config) => {
+                  setPromptsConfig(config)
+                  setIsDirty(true)
+                }}
+                onSave={handleSavePrompts}
+                isSaving={isSaving}
+              />
+            )}
+
             {activeSection === 'functions' && (
               <FunctionToolsSection
                 config={functionsConfig}
@@ -351,6 +369,10 @@ export function AIConfigPanel() {
                 onSave={handleSaveBot}
                 isSaving={isSaving}
               />
+            )}
+
+            {activeSection === 'sources' && (
+              <SourceConfigSection />
             )}
           </div>
         </div>

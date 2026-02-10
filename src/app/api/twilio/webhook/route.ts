@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { TwilioClient, validateTwilioSignature, parseTwilioWebhook } from '@/lib/twilio'
 import { openai, models, temperatures } from '@/lib/ai/openai'
-import { PRODUCT_AGENT_PROMPT, formatSystemPrompt } from '@/lib/ai/prompts/system'
+import { formatSystemPrompt } from '@/lib/ai/prompts/system'
+import { getAIPromptsConfig } from '@/lib/ai/config-service'
 import { searchFAQs } from '@/lib/ai/embeddings'
 import {
   getOrCreateConversation as getOrCreateConv,
@@ -883,8 +884,11 @@ async function generateAIResponse(context: {
   faqs: Array<{ question: string; answer: string }>
   conversationHistory: Message[]
 }): Promise<string> {
+  // Get prompt from database configuration (with fallback to defaults)
+  const promptsConfig = await getAIPromptsConfig()
+
   // Use the same prompt as the dashboard simulator
-  const systemPrompt = formatSystemPrompt(PRODUCT_AGENT_PROMPT, {
+  const systemPrompt = formatSystemPrompt(promptsConfig.whatsappSystemPrompt, {
     products: context.products,
     faqs: context.faqs,
     previousInteraction: context.conversationHistory.length > 0
