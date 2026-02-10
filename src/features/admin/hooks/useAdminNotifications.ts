@@ -9,6 +9,7 @@ interface NotificationFilters {
   priority?: NotificationPriority
   is_read?: boolean
   limit?: number
+  offset?: number
 }
 
 interface UseAdminNotificationsOptions {
@@ -59,6 +60,7 @@ export function useAdminNotifications(
       if (currentFilters.priority) params.set('priority', currentFilters.priority)
       if (currentFilters.is_read !== undefined) params.set('is_read', String(currentFilters.is_read))
       if (currentFilters.limit) params.set('limit', String(currentFilters.limit))
+      if (currentFilters.offset) params.set('offset', String(currentFilters.offset))
 
       const response = await fetch(`/api/admin/notifications?${params.toString()}`, {
         credentials: 'include',

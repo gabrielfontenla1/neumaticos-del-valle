@@ -11,6 +11,7 @@ import {
   XCircle,
   Ticket,
   Bell,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import type { AdminNotification, NotificationType } from '@/lib/validations/admin-notifications'
@@ -18,6 +19,7 @@ import type { AdminNotification, NotificationType } from '@/lib/validations/admi
 interface NotificationItemProps {
   notification: AdminNotification
   onMarkAsRead?: (id: string) => void
+  onDismiss?: (id: string) => void
   theme: {
     foreground: string
     mutedForeground: string
@@ -81,6 +83,7 @@ function formatRelativeTime(dateString: string): string {
 function NotificationItemComponent({
   notification,
   onMarkAsRead,
+  onDismiss,
   theme,
 }: NotificationItemProps) {
   const Icon = iconMap[notification.type] || Bell
@@ -93,9 +96,15 @@ function NotificationItemComponent({
     }
   }
 
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onDismiss?.(notification.id)
+  }
+
   const content = (
     <div
-      className="p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors relative"
+      className="group p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors relative"
       onClick={handleClick}
       style={{
         backgroundColor: notification.is_read ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
@@ -107,6 +116,18 @@ function NotificationItemComponent({
           className="absolute left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
           style={{ backgroundColor: theme.primary }}
         />
+      )}
+
+      {/* Dismiss button */}
+      {onDismiss && (
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2 right-2 w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10"
+          style={{ color: theme.mutedForeground }}
+          title="Descartar"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       )}
 
       <div className="flex items-start gap-3 pl-2">
