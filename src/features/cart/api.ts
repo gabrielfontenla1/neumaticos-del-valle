@@ -94,7 +94,7 @@ async function getProduct(productId: string) {
       sku: `SKU-${product.id}`, // Product type doesn't have SKU, generate from ID
       price: product.price,
       sale_price: product.price, // If there's no sale_price in Product type, use price
-      stock_quantity: product.stock || product.stock_quantity || 0,
+      stock_quantity: product.stock ?? product.stock_quantity ?? 0,
       width: product.width || null,
       aspect_ratio: product.profile || null,
       rim_diameter: product.diameter || null,

@@ -101,7 +101,7 @@ export async function getProducts(
     // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
     const mappedData = (data as DBProductRaw[] | null)?.map((product) => ({
       ...product,
-      stock: product.stock || product.stock_quantity || 0
+      stock: product.stock ?? product.stock_quantity ?? 0
     })) || []
 
     return {
@@ -148,7 +148,7 @@ export async function getProductById(id: string) {
       const productData = data as DBProductRaw
       const mappedProduct: Product = {
         ...productData,
-        stock: productData.stock || productData.stock_quantity || 0
+        stock: productData.stock ?? productData.stock_quantity ?? 0
       }
       console.log('🔍 [getProductById] Producto mapeado:', {
         id: mappedProduct.id,
@@ -348,7 +348,7 @@ export async function getFeaturedProducts() {
     // Ensure stock field exists (handle both 'stock' and 'stock_quantity' fields)
     const mappedData = (data as DBProductRaw[] | null)?.map((product) => ({
       ...product,
-      stock: product.stock || product.stock_quantity || 0
+      stock: product.stock ?? product.stock_quantity ?? 0
     })) || []
 
     return mappedData as Product[]
