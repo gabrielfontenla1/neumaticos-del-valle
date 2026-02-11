@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/home/Footer'
 import { OilWizard } from '@/components/marketing/OilWizard'
 import { OilProductCard } from '@/components/marketing/OilProductCard'
 import { OilFilters } from '@/components/marketing/OilFilters'
@@ -209,7 +208,6 @@ export default function AceitesPage() {
           onClose={() => setIsCompareOpen(false)}
         />
       </main>
-      <Footer />
     </>
   )
 }

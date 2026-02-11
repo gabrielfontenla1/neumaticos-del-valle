@@ -8,7 +8,6 @@ import {
   PerformanceStats,
   BranchesSection,
   CTASection,
-  Footer,
   TestimonialsSection,
   GuaranteesSection,
   ProcessSection,
@@ -50,9 +49,6 @@ export function TeslaHomePage() {
 
       {/* CTA Section */}
       <CTASection />
-
-      {/* Footer */}
-      <Footer />
     </div>
   )
 }

@@ -133,15 +133,19 @@ export async function createConversation(
 ): Promise<WhatsAppConversation> {
   const normalizedPhone = normalizePhoneNumber(input.phone)
 
+  const insertData: Record<string, unknown> = {
+    phone: normalizedPhone,
+    contact_name: input.contactName || null,
+    status: 'active',
+    is_paused: false,
+    message_count: 0,
+  }
+  if (input.source) insertData.source = input.source
+  if (input.baileysInstanceId) insertData.baileys_instance_id = input.baileysInstanceId
+
   const { data, error } = await db
     .from('whatsapp_conversations')
-    .insert({
-      phone: normalizedPhone,
-      contact_name: input.contactName || null,
-      status: 'active',
-      is_paused: false,
-      message_count: 0
-    })
+    .insert(insertData)
     .select()
     .single()
 
@@ -159,7 +163,9 @@ export async function createConversation(
  */
 export async function getOrCreateConversation(
   phone: string,
-  contactName?: string
+  contactName?: string,
+  source?: 'twilio' | 'baileys',
+  baileysInstanceId?: string
 ): Promise<WhatsAppConversation> {
   const existing = await findConversationByPhone(phone)
   if (existing) {
@@ -171,7 +177,7 @@ export async function getOrCreateConversation(
     return existing
   }
 
-  return createConversation({ phone, contactName })
+  return createConversation({ phone, contactName, source, baileysInstanceId })
 }
 
 /**
@@ -338,17 +344,20 @@ export async function listPausedConversations(
 export async function addMessage(
   input: CreateMessageInput
 ): Promise<WhatsAppMessage> {
+  const insertData: Record<string, unknown> = {
+    conversation_id: input.conversationId,
+    role: input.role,
+    content: input.content,
+    sent_by_human: input.sentByHuman || false,
+    sent_by_user_id: input.sentByUserId || null,
+    intent: input.intent || null,
+    response_time_ms: input.responseTimeMs || null,
+  }
+  if (input.source) insertData.source = input.source
+
   const { data, error } = await db
     .from('whatsapp_messages')
-    .insert({
-      conversation_id: input.conversationId,
-      role: input.role,
-      content: input.content,
-      sent_by_human: input.sentByHuman || false,
-      sent_by_user_id: input.sentByUserId || null,
-      intent: input.intent || null,
-      response_time_ms: input.responseTimeMs || null
-    })
+    .insert(insertData)
     .select()
     .single()
 

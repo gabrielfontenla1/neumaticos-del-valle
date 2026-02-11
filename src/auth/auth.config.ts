@@ -1,14 +1,21 @@
 import type { NextAuthConfig } from "next-auth"
+import type { Provider } from "next-auth/providers"
 import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 
-export default {
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
-    Credentials({
+const providers: Provider[] = []
+
+// Only add Google provider if real credentials are configured
+const googleId = process.env.GOOGLE_CLIENT_ID
+const googleSecret = process.env.GOOGLE_CLIENT_SECRET
+if (googleId && googleSecret && !googleId.startsWith("your-")) {
+  providers.push(
+    Google({ clientId: googleId, clientSecret: googleSecret })
+  )
+}
+
+providers.push(
+  Credentials({
       name: "Admin Login",
       credentials: {
         email: { label: "Email", type: "email" },
@@ -34,8 +41,11 @@ export default {
 
         return null
       },
-    }),
-  ],
+    })
+)
+
+export default {
+  providers,
   callbacks: {
     async jwt({ token, user, account, profile }) {
       // On credentials sign-in, persist role from the user object

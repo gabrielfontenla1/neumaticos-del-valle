@@ -96,7 +96,7 @@ function ProviderCard({
           </div>
 
           <p className={`text-[10px] mt-0.5 ${enabled ? 'text-[#8696a0]' : 'text-[#6a7a82]'}`}>
-            {isTwilio ? 'Business API' : 'Web (próximamente)'}
+            {isTwilio ? 'Business API' : 'WhatsApp Web'}
           </p>
         </div>
       </div>
@@ -135,12 +135,6 @@ export function SourceConfigSection() {
 
   // Handle toggle change
   const handleToggle = async (provider: 'twilio' | 'baileys', enabled: boolean) => {
-    // Baileys not available yet
-    if (provider === 'baileys' && enabled) {
-      toast.info('Baileys no está disponible aún. Próximamente.')
-      return
-    }
-
     const newConfig = {
       ...config,
       [`${provider}_enabled`]: enabled
@@ -235,7 +229,7 @@ export function SourceConfigSection() {
             <ProviderCard
               provider="baileys"
               enabled={config.baileys_enabled}
-              available={false}
+              available={true}
               isSaving={isSaving}
               onToggle={(enabled) => handleToggle('baileys', enabled)}
             />
@@ -246,11 +240,7 @@ export function SourceConfigSection() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-8 text-[#8696a0]">
                 <Smartphone className="h-10 w-10 mb-3 opacity-30" />
-                <p className="text-sm text-center">Próximamente disponible</p>
-                <div className="flex flex-wrap justify-center gap-2 text-xs mt-3">
-                  <span className="px-2 py-1 rounded bg-[#2a3942] text-[#6a7a82]">Sin costo mensual</span>
-                  <span className="px-2 py-1 rounded bg-[#2a3942] text-[#6a7a82]">Conexión directa</span>
-                </div>
+                <p className="text-sm text-center">Habilitá Baileys para configurar</p>
               </div>
             )}
           </div>

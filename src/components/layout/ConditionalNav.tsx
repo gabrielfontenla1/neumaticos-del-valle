@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { Navbar } from './Navbar'
+import { Footer } from '@/components/home/Footer'
 import { ReactNode } from 'react'
 
 interface ConditionalLayoutProps {
@@ -11,11 +12,12 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
-  // Don't show navigation components on admin or system pages
+  // Don't show navigation components on admin, system, or legal pages
   const isAdminRoute = pathname.startsWith('/admin')
   const isSysRoute = pathname.startsWith('/sys/')
+  const isLegalRoute = pathname === '/privacidad' || pathname === '/terminos'
 
-  if (isAdminRoute || isSysRoute) {
+  if (isAdminRoute || isSysRoute || isLegalRoute) {
     return <>{children}</>
   }
 
@@ -25,6 +27,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       <main className="pt-16">
         {children}
       </main>
+      <Footer />
     </>
   )
 }

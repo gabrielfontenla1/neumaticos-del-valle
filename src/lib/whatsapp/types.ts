@@ -120,6 +120,8 @@ export interface DbMessage {
 export interface CreateConversationInput {
   phone: string
   contactName?: string
+  source?: WhatsAppSource
+  baileysInstanceId?: string
 }
 
 export interface CreateMessageInput {
@@ -130,6 +132,7 @@ export interface CreateMessageInput {
   sentByUserId?: string
   intent?: string
   responseTimeMs?: number
+  source?: WhatsAppSource
 }
 
 export interface PauseConversationInput {

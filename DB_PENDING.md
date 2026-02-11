@@ -25,6 +25,17 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 <!-- Cambios ya implementados con referencia a la migración -->
 
+### 2026-02-11 - Baileys WhatsApp Integration
+
+- [x] **20260211_baileys_integration.sql** - Integración Baileys como segundo proveedor WhatsApp
+  - Crea: tabla `baileys_instances` (status, qr_code, session_data, settings)
+  - Crea: tabla `baileys_session_logs` (event_type, details)
+  - Agrega: columna `baileys_instance_id` FK en `whatsapp_conversations`
+  - Incluye: indexes, trigger updated_at, RLS policies
+  - Verificación: 2 tablas + 1 columna confirmados
+  - Solicitado por: Terminal App Code
+  - ✅ Aplicada en producción
+
 ### 2026-02-11 - Funciones RPC bulk para stock import
 
 - [x] **20260211_bulk_stock_update.sql** - 2 funciones RPC para importación batch

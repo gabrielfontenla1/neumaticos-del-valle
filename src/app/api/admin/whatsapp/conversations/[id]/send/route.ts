@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { findConversationById, addMessage } from '@/lib/whatsapp/repository'
 import { TwilioClient } from '@/lib/twilio'
+import { sendMessage as sendBaileysMessage } from '@/lib/baileys/client'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -8,7 +9,7 @@ interface RouteParams {
 
 /**
  * POST /api/admin/whatsapp/conversations/[id]/send
- * Send a message to the user via Twilio (human intervention)
+ * Send a message to the user via Twilio or Baileys (human intervention)
  */
 export async function POST(
   request: NextRequest,
@@ -26,7 +27,7 @@ export async function POST(
       )
     }
 
-    // Get conversation to get the phone number
+    // Get conversation to get the phone number and source
     const conversation = await findConversationById(id)
     if (!conversation) {
       return NextResponse.json(
@@ -35,34 +36,62 @@ export async function POST(
       )
     }
 
-    // Send message via Twilio
-    const twilioClient = await TwilioClient.create()
-    const result = await twilioClient.sendMessage(conversation.phone, content.trim())
+    let sendResult: { sid?: string; success?: boolean; error?: string }
 
-    if (result.status === 'failed') {
-      return NextResponse.json(
-        { success: false, error: result.errorMessage || 'Failed to send message' },
-        { status: 500 }
-      )
+    // Route by provider source
+    if (conversation.source === 'baileys') {
+      // Send via Baileys service
+      const baileysInstanceId = (conversation as unknown as Record<string, unknown>).baileys_instance_id as string | undefined
+      if (!baileysInstanceId) {
+        return NextResponse.json(
+          { success: false, error: 'No Baileys instance associated with this conversation' },
+          { status: 400 }
+        )
+      }
+
+      const result = await sendBaileysMessage(baileysInstanceId, conversation.phone, content.trim())
+      if (!result.success) {
+        return NextResponse.json(
+          { success: false, error: result.error || 'Failed to send via Baileys' },
+          { status: 500 }
+        )
+      }
+
+      sendResult = { success: true, sid: result.data?.message_id }
+    } else {
+      // Default: Send via Twilio
+      const twilioClient = await TwilioClient.create()
+      const result = await twilioClient.sendMessage(conversation.phone, content.trim())
+
+      if (result.status === 'failed') {
+        return NextResponse.json(
+          { success: false, error: result.errorMessage || 'Failed to send message' },
+          { status: 500 }
+        )
+      }
+
+      sendResult = { sid: result.sid }
     }
 
     // Save message to database as human-sent
     const message = await addMessage({
       conversationId: id,
-      role: 'assistant', // Human messages appear as assistant (the business)
+      role: 'assistant',
       content: content.trim(),
       sentByHuman: true,
-      sentByUserId: user_id || undefined
+      sentByUserId: user_id || undefined,
+      source: conversation.source || 'twilio'
     })
 
-    console.log('[API] Human message sent to:', conversation.phone)
+    console.log(`[API] Human message sent to ${conversation.phone} via ${conversation.source || 'twilio'}`)
 
     return NextResponse.json({
       success: true,
       message: 'Message sent successfully',
       data: {
         message_id: message.id,
-        twilio_sid: result.sid
+        provider: conversation.source || 'twilio',
+        external_id: sendResult.sid
       }
     })
 
