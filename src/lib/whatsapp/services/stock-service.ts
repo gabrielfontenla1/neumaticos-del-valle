@@ -120,6 +120,7 @@ export async function searchProductsWithStock(
       model,
       size_display,
       price,
+      stock,
       branch_stock (
         quantity,
         branches!inner (
@@ -145,8 +146,9 @@ export async function searchProductsWithStock(
     // Find stock for the requested branch if specified
     let branchStock = 0
     let productBranchCode: string | null = null
+    const hasBranchStockRecords = product.branch_stock && product.branch_stock.length > 0
 
-    if (branchCode && product.branch_stock) {
+    if (branchCode && hasBranchStockRecords) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const branchData = product.branch_stock.find((bs: any) =>
         bs.branches?.code === branchCode
@@ -159,9 +161,21 @@ export async function searchProductsWithStock(
 
     // Calculate total stock across all branches
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalStock = (product.branch_stock || []).reduce((sum: number, bs: any) =>
-      sum + (bs.quantity || 0), 0
-    )
+    const branchTotalStock = hasBranchStockRecords
+      ? (product.branch_stock || []).reduce((sum: number, bs: any) =>
+          sum + (bs.quantity || 0), 0
+        )
+      : 0
+
+    // Fallback to products.stock when branch_stock table isn't populated
+    const productStock = product.stock || 0
+    const totalStock = branchTotalStock > 0 ? branchTotalStock : productStock
+
+    // When branch_stock table isn't populated, use products.stock as branch_stock too
+    if (!hasBranchStockRecords && productStock > 0) {
+      branchStock = productStock
+      productBranchCode = branchCode || null
+    }
 
     return {
       product_id: product.id,
