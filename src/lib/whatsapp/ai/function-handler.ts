@@ -43,8 +43,8 @@ import {
 } from '../services/location-service'
 import * as stockTemplates from '../templates/stock-responses'
 import { generateEmbedding, searchSimilarContent, searchFAQs } from '@/lib/ai/embeddings'
-import { formatSystemPrompt } from '@/lib/ai/prompts/system'
-import { getAIPromptsConfig } from '@/lib/ai/config-service'
+import { formatSystemPrompt, getBusinessContext } from '@/lib/ai/prompts/system'
+import { getAIPromptsConfig, getWhatsAppContextConfig } from '@/lib/ai/config-service'
 import { createClient } from '@supabase/supabase-js'
 
 // Supabase client for order creation
@@ -311,7 +311,9 @@ ${itemsList}
  * Search for products relevant to the user's message to inject as context.
  * Uses the same semantic + keyword search pattern as the admin AI simulator.
  */
-async function searchProductsForContext(query: string): Promise<Record<string, unknown>[]> {
+async function searchProductsForContext(query: string, opts?: { threshold?: number; maxResults?: number }): Promise<Record<string, unknown>[]> {
+  const threshold = opts?.threshold ?? 0.65
+  const maxResults = opts?.maxResults ?? 10
   const productKeywords = [
     'neumático', 'neumatico', 'llanta', 'goma', 'cubierta',
     'precio', 'costo', 'vale', 'sale', 'cuanto', 'cuánto',
@@ -331,8 +333,8 @@ async function searchProductsForContext(query: string): Promise<Record<string, u
   try {
     const embedding = await generateEmbedding(query)
     const results = await searchSimilarContent(embedding, {
-      matchThreshold: 0.65,
-      matchCount: 10,
+      matchThreshold: threshold,
+      matchCount: maxResults,
       contentType: 'product'
     })
 
@@ -370,7 +372,7 @@ async function searchProductsForContext(query: string): Promise<Record<string, u
         .eq('rim_diameter', diameter)
         .gt('stock', 0)
         .order('price', { ascending: true })
-        .limit(10)
+        .limit(maxResults)
 
       if (data && data.length > 0) {
         console.log('[FunctionHandler] Size search found', data.length, 'products')
@@ -391,7 +393,7 @@ async function searchProductsForContext(query: string): Promise<Record<string, u
         .or(`name.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%`)
         .gt('stock', 0)
         .order('price', { ascending: true })
-        .limit(10)
+        .limit(maxResults)
 
       if (data && data.length > 0) {
         console.log('[FunctionHandler] Keyword search found', data.length, 'products')
@@ -408,9 +410,9 @@ async function searchProductsForContext(query: string): Promise<Record<string, u
 /**
  * Search FAQs relevant to the user's message.
  */
-async function searchFAQsForContext(query: string): Promise<Array<{ question: string; answer: string }>> {
+async function searchFAQsForContext(query: string, maxResults = 3): Promise<Array<{ question: string; answer: string }>> {
   try {
-    return await searchFAQs(query, 3)
+    return await searchFAQs(query, maxResults)
   } catch (error) {
     console.log('[FunctionHandler] FAQ search failed:', error)
     return []
@@ -438,10 +440,20 @@ export async function processWithFunctionCalling(
       return handleWebPurchase(webPurchase, conversation)
     }
 
+    // Load context config for search parameters
+    const ctxConfig = await getWhatsAppContextConfig()
+
     // Search for product context and FAQs in parallel (mirrors admin simulator)
     const [products, faqs] = await Promise.all([
-      searchProductsForContext(messageText),
-      searchFAQsForContext(messageText)
+      ctxConfig.enableProductSearch
+        ? searchProductsForContext(messageText, {
+            threshold: ctxConfig.semanticSearchThreshold,
+            maxResults: ctxConfig.maxProductResults,
+          })
+        : Promise.resolve([]),
+      ctxConfig.enableFaqSearch
+        ? searchFAQsForContext(messageText, ctxConfig.maxFaqResults)
+        : Promise.resolve([]),
     ])
 
     // Load dynamic configuration with enriched context
@@ -469,7 +481,7 @@ export async function processWithFunctionCalling(
       tools,
       tool_choice: 'auto',
       temperature: temperatures.balanced,
-      max_tokens: 800
+      max_tokens: ctxConfig.functionCallingMaxTokens
     })
 
     const choice = response.choices[0]
@@ -530,15 +542,19 @@ async function buildSystemPromptDynamic(
     messageHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
   }
 ): Promise<string> {
-  // Load base prompt from configuration
-  const promptsConfig = await getAIPromptsConfig()
+  // Load base prompt and business context in parallel
+  const [promptsConfig, businessCtx] = await Promise.all([
+    getAIPromptsConfig(),
+    getBusinessContext(),
+  ])
   const basePrompt = promptsConfig.whatsappSystemPrompt
 
-  // Enrich prompt with products, FAQs, and conversation history
+  // Enrich prompt with products, FAQs, business context, and conversation history
   // using the same formatSystemPrompt that powers the admin simulator
   let prompt = formatSystemPrompt(basePrompt, {
     products: context?.products,
     faqs: context?.faqs,
+    businessContext: businessCtx,
     previousInteraction: context?.messageHistory && context.messageHistory.length > 0
       ? context.messageHistory.map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.content}`).join('\n')
       : undefined

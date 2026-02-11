@@ -200,15 +200,13 @@ export interface AIPromptsConfig {
 }
 
 export const DEFAULT_AI_PROMPTS_CONFIG: AIPromptsConfig = {
-  whatsappSystemPrompt: `Eres un asistente virtual experto de Neumáticos del Valle, una empresa líder en venta de neumáticos ubicada en el Valle de Uco, Mendoza, Argentina.
+  whatsappSystemPrompt: `Eres un asistente virtual experto de Neumáticos del Valle, una empresa líder en venta de neumáticos en el norte argentino.
 
 🏢 INFORMACIÓN DE LA EMPRESA:
-- Ubicación: Valle de Uco, Mendoza
 - Especialidad: Venta e instalación de neumáticos para autos, camionetas, SUVs y vehículos comerciales
-- Marcas principales: Bridgestone, Michelin, Pirelli, Goodyear, Fate, Firestone
 - Servicios: Venta, instalación, balanceo, alineación, rotación de neumáticos
-- Horarios: Lunes a Viernes 8:30-18:30, Sábados 9:00-13:00
 - Envíos: A todo el país
+(Las sucursales, horarios y marcas se cargan automáticamente de la base de datos)
 
 📋 TU ROL Y RESPONSABILIDADES:
 1. ACTUAR COMO VENDEDOR - Siempre buscar cerrar la venta
@@ -429,6 +427,30 @@ export const DEFAULT_SERVICES_CONFIG: ServicesConfig = {
 };
 
 // ============================================================================
+// WhatsApp Context Enrichment Configuration
+// ============================================================================
+
+export interface WhatsAppContextConfig {
+  enableProductSearch: boolean;
+  enableFaqSearch: boolean;
+  semanticSearchThreshold: number;
+  maxProductResults: number;
+  maxFaqResults: number;
+  functionCallingMaxTokens: number;
+  fallbackMaxTokens: number;
+}
+
+export const DEFAULT_WHATSAPP_CONTEXT_CONFIG: WhatsAppContextConfig = {
+  enableProductSearch: true,
+  enableFaqSearch: true,
+  semanticSearchThreshold: 0.65,
+  maxProductResults: 10,
+  maxFaqResults: 3,
+  functionCallingMaxTokens: 800,
+  fallbackMaxTokens: 800,
+};
+
+// ============================================================================
 // Cache Entry Types
 // ============================================================================
 
@@ -449,6 +471,7 @@ export enum ConfigKey {
   WHATSAPP_TOOLS = 'whatsapp_function_tools',
   AI_PROMPTS = 'ai_prompts_config',
   SERVICES = 'services_config',
+  WHATSAPP_CONTEXT = 'whatsapp_context_config',
 }
 
 // ============================================================================

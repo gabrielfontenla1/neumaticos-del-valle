@@ -7,8 +7,8 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { openai, models, temperatures } from '@/lib/ai/openai'
-import { formatSystemPrompt } from '@/lib/ai/prompts/system'
-import { getAIPromptsConfig } from '@/lib/ai/config-service'
+import { formatSystemPrompt, getBusinessContext } from '@/lib/ai/prompts/system'
+import { getAIPromptsConfig, getWhatsAppContextConfig } from '@/lib/ai/config-service'
 import { searchFAQs } from '@/lib/ai/embeddings'
 import {
   getOrCreateConversation as getOrCreateConv,
@@ -47,7 +47,6 @@ import { processWithFunctionCalling } from '@/lib/whatsapp/ai/function-handler'
 // CONFIGURATION
 // ============================================================================
 
-const MAX_RESPONSE_TOKENS = 800
 const MAX_HISTORY_MESSAGES = 10
 const RESPONSE_TIMEOUT_MS = 25000
 const BRAND_CACHE_TTL = 5 * 60 * 1000
@@ -372,11 +371,17 @@ async function generateAIResponse(context: {
   faqs: Array<{ question: string; answer: string }>
   conversationHistory: Message[]
 }): Promise<string> {
-  const promptsConfig = await getAIPromptsConfig()
+  const [promptsConfig, ctxConfig, businessCtx] = await Promise.all([
+    getAIPromptsConfig(),
+    getWhatsAppContextConfig(),
+    getBusinessContext(),
+  ])
+  const fallbackTokens = ctxConfig.fallbackMaxTokens
 
   const systemPrompt = formatSystemPrompt(promptsConfig.whatsappSystemPrompt, {
     products: context.products,
     faqs: context.faqs,
+    businessContext: businessCtx,
     previousInteraction: context.conversationHistory.length > 0
       ? context.conversationHistory.map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.content}`).join('\n')
       : undefined
@@ -403,7 +408,7 @@ async function generateAIResponse(context: {
         model: models.chat,
         messages,
         temperature: temperatures.balanced,
-        max_tokens: MAX_RESPONSE_TOKENS
+        max_tokens: fallbackTokens
       }),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('AI timeout')), RESPONSE_TIMEOUT_MS)

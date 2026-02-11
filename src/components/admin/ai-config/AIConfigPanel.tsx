@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Radio,
   Sparkles,
+  Brain,
 } from 'lucide-react'
 import { PromptsSection } from './PromptsSection'
 import { SpecializedPromptsSection } from './SpecializedPromptsSection'
@@ -26,14 +27,16 @@ import { FunctionToolsSection } from './FunctionToolsSection'
 import { ModelsSection } from './ModelsSection'
 import { BotConfigSection } from './BotConfigSection'
 import { SourceConfigSection } from './SourceConfigSection'
+import { ContextConfigSection } from './ContextConfigSection'
 import type {
   AIPromptsConfig,
   WhatsAppFunctionToolsConfig,
   AIModelConfig,
   WhatsAppBotConfig,
+  WhatsAppContextConfig,
 } from '@/lib/ai/config-types'
 
-type Section = 'prompts' | 'specialized' | 'functions' | 'models' | 'bot' | 'sources'
+type Section = 'prompts' | 'specialized' | 'functions' | 'context' | 'models' | 'bot' | 'sources'
 
 export function AIConfigPanel() {
   const [activeSection, setActiveSection] = useState<Section>('prompts')
@@ -44,6 +47,7 @@ export function AIConfigPanel() {
   const [functionsConfig, setFunctionsConfig] = useState<WhatsAppFunctionToolsConfig | null>(null)
   const [modelsConfig, setModelsConfig] = useState<AIModelConfig | null>(null)
   const [botConfig, setBotConfig] = useState<WhatsAppBotConfig | null>(null)
+  const [contextConfig, setContextConfig] = useState<WhatsAppContextConfig | null>(null)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -57,28 +61,31 @@ export function AIConfigPanel() {
     setIsLoading(true)
 
     try {
-      const [promptsRes, functionsRes, modelsRes, botRes] = await Promise.all([
+      const [promptsRes, functionsRes, modelsRes, botRes, contextRes] = await Promise.all([
         fetch('/api/admin/settings/ai/prompts'),
         fetch('/api/admin/settings/ai/function-tools'),
         fetch('/api/admin/settings/ai/models'),
         fetch('/api/admin/settings/ai/whatsapp-bot'),
+        fetch('/api/admin/settings/ai/context-config'),
       ])
 
-      if (!promptsRes.ok || !functionsRes.ok || !modelsRes.ok || !botRes.ok) {
+      if (!promptsRes.ok || !functionsRes.ok || !modelsRes.ok || !botRes.ok || !contextRes.ok) {
         throw new Error('Error al cargar las configuraciones')
       }
 
-      const [promptsData, functionsData, modelsData, botData] = await Promise.all([
+      const [promptsData, functionsData, modelsData, botData, contextData] = await Promise.all([
         promptsRes.json(),
         functionsRes.json(),
         modelsRes.json(),
         botRes.json(),
+        contextRes.json(),
       ])
 
       setPromptsConfig(promptsData.config)
       setFunctionsConfig(functionsData.config)
       setModelsConfig(modelsData.config)
       setBotConfig(botData.config)
+      setContextConfig(contextData.config)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al cargar las configuraciones')
     } finally {
@@ -214,10 +221,43 @@ export function AIConfigPanel() {
     }
   }
 
+  const handleSaveContext = async () => {
+    if (!contextConfig) return
+    setIsSaving(true)
+
+    try {
+      const response = await fetch('/api/admin/settings/ai/context-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contextConfig),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Error al guardar')
+      }
+
+      setIsDirty(false)
+      toast.success('Configuración de contexto guardada correctamente')
+
+      // Invalidate cache
+      await fetch('/api/admin/settings/ai/invalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'whatsapp_context_config' }),
+      })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al guardar configuración de contexto')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const sections = [
     { id: 'prompts' as const, label: 'Prompt Principal', icon: MessageSquare },
     { id: 'specialized' as const, label: 'Prompts Especializados', icon: Sparkles },
     { id: 'functions' as const, label: 'Function Calling', icon: Wrench },
+    { id: 'context' as const, label: 'Contexto IA', icon: Brain },
     { id: 'models' as const, label: 'Modelos y Parámetros', icon: Bot },
     { id: 'bot' as const, label: 'Config Bot WhatsApp', icon: Settings },
     { id: 'sources' as const, label: 'Fuentes WhatsApp', icon: Radio },
@@ -234,7 +274,7 @@ export function AIConfigPanel() {
     )
   }
 
-  if (!promptsConfig || !functionsConfig || !modelsConfig || !botConfig) {
+  if (!promptsConfig || !functionsConfig || !modelsConfig || !botConfig || !contextConfig) {
     return (
       <Alert className="bg-red-500/10 border-red-500/30">
         <AlertCircle className="h-4 w-4 text-red-400" />
@@ -327,6 +367,18 @@ export function AIConfigPanel() {
                     setIsDirty(true)
                   }}
                   onSave={handleSaveFunctions}
+                  isSaving={isSaving}
+                />
+              )}
+
+              {activeSection === 'context' && (
+                <ContextConfigSection
+                  config={contextConfig}
+                  onChange={(config) => {
+                    setContextConfig(config)
+                    setIsDirty(true)
+                  }}
+                  onSave={handleSaveContext}
                   isSaving={isSaving}
                 />
               )}

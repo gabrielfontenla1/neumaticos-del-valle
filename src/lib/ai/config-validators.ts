@@ -172,6 +172,41 @@ export const servicesConfigSchema = z.object({
 export type ServicesConfigInput = z.infer<typeof servicesConfigSchema>;
 
 // ============================================================================
+// WhatsApp Context Enrichment Configuration Validator
+// ============================================================================
+
+export const whatsappContextConfigSchema = z.object({
+  enableProductSearch: z.boolean(),
+  enableFaqSearch: z.boolean(),
+  semanticSearchThreshold: z
+    .number()
+    .min(0, 'Threshold must be >= 0')
+    .max(1, 'Threshold must be <= 1'),
+  maxProductResults: z
+    .number()
+    .int()
+    .min(1, 'Must return at least 1 product')
+    .max(50, 'Maximum 50 products'),
+  maxFaqResults: z
+    .number()
+    .int()
+    .min(1, 'Must return at least 1 FAQ')
+    .max(20, 'Maximum 20 FAQs'),
+  functionCallingMaxTokens: z
+    .number()
+    .int()
+    .min(100, 'Min 100 tokens')
+    .max(4000, 'Max 4000 tokens'),
+  fallbackMaxTokens: z
+    .number()
+    .int()
+    .min(100, 'Min 100 tokens')
+    .max(4000, 'Max 4000 tokens'),
+});
+
+export type WhatsAppContextConfigInput = z.infer<typeof whatsappContextConfigSchema>;
+
+// ============================================================================
 // Security Validators (Prompt Injection Detection)
 // ============================================================================
 

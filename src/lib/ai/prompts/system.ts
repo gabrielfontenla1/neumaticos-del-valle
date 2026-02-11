@@ -1,13 +1,125 @@
 // System prompts for AI agents
+import { createClient } from '@supabase/supabase-js'
 
-export const SYSTEM_PROMPT_BASE = `Eres un asistente virtual experto de Neumáticos del Valle, una empresa líder en venta de neumáticos ubicada en el Valle de Uco, Mendoza, Argentina.
+// ============================================================================
+// DYNAMIC BUSINESS CONTEXT
+// ============================================================================
+
+interface BranchInfo {
+  name: string
+  address: string
+  city: string
+  province: string | null
+  phone: string
+  opening_hours: {
+    weekdays?: string
+    saturday?: string
+    sunday?: string
+  } | null
+}
+
+interface BusinessContext {
+  branches: BranchInfo[]
+  brands: string[]
+}
+
+// Simple in-memory cache (5 min TTL)
+let businessContextCache: { data: BusinessContext; ts: number } | null = null
+const BUSINESS_CACHE_TTL = 5 * 60 * 1000
+
+/**
+ * Fetch branches and brands from DB. Cached for 5 minutes.
+ */
+export async function getBusinessContext(): Promise<BusinessContext> {
+  const now = Date.now()
+  if (businessContextCache && (now - businessContextCache.ts) < BUSINESS_CACHE_TTL) {
+    return businessContextCache.data
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    return { branches: [], brands: [] }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient<any>(supabaseUrl, supabaseKey)
+
+  try {
+    const [branchesRes, brandsRes] = await Promise.all([
+      supabase
+        .from('stores')
+        .select('name, address, city, province, phone, opening_hours')
+        .eq('active', true)
+        .order('is_main', { ascending: false })
+        .order('name', { ascending: true }),
+      supabase
+        .from('products')
+        .select('brand')
+        .gt('stock', 0)
+        .neq('brand', null)
+        .order('brand'),
+    ])
+
+    const branches: BranchInfo[] = branchesRes.data || []
+    const uniqueBrands = [...new Set(
+      (brandsRes.data || [])
+        .map((p: { brand: string }) => p.brand)
+        .filter(Boolean)
+    )] as string[]
+
+    const result: BusinessContext = { branches, brands: uniqueBrands }
+    businessContextCache = { data: result, ts: now }
+    return result
+  } catch (error) {
+    console.error('[BusinessContext] Error fetching:', error)
+    return { branches: [], brands: [] }
+  }
+}
+
+/**
+ * Format business context into prompt text
+ */
+function formatBusinessInfo(ctx: BusinessContext): string {
+  let text = `\n\n🏢 INFORMACIÓN DE LA EMPRESA (DATOS REALES):\n`
+  text += `- Especialidad: Venta e instalación de neumáticos para autos, camionetas, SUVs y vehículos comerciales\n`
+  text += `- Servicios: Venta, instalación, balanceo, alineación, rotación de neumáticos\n`
+  text += `- Envíos: A todo el país\n`
+
+  if (ctx.brands.length > 0) {
+    text += `- Marcas que vendemos: ${ctx.brands.join(', ')}\n`
+  }
+
+  if (ctx.branches.length > 0) {
+    text += `\n📍 SUCURSALES:\n`
+    for (const b of ctx.branches) {
+      text += `\n• ${b.name}\n`
+      text += `  Dirección: ${b.address}, ${b.city}`
+      if (b.province) text += `, ${b.province}`
+      text += `\n`
+      if (b.phone) text += `  Teléfono: ${b.phone}\n`
+      if (b.opening_hours) {
+        const h = b.opening_hours
+        if (h.weekdays) text += `  Lunes a Viernes: ${h.weekdays}\n`
+        if (h.saturday) text += `  Sábados: ${h.saturday}\n`
+        if (h.sunday && h.sunday !== 'Cerrado') text += `  Domingos: ${h.sunday}\n`
+        else text += `  Domingos: Cerrado\n`
+      }
+    }
+  }
+
+  return text
+}
+
+// ============================================================================
+// BASE PROMPTS
+// ============================================================================
+
+export const SYSTEM_PROMPT_BASE = `Eres un asistente virtual experto de Neumáticos del Valle, una empresa líder en venta de neumáticos en el norte argentino.
 
 🏢 INFORMACIÓN DE LA EMPRESA:
-- Ubicación: Valle de Uco, Mendoza
 - Especialidad: Venta e instalación de neumáticos para autos, camionetas, SUVs y vehículos comerciales
-- Marcas principales: Bridgestone, Michelin, Pirelli, Goodyear, Fate, Firestone
 - Servicios: Venta, instalación, balanceo, alineación, rotación de neumáticos
-- Horarios: Lunes a Viernes 8:30-18:30, Sábados 9:00-13:00
 - Envíos: A todo el país
 
 📋 TU ROL Y RESPONSABILIDADES:
@@ -153,10 +265,16 @@ interface PromptContext {
   products?: PromptProduct[]
   faqs?: PromptFAQ[]
   previousInteraction?: string
+  businessContext?: BusinessContext
 }
 
 export const formatSystemPrompt = (basePrompt: string, context?: PromptContext): string => {
   let prompt = basePrompt;
+
+  // Add dynamic business info (branches, brands)
+  if (context?.businessContext) {
+    prompt += formatBusinessInfo(context.businessContext)
+  }
 
   // Add product information if available
   if (context?.products && context.products.length > 0) {

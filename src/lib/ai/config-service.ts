@@ -13,11 +13,13 @@ import {
   WhatsAppFunctionToolsConfig,
   AIPromptsConfig,
   ServicesConfig,
+  WhatsAppContextConfig,
   DEFAULT_AI_MODELS_CONFIG,
   DEFAULT_WHATSAPP_BOT_CONFIG,
   DEFAULT_WHATSAPP_FUNCTION_TOOLS,
   DEFAULT_AI_PROMPTS_CONFIG,
   DEFAULT_SERVICES_CONFIG,
+  DEFAULT_WHATSAPP_CONTEXT_CONFIG,
 } from '@/lib/ai/config-types';
 
 // Create Supabase client
@@ -202,6 +204,17 @@ export async function getServicesConfig(): Promise<ServicesConfig> {
   );
 }
 
+/**
+ * Get WhatsApp context enrichment configuration
+ */
+export async function getWhatsAppContextConfig(): Promise<WhatsAppContextConfig> {
+  return getConfig(
+    ConfigKey.WHATSAPP_CONTEXT,
+    DEFAULT_WHATSAPP_CONTEXT_CONFIG,
+    TTL.WHATSAPP_CONTEXT
+  );
+}
+
 // ============================================================================
 // Specific Configuration Setters
 // ============================================================================
@@ -254,6 +267,16 @@ export async function setServicesConfig(
   userId?: string
 ): Promise<void> {
   return setConfig(ConfigKey.SERVICES, config, userId);
+}
+
+/**
+ * Save WhatsApp context enrichment configuration
+ */
+export async function setWhatsAppContextConfig(
+  config: WhatsAppContextConfig,
+  userId?: string
+): Promise<void> {
+  return setConfig(ConfigKey.WHATSAPP_CONTEXT, config, userId);
 }
 
 // ============================================================================
@@ -350,6 +373,7 @@ export async function performHealthCheck(): Promise<HealthCheckResult> {
     { key: ConfigKey.AI_PROMPTS, name: 'AI Prompts' },
     { key: ConfigKey.WHATSAPP_TOOLS, name: 'WhatsApp Tools' },
     { key: ConfigKey.SERVICES, name: 'Services' },
+    { key: ConfigKey.WHATSAPP_CONTEXT, name: 'WhatsApp Context' },
   ];
 
   for (const check of configChecks) {

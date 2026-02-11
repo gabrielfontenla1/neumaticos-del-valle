@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openai, models, temperatures } from '@/lib/ai/openai';
-import { PRODUCT_AGENT_PROMPT, formatSystemPrompt } from '@/lib/ai/prompts/system';
+import { PRODUCT_AGENT_PROMPT, formatSystemPrompt, getBusinessContext } from '@/lib/ai/prompts/system';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   generateEmbedding,
@@ -36,6 +36,7 @@ interface FAQItem {
 interface ChatContext {
   products?: ProductResult[];
   faqs?: FAQItem[];
+  businessContext?: { branches: Array<{ name: string; address: string; city: string; province: string | null; phone: string; opening_hours: { weekdays?: string; saturday?: string; sunday?: string } | null }>; brands: string[] };
 }
 
 // Helper to search for relevant products based on user query
@@ -169,6 +170,10 @@ export async function POST(request: NextRequest) {
         console.log('FAQ search failed:', error);
       }
     }
+
+    // Fetch dynamic business info (branches, brands)
+    const businessContext = await getBusinessContext();
+    context.businessContext = businessContext;
 
     // Prepare the system prompt with context
     const systemPrompt = formatSystemPrompt(PRODUCT_AGENT_PROMPT, context);

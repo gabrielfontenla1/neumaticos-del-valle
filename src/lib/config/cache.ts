@@ -185,4 +185,5 @@ export const TTL = {
   AI_PROMPTS: 5 * 60 * 1000, // 5 minutes
   MODELS_CONFIG: 10 * 60 * 1000, // 10 minutes (rarely change)
   SERVICES_CONFIG: 5 * 60 * 1000, // 5 minutes
+  WHATSAPP_CONTEXT: 2 * 60 * 1000, // 2 minutes (affects response quality)
 } as const;
