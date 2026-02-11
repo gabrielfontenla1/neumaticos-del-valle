@@ -4,34 +4,35 @@
 
 /**
  * Convert phone number to WhatsApp JID format
+ *
+ * IMPORTANT: When the number already has a country code (11+ digits),
+ * we do NOT modify it. The stored phone came from an incoming Baileys JID,
+ * so it's already in the exact format WhatsApp expects.
  */
 export function phoneToJid(phone: string): string {
   const cleaned = phone.replace(/\D/g, '')
-  let normalized = cleaned
 
-  // Handle Argentina mobile numbers
-  if (cleaned.startsWith('54')) {
-    if (cleaned.length === 12 && !cleaned.startsWith('549')) {
-      normalized = '549' + cleaned.slice(2)
-    } else {
-      normalized = cleaned
-    }
-  } else if (cleaned.startsWith('9') && cleaned.length === 10) {
-    normalized = '54' + cleaned
-  } else if (cleaned.length === 10) {
-    normalized = '549' + cleaned
-  } else if (cleaned.length === 8) {
-    normalized = '5411' + cleaned
+  // If number already has country code, use as-is
+  if (cleaned.length >= 11) {
+    return `${cleaned}@s.whatsapp.net`
   }
 
-  return `${normalized}@s.whatsapp.net`
+  // Handle short local numbers (fallback for manual input)
+  if (cleaned.length === 10) {
+    return `54${cleaned}@s.whatsapp.net`
+  }
+  if (cleaned.length === 8) {
+    return `5411${cleaned}@s.whatsapp.net`
+  }
+
+  return `${cleaned}@s.whatsapp.net`
 }
 
 /**
  * Convert WhatsApp JID to international phone format
  */
 export function jidToPhone(jid: string): string {
-  const number = jid.replace('@s.whatsapp.net', '').replace('@c.us', '')
+  const number = jid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '')
   return `+${number}`
 }
 
@@ -39,7 +40,14 @@ export function jidToPhone(jid: string): string {
  * Extract just the number from JID
  */
 export function jidToNumber(jid: string): string {
-  return jid.replace('@s.whatsapp.net', '').replace('@c.us', '')
+  return jid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '')
+}
+
+/**
+ * Check if a JID is a LID (Linked Identity Device) format
+ */
+export function isLidJid(jid: string): boolean {
+  return jid.endsWith('@lid')
 }
 
 /**
@@ -64,6 +72,31 @@ export function formatPhoneDisplay(phone: string): string {
   }
 
   return `+${cleaned}`
+}
+
+/**
+ * Resolve the real phone number from a Baileys message key.
+ * When remoteJid is a LID, senderPn contains the real phone JID.
+ */
+export function resolvePhoneFromKey(key: { remoteJid?: string; senderPn?: string }): {
+  phone: string
+  originalJid: string
+} {
+  const originalJid = key.remoteJid || ''
+
+  // If senderPn exists, it's the real phone — use it
+  if (key.senderPn) {
+    const phone = jidToNumber(key.senderPn)
+    return { phone, originalJid }
+  }
+
+  // If remoteJid is LID, we can't resolve the phone
+  if (isLidJid(originalJid)) {
+    return { phone: '', originalJid }
+  }
+
+  // Normal phone JID
+  return { phone: jidToNumber(originalJid), originalJid }
 }
 
 /**

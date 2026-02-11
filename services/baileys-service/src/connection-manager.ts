@@ -23,7 +23,7 @@ import {
   extractMessageContent,
   notifyConnectionEvent,
 } from './message-handler'
-import { jidToNumber } from './utils/phone-format'
+import { jidToNumber, resolvePhoneFromKey, isLidJid } from './utils/phone-format'
 
 // Store active connections
 const connections = new Map<string, WASocket>()
@@ -199,8 +199,19 @@ export async function connectInstance(instanceId: string): Promise<void> {
         if (upsert.type !== 'notify') continue
         if (message.key.fromMe) continue
 
-        const from = message.key.remoteJid
-        if (!from) continue
+        const { phone: resolvedPhone, originalJid } = resolvePhoneFromKey(
+          message.key as { remoteJid?: string; senderPn?: string }
+        )
+        if (!originalJid) continue
+
+        // Build the "from" JID: prefer resolved phone, fall back to original JID
+        const from = resolvedPhone ? `${resolvedPhone}@s.whatsapp.net` : originalJid
+
+        if (!resolvedPhone && isLidJid(originalJid)) {
+          log.warn({ originalJid }, 'LID message without senderPn — phone number may be incorrect')
+        }
+
+        log.info({ from, originalJid, resolvedPhone }, 'Incoming message')
 
         const content = extractMessageContent(message.message)
         if (!content) continue
@@ -213,6 +224,7 @@ export async function connectInstance(instanceId: string): Promise<void> {
           pushName: message.pushName || undefined,
           isGroup: from.endsWith('@g.us'),
           timestamp: message.messageTimestamp as number,
+          resolvedPhone: resolvedPhone || undefined,
         })
 
         await logSessionEvent(instanceId, 'message_received', {
@@ -270,8 +282,11 @@ export async function sendMessage(
   const socket = connections.get(instanceId)
 
   if (!socket) {
+    log.warn({ instanceId }, 'No socket found for instance')
     return { success: false, error: 'Instance not connected' }
   }
+
+  log.info({ to }, 'Sending message')
 
   try {
     const result = await socket.sendMessage(to, { text: message })
@@ -281,7 +296,7 @@ export async function sendMessage(
       message_id: result?.key?.id,
     })
 
-    log.debug({ to, messageId: result?.key?.id }, 'Message sent')
+    log.info({ to, messageId: result?.key?.id }, 'Message sent successfully')
     return { success: true, messageId: result?.key?.id ?? undefined }
   } catch (error) {
     log.error({ error, to }, 'Error sending message')
@@ -300,6 +315,31 @@ export function getConnectionStatus(instanceId: string): {
   return {
     connected: !!socket?.user,
     user: socket?.user?.id,
+  }
+}
+
+export async function getProfilePicture(
+  instanceId: string,
+  jid: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const log = createInstanceLogger(instanceId)
+  const socket = connections.get(instanceId)
+
+  if (!socket) {
+    return { success: false, error: 'Instance not connected' }
+  }
+
+  try {
+    const url = await socket.profilePictureUrl(jid, 'image')
+    return { success: true, url: url || undefined }
+  } catch (error) {
+    // 404 means no profile picture set — not an error
+    const statusCode = (error as { data?: number })?.data
+    if (statusCode === 404 || statusCode === 401) {
+      return { success: true, url: undefined }
+    }
+    log.debug({ error, jid }, 'Error fetching profile picture')
+    return { success: false, error: 'Failed to fetch profile picture' }
   }
 }
 

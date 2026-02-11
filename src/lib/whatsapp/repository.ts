@@ -53,6 +53,8 @@ function mapDbToConversation(row: DbConversation): WhatsAppConversation {
     pending_tire_search: row.pending_tire_search,
     pending_appointment: row.pending_appointment,
     source: (row.source as 'twilio' | 'baileys') || 'twilio',
+    baileys_instance_id: row.baileys_instance_id || null,
+    baileys_remote_jid: row.baileys_remote_jid || null,
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at)
   }
@@ -142,6 +144,7 @@ export async function createConversation(
   }
   if (input.source) insertData.source = input.source
   if (input.baileysInstanceId) insertData.baileys_instance_id = input.baileysInstanceId
+  if (input.baileysRemoteJid) insertData.baileys_remote_jid = input.baileysRemoteJid
 
   const { data, error } = await db
     .from('whatsapp_conversations')
@@ -165,7 +168,8 @@ export async function getOrCreateConversation(
   phone: string,
   contactName?: string,
   source?: 'twilio' | 'baileys',
-  baileysInstanceId?: string
+  baileysInstanceId?: string,
+  baileysRemoteJid?: string
 ): Promise<WhatsAppConversation> {
   const existing = await findConversationByPhone(phone)
   if (existing) {
@@ -174,10 +178,29 @@ export async function getOrCreateConversation(
       await updateConversationContactName(existing.id, contactName)
       existing.contact_name = contactName
     }
+    // Switch conversation to Baileys if requested
+    if (source === 'baileys') {
+      const needsUpdate =
+        existing.source !== 'baileys' ||
+        (baileysInstanceId && existing.baileys_instance_id !== baileysInstanceId) ||
+        (baileysRemoteJid && existing.baileys_remote_jid !== baileysRemoteJid)
+
+      if (needsUpdate) {
+        const updateFields: Record<string, unknown> = { source: 'baileys' }
+        if (baileysInstanceId) updateFields.baileys_instance_id = baileysInstanceId
+        if (baileysRemoteJid) updateFields.baileys_remote_jid = baileysRemoteJid
+
+        await db.from('whatsapp_conversations').update(updateFields).eq('id', existing.id)
+        existing.source = 'baileys'
+        if (baileysInstanceId) existing.baileys_instance_id = baileysInstanceId
+        if (baileysRemoteJid) existing.baileys_remote_jid = baileysRemoteJid
+        console.log('[WhatsAppRepository] Switched conversation to baileys, instance:', baileysInstanceId)
+      }
+    }
     return existing
   }
 
-  return createConversation({ phone, contactName, source, baileysInstanceId })
+  return createConversation({ phone, contactName, source, baileysInstanceId, baileysRemoteJid })
 }
 
 /**

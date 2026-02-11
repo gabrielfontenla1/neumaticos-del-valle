@@ -103,7 +103,7 @@ export const whatsappTools: ChatCompletionTool[] = [
       name: 'check_stock',
       description: `Consultar stock y precios de neumáticos.
       Usa esta función cuando el usuario pregunte por medidas, precios, disponibilidad de neumáticos.
-      Detecta medidas en formatos: 205/55R16, 205 55 16, 205/55/16`,
+      Detecta medidas en formatos: 205/55R16, 205/55T16, 205 55 16, 205/55/16, 205/55 t 16`,
       parameters: {
         type: 'object',
         properties: {

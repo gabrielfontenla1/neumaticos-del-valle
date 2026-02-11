@@ -25,6 +25,14 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 <!-- Cambios ya implementados con referencia a la migración -->
 
+### 2026-02-11 - Columna baileys_remote_jid
+
+- [x] **20260211_add_baileys_remote_jid.sql** - Columna para JID original de WhatsApp
+  - Agrega: `baileys_remote_jid TEXT` nullable en `whatsapp_conversations`
+  - Contexto: WhatsApp usa LID en vez de phone numbers como JID
+  - Solicitado por: Terminal App Code
+  - ✅ Aplicada en producción
+
 ### 2026-02-11 - Baileys WhatsApp Integration
 
 - [x] **20260211_baileys_integration.sql** - Integración Baileys como segundo proveedor WhatsApp

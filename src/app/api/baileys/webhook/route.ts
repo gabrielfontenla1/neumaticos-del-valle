@@ -6,13 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processIncomingMessage } from '@/lib/whatsapp/processor'
 import { sendMessage } from '@/lib/baileys/client'
-import { jidToNumber } from '@/lib/baileys/phone-utils'
 import type { BaileysWebhookPayload } from '@/types/baileys'
 
 const BAILEYS_API_KEY = process.env.BAILEYS_SERVICE_API_KEY || ''
 
-async function sendBaileysResponse(instanceId: string, to: string, body: string): Promise<void> {
-  const result = await sendMessage(instanceId, to, body)
+async function sendBaileysResponse(instanceId: string, to: string, body: string, originalJid?: string): Promise<void> {
+  // Never pass LID JIDs for sending — use phone number only
+  const safeJid = (originalJid && !originalJid.endsWith('@lid')) ? originalJid : undefined
+  const result = await sendMessage(instanceId, to, body, safeJid)
   if (!result.success) {
     console.error('[Baileys Webhook] Send failed:', result.error)
   }
@@ -32,8 +33,17 @@ export async function POST(request: NextRequest) {
     console.log(`[Baileys Webhook] Event: ${event} from instance ${instance_id}`)
 
     // Handle message received
-    if (event === 'message_received' && data.body && data.phone) {
-      const phoneNumber = data.phone.replace(/^\+/, '')
+    if (event === 'message_received' && data.body) {
+      // Prefer resolved_phone (real phone from senderPn), fall back to data.phone
+      const rawPhone = data.resolved_phone || (data.phone || '').replace(/^\+/, '')
+      if (!rawPhone) {
+        console.error(`[Baileys Webhook] No phone number available in payload`, { from: data.from })
+        return NextResponse.json({ error: 'No phone number in payload' }, { status: 400 })
+      }
+      const phoneNumber = rawPhone.replace(/^\+/, '')
+      const originalJid = data.from
+
+      console.log(`[Baileys Webhook] Incoming: phone=${phoneNumber} resolved_phone=${data.resolved_phone || 'none'} originalJid=${originalJid}`)
 
       processIncomingMessage(
         {
@@ -43,8 +53,9 @@ export async function POST(request: NextRequest) {
         },
         {
           source: 'baileys',
-          sendResponse: (to: string, text: string) => sendBaileysResponse(instance_id, to, text),
+          sendResponse: (to: string, text: string) => sendBaileysResponse(instance_id, to, text, originalJid),
           baileysInstanceId: instance_id,
+          baileysRemoteJid: originalJid,
         }
       )
 

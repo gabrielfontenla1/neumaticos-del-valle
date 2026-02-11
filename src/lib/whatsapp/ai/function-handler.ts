@@ -354,7 +354,7 @@ async function searchProductsForContext(query: string, opts?: { threshold?: numb
   }
 
   // Tier 2: Keyword fallback - tire size search
-  const sizeMatch = query.match(/(\d{3})\s*[/-]?\s*(\d{2})\s*[rR]?\s*(\d{2})/)
+  const sizeMatch = query.match(/(\d{3})\s*[/-]?\s*(\d{2})\s*[rRtT]?\s*(\d{2})/)
   if (sizeMatch) {
     try {
       let width = parseInt(sizeMatch[1])
@@ -513,7 +513,23 @@ export async function processWithFunctionCalling(
       }
     }
 
-    // No function call - return AI's text response
+    // No function call - check if AI skipped check_stock for a tire size query
+    const tireSizeMatch = messageText.match(/(\d{3})\s*[/-]?\s*(\d{2})\s*[rRtT]?\s*(\d{2})/)
+    if (tireSizeMatch) {
+      const width = parseInt(tireSizeMatch[1])
+      const profile = parseInt(tireSizeMatch[2])
+      const diameter = parseInt(tireSizeMatch[3])
+
+      if (width >= 100 && width <= 400 && profile >= 20 && profile <= 90 && diameter >= 12 && diameter <= 24) {
+        console.log('[FunctionHandler] AI skipped check_stock, forcing for tire size:', width, profile, diameter)
+        return handleCheckStock(
+          { width, profile, diameter },
+          conversation
+        )
+      }
+    }
+
+    // No tire size detected - return AI's text response
     const textResponse = message.content || 'Disculpá, no entendí. ¿Podés repetir?'
     return {
       response: cleanWhatsAppMessage(textResponse),

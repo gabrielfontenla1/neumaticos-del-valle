@@ -64,6 +64,8 @@ export interface WhatsAppConversation {
   pending_appointment: PendingAppointment | null
   // Provider source
   source?: WhatsAppSource
+  baileys_instance_id?: string | null
+  baileys_remote_jid?: string | null
   created_at: Date
   updated_at: Date
 }
@@ -99,6 +101,8 @@ export interface DbConversation {
   pending_tire_search: PendingTireSearch | null
   pending_appointment: PendingAppointment | null
   source?: string
+  baileys_instance_id?: string | null
+  baileys_remote_jid?: string | null
   created_at: string
   updated_at: string
 }
@@ -122,6 +126,7 @@ export interface CreateConversationInput {
   contactName?: string
   source?: WhatsAppSource
   baileysInstanceId?: string
+  baileysRemoteJid?: string
 }
 
 export interface CreateMessageInput {

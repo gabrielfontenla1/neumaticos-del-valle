@@ -92,6 +92,7 @@ export interface MessageProcessorConfig {
   source: WhatsAppSource
   sendResponse: (phone: string, text: string) => Promise<void>
   baileysInstanceId?: string
+  baileysRemoteJid?: string  // Original JID from Baileys (e.g., "12345@lid")
 }
 
 interface StateResult {
@@ -138,9 +139,9 @@ async function getAllBrands(): Promise<string[]> {
 
 function parseTireSize(query: string): ParsedSize | null {
   const patterns = [
-    /(\d{3})\s*[/-]\s*(\d{2})\s*[rR]?\s*(\d{2})/,
-    /(\d{3})\s*(\d{2})\s*[rR]?\s*(\d{2})/,
-    /(\d{3})[-/\s](\d{2})[-/\s]?[rR]?(\d{2})/,
+    /(\d{3})\s*[/-]\s*(\d{2})\s*[rRtT]?\s*(\d{2})/,
+    /(\d{3})\s*(\d{2})\s*[rRtT]?\s*(\d{2})/,
+    /(\d{3})[-/\s](\d{2})[-/\s]?[rRtT]?(\d{2})/,
   ]
 
   for (const pattern of patterns) {
@@ -695,7 +696,8 @@ export async function processIncomingMessage(
       phoneNumber,
       profileName,
       config.source,
-      config.baileysInstanceId
+      config.baileysInstanceId,
+      config.baileysRemoteJid
     )
     console.log(tag, 'Conversation:', conversation.id, 'State:', conversation.conversation_state)
 

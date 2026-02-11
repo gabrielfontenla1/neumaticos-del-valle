@@ -62,7 +62,7 @@ async function searchProducts(query: string) {
 
   // Fallback to keyword search
   // Extract potential tire size from query
-  const sizePattern = /(\d{3})\/(\d{2})[R/]?(\d{2})/i;
+  const sizePattern = /(\d{3})\s*[/-]?\s*(\d{2})\s*[rRtT]?\s*(\d{2})/;
   const sizeMatch = query.match(sizePattern);
 
   let products = [];
@@ -129,7 +129,7 @@ function needsProductSearch(query: string): boolean {
 
   const lowerQuery = query.toLowerCase();
   return productKeywords.some(keyword => lowerQuery.includes(keyword)) ||
-         /\d{3}\/\d{2}[R/]?\d{2}/i.test(query); // Check for tire size pattern
+         /\d{3}\s*[/-]?\s*\d{2}\s*[rRtT]?\s*\d{2}/.test(query); // Check for tire size pattern
 }
 
 export async function POST(request: NextRequest) {

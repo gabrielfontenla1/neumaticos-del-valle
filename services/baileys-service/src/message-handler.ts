@@ -13,6 +13,7 @@ interface IncomingMessage {
   pushName?: string
   isGroup: boolean
   timestamp: number
+  resolvedPhone?: string
 }
 
 interface WebhookPayload {
@@ -25,6 +26,7 @@ interface WebhookPayload {
     push_name?: string
     is_group: boolean
     phone?: string
+    resolved_phone?: string
   }
   timestamp: string
 }
@@ -35,7 +37,7 @@ const WEBHOOK_URL = process.env.NEXT_APP_WEBHOOK_URL || 'http://localhost:6001/a
  * Process incoming message and forward to Next.js webhook
  */
 export async function handleIncomingMessage(message: IncomingMessage): Promise<void> {
-  const { instanceId, from, body, messageId, pushName, isGroup } = message
+  const { instanceId, from, body, messageId, pushName, isGroup, resolvedPhone } = message
 
   // Skip group messages
   if (isGroup) {
@@ -49,9 +51,12 @@ export async function handleIncomingMessage(message: IncomingMessage): Promise<v
     return
   }
 
-  const phone = jidToPhone(from)
+  // Use resolvedPhone if available (handles LID), otherwise fall back to jidToPhone
+  const phone = resolvedPhone
+    ? `+${resolvedPhone}`
+    : jidToPhone(from)
 
-  logger.info({ instanceId, from: phone, messageId }, 'Processing incoming message')
+  logger.info({ instanceId, from: phone, resolvedPhone, messageId }, 'Processing incoming message')
 
   const payload: WebhookPayload = {
     instance_id: instanceId,
@@ -63,6 +68,7 @@ export async function handleIncomingMessage(message: IncomingMessage): Promise<v
       push_name: pushName,
       is_group: isGroup,
       phone,
+      resolved_phone: resolvedPhone || undefined,
     },
     timestamp: new Date().toISOString(),
   }

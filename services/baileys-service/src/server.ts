@@ -12,6 +12,7 @@ import {
   sendMessage,
   getConnectionStatus,
   getActiveConnections,
+  getProfilePicture,
 } from './connection-manager'
 import { getInstance, getRecentLogs } from './session-store'
 
@@ -129,13 +130,20 @@ app.get('/instances/:id/qr', authenticate, async (req: Request, res: Response) =
 
 app.post('/instances/:id/send', authenticate, async (req: Request, res: Response) => {
   try {
-    const { to, message } = req.body
+    const { to, message, jid: rawJid } = req.body
 
-    if (!to || !message) {
-      return res.status(400).json({ error: 'Missing "to" or "message" field' })
+    if ((!to && !rawJid) || !message) {
+      return res.status(400).json({ error: 'Missing "to"/"jid" or "message" field' })
     }
 
-    const jid = phoneToJid(to)
+    // Never send to @lid JIDs — always build JID from phone number
+    let jid: string
+    if (rawJid && !rawJid.endsWith('@lid')) {
+      jid = rawJid
+    } else {
+      jid = phoneToJid(to)
+    }
+    logger.info({ to, rawJid, jid, instanceId: param(req, 'id') }, 'Resolving send JID')
     const result = await sendMessage(param(req, 'id'), jid, message)
 
     if (result.success) {
@@ -146,6 +154,26 @@ app.post('/instances/:id/send', authenticate, async (req: Request, res: Response
   } catch (error) {
     logger.error({ error }, 'Error sending message')
     res.status(500).json({ error: 'Failed to send message' })
+  }
+})
+
+app.get('/instances/:id/profile-picture', authenticate, async (req: Request, res: Response) => {
+  try {
+    const jid = req.query.jid as string
+    if (!jid) {
+      return res.status(400).json({ error: 'Missing "jid" query parameter' })
+    }
+
+    const result = await getProfilePicture(param(req, 'id'), jid)
+
+    if (result.success) {
+      res.json({ success: true, url: result.url || null })
+    } else {
+      res.status(400).json({ success: false, error: result.error })
+    }
+  } catch (error) {
+    logger.error({ error }, 'Error getting profile picture')
+    res.status(500).json({ error: 'Failed to get profile picture' })
   }
 })
 

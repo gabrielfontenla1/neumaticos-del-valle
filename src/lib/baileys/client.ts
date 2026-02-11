@@ -83,11 +83,12 @@ export async function getQRCode(instanceId: string): Promise<ServiceResponse<QRC
 export async function sendMessage(
   instanceId: string,
   to: string,
-  message: string
+  message: string,
+  jid?: string
 ): Promise<ServiceResponse<{ success: boolean; message_id?: string }>> {
   return fetchService(`/instances/${instanceId}/send`, {
     method: 'POST',
-    body: JSON.stringify({ to, message }),
+    body: JSON.stringify({ to, message, jid }),
   })
 }
 
@@ -96,6 +97,17 @@ export async function getInstanceLogs(
   limit = 50
 ): Promise<ServiceResponse<{ logs: unknown[] }>> {
   return fetchService(`/instances/${instanceId}/logs?limit=${limit}`)
+}
+
+// ===========================================
+// Profile Picture
+// ===========================================
+
+export async function getProfilePicture(
+  instanceId: string,
+  jid: string
+): Promise<ServiceResponse<{ success: boolean; url: string | null }>> {
+  return fetchService(`/instances/${instanceId}/profile-picture?jid=${encodeURIComponent(jid)}`)
 }
 
 // ===========================================

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -17,6 +17,13 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
   MessageCircle,
   User,
   Bot,
@@ -29,10 +36,16 @@ import {
   Settings,
   CheckCheck,
   AlertTriangle,
+  Sparkles,
+  Bell,
+  Plus,
+  ArrowRightLeft,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
+import { useSearchParams } from 'next/navigation'
 import { ChatListSkeleton, ChatMessagesSkeleton } from '@/components/skeletons'
 import { AIConfigPanel } from '@/components/admin/ai-config/AIConfigPanel'
+import { AIAssistantChat } from '@/components/admin/ai-chat/AIAssistantChat'
 
 // Types
 interface Conversation {
@@ -93,7 +106,13 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function ChatsPage() {
-  const [activeTab, setActiveTab] = useState('conversations')
+  const searchParams = useSearchParams()
+  const initialTab = useMemo(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'ai-assistant' || tab === 'ai-config') return tab
+    return 'conversations'
+  }, [searchParams])
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -105,6 +124,13 @@ export default function ChatsPage() {
   const [isSending, setIsSending] = useState(false)
   const [isPausing, setIsPausing] = useState(false)
   const [showPauseDialog, setShowPauseDialog] = useState(false)
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false)
+  const [newChatPhone, setNewChatPhone] = useState('')
+  const [newChatSource, setNewChatSource] = useState<'twilio' | 'baileys'>('baileys')
+  const [isCreatingChat, setIsCreatingChat] = useState(false)
+  const [isSwitchingToBaileys, setIsSwitchingToBaileys] = useState(false)
+  const [profilePics, setProfilePics] = useState<Record<string, string | null>>({})
+  const fetchedPicIds = useRef<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
@@ -114,7 +140,7 @@ export default function ChatsPage() {
     try {
       const params = new URLSearchParams()
       if (filter === 'paused') params.set('is_paused', 'true')
-      if (filter === 'active') params.set('is_paused', 'false')
+      if (filter === 'alerts') params.set('alerts', 'true')
 
       const response = await fetch(`/api/admin/whatsapp/conversations?${params}`)
       const data = await response.json()
@@ -225,6 +251,92 @@ export default function ChatsPage() {
     }
   }
 
+  // Create new chat
+  const handleCreateNewChat = async () => {
+    if (!newChatPhone.trim()) return
+
+    setIsCreatingChat(true)
+    try {
+      const response = await fetch('/api/admin/whatsapp/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: newChatPhone.trim(),
+          source: newChatSource
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.data) {
+        setShowNewChatDialog(false)
+        setNewChatPhone('')
+        setNewChatSource('baileys')
+        await fetchConversations()
+        setSelectedConversation(data.data)
+      } else {
+        alert(data.error || 'Error al crear conversación')
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error)
+      alert('Error al crear conversación')
+    } finally {
+      setIsCreatingChat(false)
+    }
+  }
+
+  // Switch conversation from Twilio to Baileys
+  const handleSwitchToBaileys = async () => {
+    if (!selectedConversation) return
+
+    setIsSwitchingToBaileys(true)
+    try {
+      const response = await fetch('/api/admin/whatsapp/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: selectedConversation.phone,
+          source: 'baileys'
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.data) {
+        setSelectedConversation(prev => prev ? { ...prev, source: 'baileys' } : prev)
+        fetchConversations()
+      } else {
+        alert(data.error || 'Error al cambiar a Baileys')
+      }
+    } catch (error) {
+      console.error('Error switching to Baileys:', error)
+      alert('Error al cambiar a Baileys')
+    } finally {
+      setIsSwitchingToBaileys(false)
+    }
+  }
+
+  // Fetch profile pictures for Baileys conversations
+  useEffect(() => {
+    const toFetch = conversations
+      .filter(c => c.source === 'baileys' && !fetchedPicIds.current.has(c.id))
+      .slice(0, 10)
+
+    if (toFetch.length === 0) return
+
+    toFetch.forEach(c => {
+      fetchedPicIds.current.add(c.id)
+      fetch(`/api/admin/whatsapp/conversations/${c.id}/profile-picture`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.url) {
+            setProfilePics(prev => ({ ...prev, [c.id]: data.url }))
+          }
+        })
+        .catch(() => {/* silently fail */})
+    })
+  }, [conversations])
+
   // Initial load
   useEffect(() => {
     fetchConversations()
@@ -331,6 +443,13 @@ export default function ChatsPage() {
               Chats
             </TabsTrigger>
             <TabsTrigger
+              value="ai-assistant"
+              className="h-8 px-4 text-sm text-[#8696a0] data-[state=active]:bg-[#2a3942] data-[state=active]:text-[#00a884] rounded"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Asistente IA
+            </TabsTrigger>
+            <TabsTrigger
               value="ai-config"
               className="h-8 px-4 text-sm text-[#8696a0] data-[state=active]:bg-[#2a3942] data-[state=active]:text-[#00a884] rounded"
             >
@@ -367,24 +486,34 @@ export default function ChatsPage() {
             </div>
 
             {/* Filter Pills */}
-            <div className="flex gap-2 px-3 py-2 border-b border-[#2a3942]">
-              {[
-                { id: 'all', label: 'Todos' },
-                { id: 'active', label: 'Bot Activo' },
-                { id: 'paused', label: 'Pausados' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setFilter(tab.id)}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                    filter === tab.id
-                      ? 'bg-[#00a884] text-[#111b21]'
-                      : 'bg-[#202c33] text-[#8696a0] hover:bg-[#2a3942]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-[#2a3942]">
+              <div className="flex gap-2 flex-1">
+                {[
+                  { id: 'all', label: 'Todos' },
+                  { id: 'paused', label: 'Pausados' },
+                  { id: 'alerts', label: 'Alertas', icon: Bell },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFilter(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1 text-sm rounded-full transition-colors ${
+                      filter === tab.id
+                        ? 'bg-[#00a884] text-[#111b21]'
+                        : 'bg-[#202c33] text-[#8696a0] hover:bg-[#2a3942]'
+                    }`}
+                  >
+                    {tab.icon && <tab.icon className="h-3.5 w-3.5" />}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowNewChatDialog(true)}
+                className="flex items-center justify-center h-8 w-8 rounded-full bg-[#00a884] hover:bg-[#02906f] text-white transition-colors shrink-0"
+                title="Nuevo mensaje"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
             </div>
 
             {/* Chat List */}
@@ -406,8 +535,12 @@ export default function ChatsPage() {
                         selectedConversation?.id === conv.id ? 'bg-[#2a3942]' : ''
                       }`}
                     >
-                      <div className="w-12 h-12 rounded-full bg-[#6b7c85] flex items-center justify-center flex-shrink-0">
-                        <User className="h-6 w-6 text-[#cfd9df]" />
+                      <div className="w-12 h-12 rounded-full bg-[#6b7c85] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {profilePics[conv.id] ? (
+                          <img src={profilePics[conv.id]!} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="h-6 w-6 text-[#cfd9df]" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between mb-0.5">
@@ -452,8 +585,12 @@ export default function ChatsPage() {
                     <ChevronLeft className="h-5 w-5 text-[#aebac1]" />
                   </button>
 
-                  <div className="w-10 h-10 rounded-full bg-[#6b7c85] flex items-center justify-center">
-                    <User className="h-5 w-5 text-[#cfd9df]" />
+                  <div className="w-10 h-10 rounded-full bg-[#6b7c85] flex items-center justify-center overflow-hidden">
+                    {profilePics[selectedConversation.id] ? (
+                      <img src={profilePics[selectedConversation.id]!} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-5 w-5 text-[#cfd9df]" />
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -466,6 +603,17 @@ export default function ChatsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {selectedConversation.source !== 'baileys' && (
+                      <Button
+                        onClick={handleSwitchToBaileys}
+                        disabled={isSwitchingToBaileys}
+                        size="sm"
+                        className="bg-[#25D9A3]/15 text-[#25D9A3] hover:bg-[#25D9A3]/25 border-0 h-8"
+                      >
+                        <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
+                        {isSwitchingToBaileys ? 'Cambiando...' : 'Usar Baileys'}
+                      </Button>
+                    )}
                     {selectedConversation.is_paused ? (
                       <Button
                         onClick={handleResumeConversation}
@@ -618,6 +766,19 @@ export default function ChatsPage() {
             </motion.div>
           )}
 
+          {activeTab === 'ai-assistant' && (
+            <motion.div
+              key="ai-assistant"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="flex-1 min-h-0"
+            >
+              <AIAssistantChat />
+            </motion.div>
+          )}
+
           {activeTab === 'ai-config' && (
             <motion.div
               key="ai-config"
@@ -666,6 +827,100 @@ export default function ChatsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* New Chat Dialog */}
+      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+        <DialogContent className="bg-[#202c33] border-[#2a3942] max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-[#e9edef]">Nuevo chat</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            {/* Provider selector */}
+            <div>
+              <label className="text-sm text-[#8696a0] mb-2 block">
+                Enviar vía
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewChatSource('baileys')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    newChatSource === 'baileys'
+                      ? 'bg-[#25D9A3]/20 text-[#25D9A3] ring-1 ring-[#25D9A3]/50'
+                      : 'bg-[#2a3942] text-[#8696a0] hover:bg-[#3b4a54]'
+                  }`}
+                >
+                  <span className="text-xs font-bold">B</span>
+                  Baileys
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewChatSource('twilio')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    newChatSource === 'twilio'
+                      ? 'bg-[#6366F1]/20 text-[#6366F1] ring-1 ring-[#6366F1]/50'
+                      : 'bg-[#2a3942] text-[#8696a0] hover:bg-[#3b4a54]'
+                  }`}
+                >
+                  <span className="text-xs font-bold">T</span>
+                  Twilio
+                </button>
+              </div>
+            </div>
+
+            {/* Phone input */}
+            <div>
+              <label className="text-sm text-[#8696a0] mb-2 block">
+                Número de teléfono
+              </label>
+              <Input
+                placeholder={newChatSource === 'baileys' ? '5493835123456' : '549XXXXXXXXXX'}
+                value={newChatPhone}
+                onChange={(e) => setNewChatPhone(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleCreateNewChat()
+                  }
+                }}
+                className="bg-[#2a3942] border-[#3b4a54] text-[#e9edef] placeholder:text-[#8696a0] focus-visible:ring-[#00a884]"
+                autoFocus
+              />
+              <div className="mt-2 text-xs text-[#8696a0] space-y-1">
+                {newChatSource === 'baileys' ? (
+                  <>
+                    <p className="text-[#25D9A3]/80 font-medium">Formato: solo numeros, sin + ni espacios</p>
+                    <p>Ej: <span className="text-[#e9edef] font-mono">5493835123456</span></p>
+                    <p className="text-[10px]">549 (Argentina) + cod. area sin 0 + numero sin 15</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[#6366F1]/80 font-medium">Formato: solo numeros, sin + ni espacios</p>
+                    <p>Ej: <span className="text-[#e9edef] font-mono">5493835123456</span></p>
+                    <p className="text-[10px]">549 (Argentina) + cod. area sin 0 + numero sin 15</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setShowNewChatDialog(false); setNewChatPhone(''); setNewChatSource('baileys') }}
+              className="bg-[#2a3942] border-[#3b4a54] text-[#e9edef] hover:bg-[#3b4a54] hover:text-[#e9edef]"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateNewChat}
+              disabled={isCreatingChat || !newChatPhone.trim()}
+              className="bg-[#00a884] hover:bg-[#02906f] text-white"
+            >
+              {isCreatingChat ? 'Creando...' : 'Iniciar chat'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

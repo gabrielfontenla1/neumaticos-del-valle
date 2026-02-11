@@ -41,7 +41,7 @@ export async function POST(
     // Route by provider source
     if (conversation.source === 'baileys') {
       // Send via Baileys service
-      const baileysInstanceId = (conversation as unknown as Record<string, unknown>).baileys_instance_id as string | undefined
+      const baileysInstanceId = conversation.baileys_instance_id
       if (!baileysInstanceId) {
         return NextResponse.json(
           { success: false, error: 'No Baileys instance associated with this conversation' },
@@ -49,7 +49,10 @@ export async function POST(
         )
       }
 
-      const result = await sendBaileysMessage(baileysInstanceId, conversation.phone, content.trim())
+      // If stored JID is a LID, don't pass it — use phone number only
+      const remoteJid = conversation.baileys_remote_jid
+      const safeJid = (remoteJid && !remoteJid.endsWith('@lid')) ? remoteJid : undefined
+      const result = await sendBaileysMessage(baileysInstanceId, conversation.phone, content.trim(), safeJid)
       if (!result.success) {
         return NextResponse.json(
           { success: false, error: result.error || 'Failed to send via Baileys' },

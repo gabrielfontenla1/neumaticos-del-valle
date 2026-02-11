@@ -4,27 +4,28 @@
 
 /**
  * Convert phone number to WhatsApp JID format
+ *
+ * IMPORTANT: When the number already has a country code (11+ digits),
+ * we do NOT modify it. The stored phone came from an incoming Baileys JID,
+ * so it's already in the exact format WhatsApp expects.
  */
 export function phoneToJid(phone: string): string {
   const cleaned = phone.replace(/\D/g, '')
-  let normalized = cleaned
 
-  // Handle Argentina mobile numbers
-  if (cleaned.startsWith('54')) {
-    if (cleaned.length === 12 && !cleaned.startsWith('549')) {
-      normalized = '549' + cleaned.slice(2)
-    } else {
-      normalized = cleaned
-    }
-  } else if (cleaned.startsWith('9') && cleaned.length === 10) {
-    normalized = '54' + cleaned
-  } else if (cleaned.length === 10) {
-    normalized = '549' + cleaned
-  } else if (cleaned.length === 8) {
-    normalized = '5411' + cleaned
+  // If number already has country code, use as-is
+  if (cleaned.length >= 11) {
+    return `${cleaned}@s.whatsapp.net`
   }
 
-  return `${normalized}@s.whatsapp.net`
+  // Handle short local numbers (fallback for manual input)
+  if (cleaned.length === 10) {
+    return `54${cleaned}@s.whatsapp.net`
+  }
+  if (cleaned.length === 8) {
+    return `5411${cleaned}@s.whatsapp.net`
+  }
+
+  return `${cleaned}@s.whatsapp.net`
 }
 
 /**

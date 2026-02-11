@@ -100,6 +100,7 @@ export interface BaileysWebhookData {
   is_group?: boolean
   push_name?: string
   phone?: string
+  resolved_phone?: string
 
   // For connection events
   qr_code?: string
