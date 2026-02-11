@@ -20,6 +20,11 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+function param(req: Request, name: string): string {
+  const v = req.params[name]
+  return Array.isArray(v) ? v[0] : v
+}
+
 // Request logging
 app.use((req: Request, _res: Response, next: NextFunction) => {
   logger.debug({ method: req.method, path: req.path }, 'Request received')
@@ -60,12 +65,12 @@ app.get('/health', (_req: Request, res: Response) => {
 
 app.get('/instances/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const instance = await getInstance(req.params.id)
+    const instance = await getInstance(param(req, 'id'))
     if (!instance) {
       return res.status(404).json({ error: 'Instance not found' })
     }
 
-    const connectionStatus = getConnectionStatus(req.params.id)
+    const connectionStatus = getConnectionStatus(param(req, 'id'))
 
     res.json({
       ...instance,
@@ -80,7 +85,7 @@ app.get('/instances/:id', authenticate, async (req: Request, res: Response) => {
 
 app.post('/instances/:id/connect', authenticate, async (req: Request, res: Response) => {
   try {
-    const instanceId = req.params.id
+    const instanceId = param(req, 'id')
 
     connectInstance(instanceId).catch((error) => {
       logger.error({ error, instanceId }, 'Connection failed')
@@ -95,7 +100,7 @@ app.post('/instances/:id/connect', authenticate, async (req: Request, res: Respo
 
 app.post('/instances/:id/disconnect', authenticate, async (req: Request, res: Response) => {
   try {
-    await disconnectInstance(req.params.id)
+    await disconnectInstance(param(req, 'id'))
     res.json({ message: 'Disconnected successfully' })
   } catch (error) {
     logger.error({ error }, 'Error disconnecting')
@@ -105,7 +110,7 @@ app.post('/instances/:id/disconnect', authenticate, async (req: Request, res: Re
 
 app.get('/instances/:id/qr', authenticate, async (req: Request, res: Response) => {
   try {
-    const instance = await getInstance(req.params.id)
+    const instance = await getInstance(param(req, 'id'))
     if (!instance) {
       return res.status(404).json({ error: 'Instance not found' })
     }
@@ -131,7 +136,7 @@ app.post('/instances/:id/send', authenticate, async (req: Request, res: Response
     }
 
     const jid = phoneToJid(to)
-    const result = await sendMessage(req.params.id, jid, message)
+    const result = await sendMessage(param(req, 'id'), jid, message)
 
     if (result.success) {
       res.json({ success: true, message_id: result.messageId })
@@ -147,7 +152,7 @@ app.post('/instances/:id/send', authenticate, async (req: Request, res: Response
 app.get('/instances/:id/logs', authenticate, async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50
-    const logs = await getRecentLogs(req.params.id, limit)
+    const logs = await getRecentLogs(param(req, 'id'), limit)
     res.json({ logs })
   } catch (error) {
     logger.error({ error }, 'Error getting logs')

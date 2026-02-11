@@ -282,7 +282,7 @@ export async function sendMessage(
     })
 
     log.debug({ to, messageId: result?.key?.id }, 'Message sent')
-    return { success: true, messageId: result?.key?.id }
+    return { success: true, messageId: result?.key?.id ?? undefined }
   } catch (error) {
     log.error({ error, to }, 'Error sending message')
     return {
