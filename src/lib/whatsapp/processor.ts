@@ -47,7 +47,7 @@ import { processWithFunctionCalling } from '@/lib/whatsapp/ai/function-handler'
 // CONFIGURATION
 // ============================================================================
 
-const MAX_RESPONSE_TOKENS = 500
+const MAX_RESPONSE_TOKENS = 800
 const MAX_HISTORY_MESSAGES = 10
 const RESPONSE_TIMEOUT_MS = 25000
 const BRAND_CACHE_TTL = 5 * 60 * 1000

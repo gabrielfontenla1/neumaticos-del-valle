@@ -42,6 +42,9 @@ import {
   getBranchByCode
 } from '../services/location-service'
 import * as stockTemplates from '../templates/stock-responses'
+import { generateEmbedding, searchSimilarContent, searchFAQs } from '@/lib/ai/embeddings'
+import { formatSystemPrompt } from '@/lib/ai/prompts/system'
+import { getAIPromptsConfig } from '@/lib/ai/config-service'
 import { createClient } from '@supabase/supabase-js'
 
 // Supabase client for order creation
@@ -301,6 +304,120 @@ ${itemsList}
 }
 
 // ============================================================================
+// PRODUCT & FAQ CONTEXT SEARCH (mirrors admin simulator pipeline)
+// ============================================================================
+
+/**
+ * Search for products relevant to the user's message to inject as context.
+ * Uses the same semantic + keyword search pattern as the admin AI simulator.
+ */
+async function searchProductsForContext(query: string): Promise<Record<string, unknown>[]> {
+  const productKeywords = [
+    'neumático', 'neumatico', 'llanta', 'goma', 'cubierta',
+    'precio', 'costo', 'vale', 'sale', 'cuanto', 'cuánto',
+    'tiene', 'tienen', 'hay', 'disponible', 'tenes', 'tenés',
+    'medida', 'tamaño', 'rodado',
+    'necesito', 'busco', 'quiero', 'comprar', 'conseguir',
+    'marca', 'bridgestone', 'pirelli', 'michelin', 'goodyear', 'fate', 'firestone'
+  ]
+
+  const lowerQuery = query.toLowerCase()
+  const needsSearch = productKeywords.some(k => lowerQuery.includes(k)) ||
+    /\d{3}/.test(query)
+
+  if (!needsSearch) return []
+
+  // Tier 1: Semantic search via embeddings (same as admin simulator)
+  try {
+    const embedding = await generateEmbedding(query)
+    const results = await searchSimilarContent(embedding, {
+      matchThreshold: 0.65,
+      matchCount: 10,
+      contentType: 'product'
+    })
+
+    if (results && results.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const typed = results as Array<{ product?: Record<string, unknown>; similarity: number }>
+      const products = typed
+        .filter(r => r.product)
+        .map(r => r.product as Record<string, unknown>)
+      if (products.length > 0) {
+        console.log('[FunctionHandler] Semantic search found', products.length, 'products')
+        return products
+      }
+    }
+  } catch (error) {
+    console.log('[FunctionHandler] Semantic search failed, trying keyword fallback:', error)
+  }
+
+  // Tier 2: Keyword fallback - tire size search
+  const sizeMatch = query.match(/(\d{3})\s*[/-]?\s*(\d{2})\s*[rR]?\s*(\d{2})/)
+  if (sizeMatch) {
+    try {
+      let width = parseInt(sizeMatch[1])
+      const profile = parseInt(sizeMatch[2])
+      const diameter = parseInt(sizeMatch[3])
+
+      // Auto-correct common typos (176→175, 206→205, etc.)
+      if (width % 10 === 6) width = width - 1
+
+      const { data } = await supabaseAdmin
+        .from('products')
+        .select('*')
+        .eq('width', width)
+        .eq('aspect_ratio', profile)
+        .eq('rim_diameter', diameter)
+        .gt('stock', 0)
+        .order('price', { ascending: true })
+        .limit(10)
+
+      if (data && data.length > 0) {
+        console.log('[FunctionHandler] Size search found', data.length, 'products')
+        return data
+      }
+    } catch (error) {
+      console.log('[FunctionHandler] Size search failed:', error)
+    }
+  }
+
+  // Tier 3: Brand/text search
+  try {
+    const searchTerm = query.replace(/[^\w\sáéíóúñ]/gi, '').trim()
+    if (searchTerm.length >= 2) {
+      const { data } = await supabaseAdmin
+        .from('products')
+        .select('*')
+        .or(`name.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%`)
+        .gt('stock', 0)
+        .order('price', { ascending: true })
+        .limit(10)
+
+      if (data && data.length > 0) {
+        console.log('[FunctionHandler] Keyword search found', data.length, 'products')
+        return data
+      }
+    }
+  } catch (error) {
+    console.log('[FunctionHandler] Keyword search failed:', error)
+  }
+
+  return []
+}
+
+/**
+ * Search FAQs relevant to the user's message.
+ */
+async function searchFAQsForContext(query: string): Promise<Array<{ question: string; answer: string }>> {
+  try {
+    return await searchFAQs(query, 3)
+  } catch (error) {
+    console.log('[FunctionHandler] FAQ search failed:', error)
+    return []
+  }
+}
+
+// ============================================================================
 // MAIN HANDLER
 // ============================================================================
 
@@ -321,8 +438,18 @@ export async function processWithFunctionCalling(
       return handleWebPurchase(webPurchase, conversation)
     }
 
-    // Load dynamic configuration
-    const systemPrompt = await buildSystemPromptDynamic(conversation)
+    // Search for product context and FAQs in parallel (mirrors admin simulator)
+    const [products, faqs] = await Promise.all([
+      searchProductsForContext(messageText),
+      searchFAQsForContext(messageText)
+    ])
+
+    // Load dynamic configuration with enriched context
+    const systemPrompt = await buildSystemPromptDynamic(conversation, {
+      products,
+      faqs,
+      messageHistory
+    })
     const tools = await getWhatsAppToolsDynamic()
 
     // Build messages array with context
@@ -342,7 +469,7 @@ export async function processWithFunctionCalling(
       tools,
       tool_choice: 'auto',
       temperature: temperatures.balanced,
-      max_tokens: 500
+      max_tokens: 800
     })
 
     const choice = response.choices[0]
@@ -392,10 +519,38 @@ export async function processWithFunctionCalling(
 
 /**
  * Build system prompt with current context (async, loads from config)
+ * Now enriched with product context, FAQs, and conversation history
+ * to match the quality of the admin AI simulator.
  */
-async function buildSystemPromptDynamic(conversation: WhatsAppConversation): Promise<string> {
+async function buildSystemPromptDynamic(
+  conversation: WhatsAppConversation,
+  context?: {
+    products?: Record<string, unknown>[]
+    faqs?: Array<{ question: string; answer: string }>
+    messageHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  }
+): Promise<string> {
   // Load base prompt from configuration
-  let prompt = await getWhatsAppSystemPromptDynamic()
+  const promptsConfig = await getAIPromptsConfig()
+  const basePrompt = promptsConfig.whatsappSystemPrompt
+
+  // Enrich prompt with products, FAQs, and conversation history
+  // using the same formatSystemPrompt that powers the admin simulator
+  let prompt = formatSystemPrompt(basePrompt, {
+    products: context?.products,
+    faqs: context?.faqs,
+    previousInteraction: context?.messageHistory && context.messageHistory.length > 0
+      ? context.messageHistory.map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.content}`).join('\n')
+      : undefined
+  })
+
+  // WhatsApp-specific formatting instructions
+  prompt += `\n\n📱 FORMATO WHATSAPP:
+- Mensajes CORTOS (máximo 4-5 líneas)
+- UNA sola pregunta por mensaje
+- Emojis moderados (1-2 máximo)
+- Usa *negrita* para destacar (no **, solo *)
+- Sin headers (#) ni markdown complejo`
 
   // Add pending appointment context if exists
   if (conversation.pending_appointment) {
