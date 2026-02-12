@@ -527,10 +527,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`📊 Products in DB: ${productMap.size}`)
-    console.log(`📊 Rows in Excel: ${normalizedData.length}`)
-    console.log(`📊 Source: ${userSource} (detected: ${detection.detectedFormat})`)
-
     const result: UpdateResult = {
       success: true,
       mode: detection.hasPrices && detection.hasStock
@@ -745,14 +741,6 @@ export async function POST(request: NextRequest) {
     }
 
     result.success = result.errors.length === 0 || result.updated > 0
-
-    console.log(`✅ Update completed:`, {
-      source: result.source,
-      mode: result.mode,
-      updated: result.updated,
-      notFound: result.notFound,
-      errors: result.errors.length
-    })
 
     return NextResponse.json(result)
 

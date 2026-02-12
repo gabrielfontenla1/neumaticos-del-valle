@@ -1,5 +1,6 @@
 export interface Product {
   id: string
+  slug?: string
   name: string
   brand: string
   model?: string
@@ -77,6 +78,7 @@ export interface ImportRowPreview extends Omit<ImportRow, keyof ImportRow> {
 // Database query result types
 export interface DBProductRaw {
   id: string
+  slug?: string
   name: string
   brand: string
   model?: string
@@ -126,6 +128,7 @@ export interface SizeOption {
 
 export interface ProductSearchResult {
   id: string
+  slug?: string
   name: string
   brand: string
   size?: string

@@ -41,18 +41,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { TableSkeleton } from '@/components/skeletons/TableSkeleton'
-
-// Exact colors from rapicompras darkColors theme
-const colors = {
-  background: '#30302e',
-  foreground: '#fafafa',
-  card: '#262624',
-  primary: '#d97757',
-  mutedForeground: '#a1a1aa',
-  border: '#262626',
-  input: '#262626',
-  secondary: '#262626',
-}
+import { adminColors as colors } from '@/lib/constants/admin-theme'
 
 type VoucherStatus = 'pending' | 'active' | 'redeemed' | 'expired'
 type ServiceType = 'inspection' | 'rotation' | 'balancing' | 'alignment'

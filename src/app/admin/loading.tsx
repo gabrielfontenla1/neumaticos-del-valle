@@ -1,9 +1,6 @@
 // Admin Loading State - Shown during page transitions
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton'
-
-const colors = {
-  background: '#30302e',
-}
+import { adminColors as colors } from '@/lib/constants/admin-theme'
 
 export default function AdminLoading() {
   return (

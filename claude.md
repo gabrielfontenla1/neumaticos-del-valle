@@ -348,6 +348,272 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 ---
 
+## 🎯 Admin UI Standards (Dark Theme)
+
+Todas las pantallas admin siguen el dark theme definido en `src/lib/constants/admin-theme.ts`. Referencia de implementacion: `src/app/admin/servicios/page.tsx` y `src/app/admin/configuracion/sucursales/page.tsx`.
+
+### Colores Base
+```
+Background principal:  #30302e  (lo provee AdminLayout, NO usar en pages)
+Cards/containers:      #262624
+Inputs/fields:         #30302e
+Bordes:                #3a3a38
+Texto primario:        #fafafa
+Texto secundario:      #888888
+Placeholders:          #666666
+Acento principal:      #d97757  (naranja — SIEMPRE, nunca verde)
+```
+
+### Fondo de Paginas Admin
+```
+❌ NUNCA: <main className="bg-[#30302e] ...">
+✅ SIEMPRE: <main className="p-6 space-y-6 min-h-screen">
+```
+`AdminLayout` renderiza `AnimatedBackground` en `fixed inset-0 z-0`. Si la page tiene fondo opaco, tapa la grilla animada. Las pages deben tener fondo **transparente**.
+
+### shadcn/ui Dark Theme Overrides
+
+Los componentes de `components/ui/` tienen colores hardcodeados (ej: `text-gray-900`). Se necesitan overrides con `!important` via Tailwind `!` prefix.
+
+**Input / Textarea**:
+```tsx
+className="bg-[#30302e] text-[#fafafa] placeholder:text-[#666666] h-12 border-[#3a3a38] focus:border-[#d97757] focus:ring-[#d97757]/20 focus-visible:border-[#d97757] focus-visible:ring-[#d97757]/20"
+```
+- shadcn Input usa `focus-visible:` NO `focus:` — hay que poner **ambos**
+- Textarea: agregar `resize-none min-h-[100px]`
+
+**Select (dark theme)**:
+```tsx
+// SelectTrigger
+className="!bg-[#30302e] !text-[#fafafa] !border-[#3a3a38] h-12 focus:ring-[#d97757] [&>svg]:!text-[#888888] [&>span]:!text-[#fafafa]"
+
+// SelectContent
+className="!bg-[#262624] !border-[#3a3a38]"
+
+// SelectItem
+className="!text-[#fafafa] !bg-transparent hover:!bg-[#3a3a38] focus:!bg-[#3a3a38] focus:!text-[#fafafa] cursor-pointer [&>span>svg]:!text-[#fafafa]"
+```
+- El `select.tsx` base tiene `text-gray-900` hardcodeado, se necesita `!` en todo
+
+**Card con Table**:
+```tsx
+// Card que envuelve una Table debe eliminar padding y gap defaults
+<Card className="bg-[#262624] border-[#3a3a38] py-0 gap-0 overflow-hidden">
+```
+- Card tiene `py-6` y `gap-6` por defecto que generan espacio arriba del table header
+
+**Input readonly (IDs auto-generados)**:
+```tsx
+<Input readOnly tabIndex={-1} className="... opacity-60 cursor-not-allowed" />
+```
+- `tabIndex={-1}` para que Tab lo saltee
+
+### Precio Formateado (ARS)
+
+```tsx
+// Helpers
+function formatPriceDisplay(value: number): string {
+  if (value === 0) return ''
+  return value.toLocaleString('es-AR')
+}
+
+function parsePriceInput(formatted: string): number {
+  const cleaned = formatted.replace(/[$\s.]/g, '')
+  const num = parseInt(cleaned, 10)
+  return isNaN(num) ? 0 : num
+}
+
+// Render: Input con prefijo "$" absoluto
+<div className="relative">
+  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#888888] text-sm pointer-events-none">$</span>
+  <Input
+    type="text"
+    inputMode="numeric"
+    className="... pl-8"
+    placeholder="0"
+    value={priceDisplay}
+    onFocus={() => { if (price === 0) setPriceDisplay('') }}
+    onChange={(e) => {
+      const parsed = parsePriceInput(e.target.value)
+      setPrice(parsed)
+      setPriceDisplay(parsed === 0 ? '' : formatPriceDisplay(parsed))
+    }}
+    onBlur={() => {
+      setPriceDisplay(price === 0 ? '' : formatPriceDisplay(price))
+    }}
+  />
+</div>
+```
+
+### Stepper Pattern (Dialogs Multi-Step)
+
+Usar cuando el form tiene 2+ secciones logicas. Referencia: `sucursales/page.tsx`, `servicios/page.tsx`.
+
+**Estructura del Dialog**:
+```
+DialogContent (p-0, max-h-[90vh], flex flex-col)
++-- Header (border-b, px-6 py-4, gradient bg)
+|   +-- Titulo
+|   +-- Progress bar animada (gradient naranja)
+|   +-- Step indicators (circles con iconos)
++-- Content (p-6, min-h-[280px], flex-1, overflow-y-auto)
+|   +-- AnimatePresence mode="wait"
+|       +-- motion.div (key=step, fade + slide)
++-- Footer (p-6, border-t, shrink-0)
+    +-- Left: Cancelar (step 0) / Anterior (step 1+)
+    +-- Right: Siguiente (step N-1) / Accion Final (ultimo step)
+```
+
+**Steps definition**:
+```tsx
+const STEPS = [
+  { id: 0, title: 'Informacion', description: 'Detalles basicos', icon: FileText },
+  { id: 1, title: 'Configuracion', description: 'Opciones avanzadas', icon: Settings },
+]
+```
+
+**Progress bar**:
+```tsx
+<div className="h-1 bg-[#3a3a38] rounded-full overflow-hidden">
+  <motion.div
+    className="h-full rounded-full"
+    style={{ background: 'linear-gradient(90deg, #d97757, #e8956f)' }}
+    initial={{ width: '0%' }}
+    animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+    transition={{ duration: 0.3, ease: 'easeInOut' }}
+  />
+</div>
+```
+
+**Step indicators (circles)**:
+```tsx
+{STEPS.map((s) => (
+  <div key={s.id} className="flex items-center gap-2">
+    <div className={cn(
+      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all",
+      step > s.id
+        ? "bg-[#d97757] text-white"           // Completado = naranja
+        : step === s.id
+        ? "bg-[#d97757]/20 text-[#d97757] ring-2 ring-[#d97757]/50"  // Actual
+        : "bg-[#3a3a38] text-[#666666]"       // Pendiente
+    )}>
+      {step > s.id ? <CheckCircle2 className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
+    </div>
+    <span className={cn("text-xs hidden sm:block", step >= s.id ? "text-[#fafafa]" : "text-[#666666]")}>
+      {s.title}
+    </span>
+  </div>
+))}
+```
+
+**Colores de los steps: SIEMPRE naranja `#d97757`, NUNCA verde.**
+
+**Validacion por step**:
+```tsx
+const validateStep = (step: number): boolean => {
+  setStepError(null)
+  switch (step) {
+    case 0:
+      if (!field.trim()) { setStepError('Campo requerido'); return false }
+      return true
+    // ...
+  }
+}
+
+const handleNextStep = () => {
+  if (validateStep(currentStep) && currentStep < STEPS.length - 1) setCurrentStep(prev => prev + 1)
+}
+const handlePrevStep = () => {
+  if (currentStep > 0) { setStepError(null); setCurrentStep(prev => prev - 1) }
+}
+```
+
+**Error display en step**:
+```tsx
+{stepError && (
+  <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription className="text-red-400">{stepError}</AlertDescription>
+  </Alert>
+)}
+```
+
+### Dialog Animation (Framer Motion)
+
+```tsx
+<Dialog open={isOpen} onOpenChange={setIsOpen}>
+  <DialogContent
+    className="p-0 bg-transparent border-none shadow-none max-w-lg [&>button]:hidden"
+    data-overlay-translucent
+  >
+    <motion.div
+      className="bg-[#262624] border border-[#3a3a38] rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
+      {/* Custom X close button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(false)}
+        className="absolute top-4 right-4 z-50 rounded-full p-1.5 text-[#888888] hover:text-[#fafafa] hover:bg-[#3a3a38] transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </button>
+      {/* ... Header, Content, Footer ... */}
+    </motion.div>
+  </DialogContent>
+</Dialog>
+```
+
+- `[&>button]:hidden` oculta el boton close nativo de Radix
+- `data-overlay-translucent` activa overlay translucido (ver globals.css)
+- Custom X button dentro del motion.div
+
+**CSS para overlay translucido** (en `globals.css`):
+```css
+[data-slot="dialog-portal"]:has([data-overlay-translucent]) [data-slot="dialog-overlay"] {
+  background: rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(2px);
+}
+```
+
+### Reglas Criticas para Dialogs y Forms
+
+```
+✅ SIEMPRE type="button" en TODOS los botones del footer del Dialog
+   (HTML buttons default a type="submit", cierra el dialog)
+✅ SIEMPRE focus-visible: Y focus: en inputs (shadcn usa focus-visible:)
+✅ SIEMPRE ! (important) en overrides de Select, SelectContent, SelectItem
+✅ SIEMPRE resetear step, errors y display states en openDialog()
+✅ SIEMPRE py-0 gap-0 overflow-hidden en Card que envuelve Table
+✅ SIEMPRE fondo transparente en pages admin (no bg-[#30302e])
+✅ SIEMPRE naranja #d97757 para acento (steps, botones primarios, focus rings)
+❌ NUNCA verde para steps completados ni botones de accion
+❌ NUNCA bg-[#30302e] en el root element de pages admin
+❌ NUNCA focus: sin focus-visible: en inputs shadcn
+❌ NUNCA olvidar type="button" en botones dentro de Dialog
+```
+
+### Duration Select (Servicios/Turnos)
+
+```tsx
+const DURATION_OPTIONS = [
+  { value: '15', label: '15 min' },
+  { value: '30', label: '30 min' },
+  { value: '45', label: '45 min' },
+  { value: '60', label: '1 hora' },
+  { value: '75', label: '1h 15min' },
+  { value: '90', label: '1h 30min' },
+  { value: '105', label: '1h 45min' },
+  { value: '120', label: '2 horas' },
+]
+```
+- Incrementos de 15 minutos
+- Al editar, snap al multiplo de 15 mas cercano: `Math.round(duration / 15) * 15`
+
+---
+
 ## 🔗 Key Integrations
 
 ### Supabase

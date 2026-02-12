@@ -365,26 +365,3 @@ export function useURLFilters(
     activeFilterCount,
   }
 }
-
-/**
- * Type guard to check if a value is a valid filter key
- */
-export function isFilterKey(key: unknown): key is keyof FilterState {
-  return typeof key === 'string' && key in DEFAULT_FILTER_STATE
-}
-
-/**
- * Helper to get a single filter value from URL
- * Useful for server components
- */
-export function getFilterFromURL(
-  searchParams: URLSearchParams | null,
-  key: keyof FilterState
-): FilterState[typeof key] {
-  if (!searchParams) {
-    return DEFAULT_FILTER_STATE[key]
-  }
-
-  const filters = deserializeFiltersFromURL(searchParams)
-  return filters[key]
-}

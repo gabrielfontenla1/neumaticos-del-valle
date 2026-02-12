@@ -13,16 +13,7 @@ import {
   Package,
   CalendarDays
 } from 'lucide-react'
-
-// Exact colors from rapicompras darkColors theme
-const colors = {
-  background: '#30302e',
-  foreground: '#fafafa',
-  card: '#262624',
-  primary: '#d97757',
-  mutedForeground: '#a1a1aa',
-  border: '#262626',
-}
+import { adminColors as colors } from '@/lib/constants/admin-theme'
 
 interface DashboardStats {
   todayAppointments: number

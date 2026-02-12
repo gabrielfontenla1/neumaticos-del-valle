@@ -6,16 +6,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Tag,
   Plus,
   Search,
   Calendar,
   CheckCircle,
   XCircle,
-  Clock,
-  Filter,
   Download,
-  Home,
   ChevronLeft
 } from 'lucide-react'
 

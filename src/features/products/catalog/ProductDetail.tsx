@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Package, Truck, ShieldCheck, Star, Minus, Plus, Info, ChevronLeft, ChevronRight, MessageCircle, ShoppingCart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Product } from '../types'
-import { getProductById } from '../api'
+import { getProductBySlug } from '../api'
 import { useCartContext } from '@/providers/CartProvider'
 import { Navbar } from '@/components/layout/Navbar'
 import { Button } from '@/components/ui/button'
@@ -27,7 +27,7 @@ import { CheckoutModal } from '@/features/cart/components/CheckoutModal'
 import type { Branch } from '@/types/branch'
 
 interface ProductDetailProps {
-  productId: string
+  productSlug: string
   backUrl?: string
   backLabel?: string
 }
@@ -42,7 +42,7 @@ interface ProductFeatures {
   [key: string]: unknown
 }
 
-export default function ProductDetail({ productId, backUrl = '/productos', backLabel = 'Volver al catálogo' }: ProductDetailProps) {
+export default function ProductDetail({ productSlug, backUrl = '/productos', backLabel = 'Volver al catálogo' }: ProductDetailProps) {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
@@ -102,12 +102,17 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
 
     const loadProduct = async () => {
       setLoading(true)
-      const data = await getProductById(productId)
+      const data = await getProductBySlug(productSlug)
       setProduct(data)
       setLoading(false)
+
+      // If loaded via UUID and product has a slug, redirect 301 to canonical slug URL
+      if (data?.slug && data.slug !== productSlug) {
+        window.history.replaceState(null, '', `/productos/${data.slug}`)
+      }
     }
     loadProduct()
-  }, [productId])
+  }, [productSlug])
 
   useEffect(() => {
     const loadEquivalents = async () => {
@@ -121,7 +126,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
           diameter: product.diameter
         }, 3, false) // 3% tolerancia, NO permitir diferentes rodados
         // Filtrar el producto actual de los resultados
-        const filtered = result.equivalentTires.filter(tire => tire.id !== productId)
+        const filtered = result.equivalentTires.filter(tire => tire.id !== product.id)
         setEquivalentTires(filtered)
       } catch (error) {
         console.error('Error loading equivalent tires:', error)
@@ -131,28 +136,16 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
     }
 
     loadEquivalents()
-  }, [product, productId])
+  }, [product])
 
   const handleAddToCart = async () => {
-    console.log('🔵 [ProductDetail] handleAddToCart INICIO')
-    console.log('🔵 [ProductDetail] Producto:', product)
-    console.log('🔵 [ProductDetail] Product ID:', product?.id)
-    console.log('🔵 [ProductDetail] Quantity:', quantity)
-
     if (!product) {
-      console.error('❌ [ProductDetail] No hay producto disponible')
       toast.error('No se pudo agregar el producto')
       return
     }
 
-    console.log('🔵 [ProductDetail] Llamando a addItem con:', {
-      productId: product.id,
-      quantity: quantity
-    })
-
     try {
       const result = await addItem(product.id, quantity)
-      console.log('✅ [ProductDetail] Resultado de addItem:', result)
 
       if (result) {
         toast.success(`${quantity} ${quantity === 1 ? 'producto agregado' : 'productos agregados'} al carrito`)
@@ -163,8 +156,6 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
       console.error('❌ [ProductDetail] Error en addItem:', error)
       toast.error('Error al agregar el producto')
     }
-
-    console.log('🔵 [ProductDetail] handleAddToCart FIN')
   }
 
   const handleCheckoutConfirm = async (qty: number, branch: Branch) => {
@@ -777,7 +768,7 @@ export default function ProductDetail({ productId, backUrl = '/productos', backL
                       transition={{ delay: index * 0.1 }}
                     >
                       <Link
-                        href={`/productos/${tire.id}`}
+                        href={`/productos/${(tire as any).slug || tire.id}`}
                         className="block group h-full"
                       >
                         <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 p-4 hover:border-gray-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out h-full flex flex-col shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]">

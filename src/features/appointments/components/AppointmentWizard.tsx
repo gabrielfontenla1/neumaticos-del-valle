@@ -2,10 +2,12 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, Trophy, Zap } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, Trophy, Zap, MessageCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppointment } from '../hooks/useAppointment'
+import { deserializeAppointmentFromURL, validateAppointmentParams, serializeAppointmentToURL } from '../url-params'
 import WelcomeStep from './steps/WelcomeStep'
 import ProvinceStep from './steps/ProvinceStep'
 import BranchStep from './steps/BranchStep'
@@ -65,6 +67,7 @@ const pageTransition = {
 }
 
 export function AppointmentWizard() {
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<Step>('welcome')
   const [direction, setDirection] = useState(0)
   const [hasValidVoucher, setHasValidVoucher] = useState(false)
@@ -74,6 +77,8 @@ export function AppointmentWizard() {
   const [selectedServices, setSelectedServices] = useState<string[]>([])
   const [isMobile, setIsMobile] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
+  const [isFromWhatsApp, setIsFromWhatsApp] = useState(false)
+  const urlParamsProcessed = useRef(false)
 
   const {
     formData,
@@ -85,6 +90,7 @@ export function AppointmentWizard() {
     validateVoucherCode,
     submitAppointment,
     isFormComplete,
+    clearForm,
     setError
   } = useAppointment()
 
@@ -95,6 +101,120 @@ export function AppointmentWizard() {
     }, 500)
     return () => clearTimeout(timer)
   }, [])
+
+  // Process URL params when branches are loaded
+  useEffect(() => {
+    if (urlParamsProcessed.current || branches.length === 0) return
+
+    const params = new URLSearchParams()
+    searchParams.forEach((value, key) => params.set(key, value))
+
+    const appointmentParams = deserializeAppointmentFromURL(params)
+    if (!appointmentParams) return
+
+    urlParamsProcessed.current = true
+
+    if (appointmentParams.source === 'wa') {
+      setIsFromWhatsApp(true)
+    }
+
+    // Clear sessionStorage to avoid conflicts
+    clearForm()
+
+    const validation = validateAppointmentParams(appointmentParams)
+
+    // Determine the furthest valid step we can jump to
+    let targetStep: Step = 'province'
+    const formUpdates: Record<string, string | undefined> = {}
+
+    // Validate branch
+    if (appointmentParams.branch_id) {
+      const branch = branches.find(b => b.id === appointmentParams.branch_id)
+      if (branch) {
+        formUpdates.branch_id = branch.id
+        if (branch.province) {
+          setSelectedProvince(branch.province)
+        }
+        targetStep = 'service'
+      } else {
+        setError('La sucursal del link no es válida. Seleccioná una.')
+        setCurrentStep('province')
+        return
+      }
+    }
+
+    // Validate services
+    if (appointmentParams.services && appointmentParams.services.length > 0) {
+      const validServices = appointmentParams.services.filter(id =>
+        SERVICES.some(s => s.id === id)
+      )
+      if (validServices.length > 0) {
+        setSelectedServices(validServices)
+        if (targetStep === 'service') targetStep = 'date'
+      }
+    }
+
+    // Validate date
+    if (appointmentParams.preferred_date) {
+      const dateErrors = validation.errors.filter(e =>
+        e.includes('Fecha') || e.includes('fecha') || e.includes('domingo') || e.includes('pasó')
+      )
+      if (dateErrors.length === 0) {
+        formUpdates.preferred_date = appointmentParams.preferred_date
+        if (targetStep === 'date') targetStep = 'time'
+      } else {
+        // Date invalid, stop here
+        setError(dateErrors[0])
+        updateFormData(formUpdates)
+        setCurrentStep(targetStep)
+        return
+      }
+    }
+
+    // Validate time
+    if (appointmentParams.preferred_time) {
+      const timeErrors = validation.errors.filter(e =>
+        e.includes('Horario') || e.includes('horario')
+      )
+      if (timeErrors.length === 0) {
+        formUpdates.preferred_time = appointmentParams.preferred_time
+        if (targetStep === 'time') targetStep = 'contact'
+      }
+    }
+
+    // Pre-fill name and phone
+    if (appointmentParams.customer_name) {
+      formUpdates.customer_name = appointmentParams.customer_name
+    }
+    if (appointmentParams.customer_phone) {
+      formUpdates.customer_phone = appointmentParams.customer_phone
+    }
+
+    // Apply all form data at once
+    updateFormData(formUpdates)
+    setCurrentStep(targetStep)
+  }, [branches, searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync wizard state to URL as user progresses (replaceState to avoid history pollution)
+  useEffect(() => {
+    if (currentStep === 'welcome' || currentStep === 'success') return
+
+    const queryString = serializeAppointmentToURL({
+      branch_id: formData.branch_id || undefined,
+      services: selectedServices.length > 0 ? selectedServices : undefined,
+      preferred_date: formData.preferred_date || undefined,
+      preferred_time: formData.preferred_time || undefined,
+      customer_name: formData.customer_name || undefined,
+      customer_phone: formData.customer_phone || undefined,
+      source: isFromWhatsApp ? 'wa' : undefined,
+    })
+
+    const newUrl = queryString ? `/turnos?${queryString}` : '/turnos'
+
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', newUrl)
+    }
+  }, [formData.branch_id, formData.preferred_date, formData.preferred_time, formData.customer_name, formData.customer_phone, selectedServices, currentStep, isFromWhatsApp])
 
   // Detect if mobile device
   useEffect(() => {
@@ -339,6 +459,18 @@ export function AppointmentWizard() {
               transition={pageTransition}
               className="absolute inset-0 p-6 overflow-y-auto"
             >
+              {/* WhatsApp pre-fill banner */}
+              {isFromWhatsApp && currentStep !== 'welcome' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <p className="text-green-800 text-sm">Turno pre-cargado desde WhatsApp. Revisá los datos y confirmá.</p>
+                </motion.div>
+              )}
+
               {/* Error Message */}
               {error && (
                 <motion.div
@@ -564,6 +696,18 @@ export function AppointmentWizard() {
               transition={pageTransition}
               className="w-full"
             >
+              {/* WhatsApp pre-fill banner */}
+              {isFromWhatsApp && currentStep !== 'welcome' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <p className="text-green-800 text-sm">Turno pre-cargado desde WhatsApp. Revisá los datos y confirmá.</p>
+                </motion.div>
+              )}
+
               {/* Error Message */}
               {error && (
                 <motion.div

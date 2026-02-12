@@ -8,28 +8,20 @@ export function generateSessionId(): string {
 
 // Get cart from localStorage
 function getLocalCart(sessionId: string): CartItem[] {
-  console.log('📦 [api-local/getLocalCart] INICIO - sessionId:', sessionId)
-
   if (typeof window === 'undefined') {
     console.warn('⚠️ [api-local/getLocalCart] Window undefined (SSR)')
     return []
   }
 
   const key = `cart_${sessionId}`
-  console.log('📦 [api-local/getLocalCart] Buscando key:', key)
-
   const cartData = localStorage.getItem(key)
-  console.log('📦 [api-local/getLocalCart] Datos encontrados:', cartData ? 'SÍ' : 'NO')
 
   if (!cartData) {
-    console.log('📦 [api-local/getLocalCart] No hay datos - retornando array vacío')
     return []
   }
 
   try {
     const items = JSON.parse(cartData)
-    console.log('📦 [api-local/getLocalCart] Items parseados:', items.length, 'items')
-    console.log('📦 [api-local/getLocalCart] FIN - SUCCESS')
     return items
   } catch (error) {
     console.error('❌ [api-local/getLocalCart] Error parseando JSON:', error)
@@ -39,10 +31,6 @@ function getLocalCart(sessionId: string): CartItem[] {
 
 // Save cart to localStorage
 function saveLocalCart(sessionId: string, items: CartItem[]): void {
-  console.log('💾 [api-local/saveLocalCart] INICIO')
-  console.log('💾 [api-local/saveLocalCart] sessionId:', sessionId)
-  console.log('💾 [api-local/saveLocalCart] Cantidad de items:', items.length)
-
   if (typeof window === 'undefined') {
     console.warn('⚠️ [api-local/saveLocalCart] Window undefined (SSR)')
     return
@@ -50,25 +38,13 @@ function saveLocalCart(sessionId: string, items: CartItem[]): void {
 
   const key = `cart_${sessionId}`
   const data = JSON.stringify(items)
-  console.log('💾 [api-local/saveLocalCart] Guardando en key:', key)
-  console.log('💾 [api-local/saveLocalCart] Tamaño de datos:', data.length, 'caracteres')
-
   localStorage.setItem(key, data)
-  console.log('💾 [api-local/saveLocalCart] Guardado exitosamente')
-
-  // Verificación
-  const verification = localStorage.getItem(key)
-  console.log('💾 [api-local/saveLocalCart] Verificación:', verification ? 'OK' : 'FALLÓ')
-  console.log('💾 [api-local/saveLocalCart] FIN')
 }
 
 // Get product from actual products list
 async function getProduct(productId: string) {
-  console.log('🔶 [api-local/getProduct] INICIO - productId:', productId)
   try {
-    console.log('🔶 [api-local/getProduct] Llamando a getProductById...')
     const product = await getProductById(productId)
-    console.log('🔶 [api-local/getProduct] Producto recibido:', product)
 
     if (!product) {
       console.error('❌ [api-local/getProduct] Producto no encontrado:', productId)
@@ -102,19 +78,6 @@ async function getProduct(productId: string) {
       image_url: product.image_url || product.images?.[0] || null
     }
 
-    console.log('🔶 [api-local/getProduct] Producto mapeado completamente:', {
-      id: mappedProduct.id,
-      product_id: mappedProduct.product_id,
-      name: mappedProduct.name,
-      price: mappedProduct.price,
-      stock_quantity: mappedProduct.stock_quantity,
-      brand: mappedProduct.brand,
-      sku: mappedProduct.sku,
-      width: mappedProduct.width,
-      aspect_ratio: mappedProduct.aspect_ratio,
-      rim_diameter: mappedProduct.rim_diameter
-    })
-    console.log('🔶 [api-local/getProduct] FIN - SUCCESS')
     return mappedProduct
   } catch (error) {
     console.error('❌ [api-local/getProduct] Error:', error)
@@ -125,11 +88,8 @@ async function getProduct(productId: string) {
 
 // Get or create cart session
 export async function getOrCreateCartSession(sessionId: string): Promise<CartSession | null> {
-  console.log('🔷 [api-local/getOrCreateCartSession] INICIO - sessionId:', sessionId)
   try {
-    console.log('🔷 [api-local/getOrCreateCartSession] Obteniendo items del localStorage...')
     const items = getLocalCart(sessionId)
-    console.log('🔷 [api-local/getOrCreateCartSession] Items encontrados:', items.length)
 
     const now = new Date()
     const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
@@ -142,8 +102,6 @@ export async function getOrCreateCartSession(sessionId: string): Promise<CartSes
       created_at: now.toISOString(),
       updated_at: now.toISOString()
     }
-    console.log('🔷 [api-local/getOrCreateCartSession] Sesión creada:', session)
-    console.log('🔷 [api-local/getOrCreateCartSession] FIN - SUCCESS')
     return session
   } catch (error) {
     console.error('❌ [api-local/getOrCreateCartSession] Error:', error)
@@ -158,11 +116,6 @@ export async function addToCart(
   productId: string,
   quantity: number = 1
 ): Promise<boolean> {
-  console.log('🟡 [api-local] addToCart INICIO')
-  console.log('🟡 [api-local] sessionId:', sessionId)
-  console.log('🟡 [api-local] productId:', productId)
-  console.log('🟡 [api-local] quantity:', quantity)
-
   try {
     // Validate inputs
     if (!sessionId || !sessionId.trim()) {
@@ -181,16 +134,7 @@ export async function addToCart(
     }
 
     const items = getLocalCart(sessionId)
-    console.log('🟡 [api-local] Items actuales en carrito:', items.length)
-
-    console.log('🟡 [api-local] Obteniendo producto...')
     const product = await getProduct(productId)
-    console.log('🟡 [api-local] Producto obtenido:', product ? {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      stock: product.stock_quantity
-    } : 'NULL')
 
     if (!product) {
       console.error('❌ [api-local] Producto no encontrado:', productId)
@@ -215,17 +159,11 @@ export async function addToCart(
 
     // Check if item exists
     const existingItemIndex = items.findIndex(item => item.product_id === productId)
-    console.log('🟡 [api-local] Index de item existente:', existingItemIndex)
 
     if (existingItemIndex >= 0) {
       // Update quantity
       const existingItem = items[existingItemIndex]
       const newQuantity = existingItem.quantity + quantity
-      console.log('🟡 [api-local] Actualizando cantidad existente:', {
-        cantidadActual: existingItem.quantity,
-        agregando: quantity,
-        nuevaCantidad: newQuantity
-      })
 
       if (newQuantity > product.stock_quantity) {
         console.error('❌ [api-local] Nueva cantidad excede stock:', {
@@ -239,7 +177,6 @@ export async function addToCart(
         ...existingItem,
         quantity: newQuantity
       }
-      console.log('🟡 [api-local] Item actualizado:', items[existingItemIndex])
     } else {
       // Add new item
       const newItem: CartItem = {
@@ -258,15 +195,10 @@ export async function addToCart(
         season: product.season,
         stock_quantity: product.stock_quantity
       }
-      console.log('🟡 [api-local] Agregando nuevo item:', newItem)
       items.push(newItem)
     }
 
-    console.log('🟡 [api-local] Guardando carrito en localStorage...')
     saveLocalCart(sessionId, items)
-    console.log('🟡 [api-local] Carrito guardado exitosamente')
-    console.log('🟡 [api-local] Total items en carrito:', items.length)
-    console.log('🟡 [api-local] addToCart FIN - SUCCESS')
     return true
   } catch (error) {
     console.error('❌ [api-local] Error en addToCart:', error)

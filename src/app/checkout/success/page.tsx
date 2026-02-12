@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, MessageCircle, Clock, Package, ArrowLeft, Phone, Copy, Gift, Star, Home } from 'lucide-react'
+import { CheckCircle, MessageCircle, Clock, Package, ArrowLeft, Phone, Copy, Gift, Star } from 'lucide-react'
 import { getVoucherByCode } from '@/features/checkout/api/voucher'
 import { PostPurchaseFlow } from '@/features/reviews/components'
 

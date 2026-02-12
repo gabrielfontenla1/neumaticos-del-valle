@@ -28,9 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const payload: BaileysWebhookPayload = await request.json()
-    const { instance_id, event, data, timestamp } = payload
-
-    console.log(`[Baileys Webhook] Event: ${event} from instance ${instance_id}`)
+    const { instance_id, event, data } = payload
 
     // Handle message received
     if (event === 'message_received' && data.body) {
@@ -42,8 +40,6 @@ export async function POST(request: NextRequest) {
       }
       const phoneNumber = rawPhone.replace(/^\+/, '')
       const originalJid = data.from
-
-      console.log(`[Baileys Webhook] Incoming: phone=${phoneNumber} resolved_phone=${data.resolved_phone || 'none'} originalJid=${originalJid}`)
 
       processIncomingMessage(
         {
@@ -64,7 +60,6 @@ export async function POST(request: NextRequest) {
 
     // Handle connection events (log only)
     if (['connected', 'disconnected', 'qr_generated', 'error'].includes(event)) {
-      console.log(`[Baileys Webhook] Connection event: ${event}`, data)
       return NextResponse.json({ success: true, event })
     }
 

@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
+import { adminColors as colors } from '@/lib/constants/admin-theme'
 
 // Dynamic import to avoid SSR hydration issues with PIXI.js
 const AnimatedBackground = dynamic(
@@ -31,17 +32,6 @@ const AnimatedBackground = dynamic(
 
 // Access key from environment variable
 const ACCESS_KEY = process.env.NEXT_PUBLIC_ADMIN_ACCESS_KEY || 'ndv2024'
-
-// Exact colors from dashboard theme
-const colors = {
-  background: '#30302e',
-  foreground: '#fafafa',
-  card: '#262624',
-  primary: '#d97757',
-  mutedForeground: '#a1a1aa',
-  border: '#262626',
-  secondary: '#262626',
-}
 
 function LoginForm() {
   const [email, setEmail] = useState('')

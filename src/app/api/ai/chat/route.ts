@@ -57,7 +57,7 @@ async function searchProducts(query: string) {
         .map((r) => ({ ...r.product, similarity: r.similarity }));
     }
   } catch (error) {
-    console.log('Semantic search failed, falling back to keyword search');
+    // Semantic search failed, falling back to keyword search
   }
 
   // Fallback to keyword search
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
           context.faqs = faqs;
         }
       } catch (error) {
-        console.log('FAQ search failed:', error);
+        // FAQ search failed silently
       }
     }
 

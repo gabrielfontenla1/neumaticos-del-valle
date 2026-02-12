@@ -113,7 +113,6 @@ export async function getProducts(
     }
   } catch (error) {
     console.error('Error fetching products:', error)
-    console.error('Error details:', JSON.stringify(error, null, 2))
     return {
       data: [],
       total: 0,
@@ -127,19 +126,14 @@ export async function getProducts(
 // Obtener producto por ID
 export async function getProductById(id: string) {
   try {
-    console.log('🔍 [getProductById] INICIO - id:', id)
-
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
       .single()
 
-    console.log('🔍 [getProductById] Response - data:', data ? 'OBTENIDO' : 'NULL')
-    console.log('🔍 [getProductById] Response - error:', error?.message || 'NINGUNO')
-
     if (error) {
-      console.error('🔍 [getProductById] Error de BD:', error)
+      console.error('❌ [getProductById] Error de BD:', error)
       throw error
     }
 
@@ -150,16 +144,6 @@ export async function getProductById(id: string) {
         ...productData,
         stock: productData.stock ?? productData.stock_quantity ?? 0
       }
-      console.log('🔍 [getProductById] Producto mapeado:', {
-        id: mappedProduct.id,
-        name: mappedProduct.name,
-        price: mappedProduct.price,
-        stock: mappedProduct.stock,
-        width: mappedProduct.width,
-        profile: mappedProduct.profile,
-        diameter: mappedProduct.diameter
-      })
-      console.log('🔍 [getProductById] FIN - SUCCESS')
       return mappedProduct
     }
 
@@ -167,7 +151,39 @@ export async function getProductById(id: string) {
     return null
   } catch (error) {
     console.error('❌ [getProductById] Error fetching product:', error)
-    console.error('❌ [getProductById] Stack trace:', error instanceof Error ? error.stack : 'No stack')
+    return null
+  }
+}
+
+// Obtener producto por slug (con fallback a UUID para backward compat)
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  try {
+    // Try by slug first
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('slug', slug)
+      .single()
+
+    if (data) {
+      const productData = data as DBProductRaw
+      return {
+        ...productData,
+        stock: productData.stock ?? productData.stock_quantity ?? 0
+      }
+    }
+
+    // Fallback: if the param looks like a UUID, search by id
+    if (slug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/)) {
+      return getProductById(slug)
+    }
+
+    return null
+  } catch {
+    // single() throws when 0 rows matched — try UUID fallback
+    if (slug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/)) {
+      return getProductById(slug)
+    }
     return null
   }
 }

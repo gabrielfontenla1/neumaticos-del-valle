@@ -91,11 +91,26 @@ export const ADMIN_COLORS = {
 } as const
 
 /**
+ * Flat admin color palette used by page-level components.
+ * Replaces the duplicated `const colors = {...}` across admin pages.
+ */
+export const adminColors = {
+  background: '#30302e',
+  foreground: '#fafafa',
+  card: '#262624',
+  primary: '#d97757',
+  mutedForeground: '#a1a1aa',
+  border: '#262626',
+  input: '#262626',
+  secondary: '#262626',
+} as const
+
+/**
  * Common Tailwind classes for admin pages
  */
 export const ADMIN_CLASSES = {
   // Page layouts
-  page: 'p-6 space-y-6 bg-[#30302e] min-h-screen',
+  page: 'p-6 space-y-6 min-h-screen',
 
   // Cards
   card: 'bg-[#262624] border-[#3a3a38] shadow-lg shadow-black/20',

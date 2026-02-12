@@ -52,7 +52,7 @@ export default function EquivalentResults({ result }: EquivalentResultsProps) {
           {equivalentTires.map((tire) => (
             <Link
               key={tire.id}
-              href={`/productos/${tire.id}`}
+              href={`/productos/${(tire as any).slug || tire.id}`}
               className="block bg-white/5 border border-white/10 rounded-lg p-4 hover:border-[#FEE004]/50 hover:bg-white/10 transition-all"
             >
               <div className="flex items-start gap-4">

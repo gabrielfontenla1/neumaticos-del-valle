@@ -6,6 +6,44 @@ Archivo de coordinación para cambios de base de datos entre terminales.
 
 ## ⏳ Pendiente
 
+- [ ] **Poblar slugs en todos los productos existentes** (solicitado por Terminal App Code)
+  - Contexto: Se implementaron URLs amigables con slugs descriptivos para SEO (`/productos/pirelli-cinturato-p7-205-55-r16-2854500` en vez de UUIDs)
+  - La columna `slug` ya existe en la BD (migración `012_add_sku_column.sql`), está indexada (`idx_products_slug`)
+  - El código ya genera slugs en nuevos imports y busca por slug en `getProductBySlug()`
+  - **Se necesita ejecutar la migración** `supabase/migrations/20260211_populate_product_slugs.sql` para poblar slugs en los ~741 productos existentes
+  - SQL a ejecutar:
+    ```sql
+    UPDATE products
+    SET slug = trim(BOTH '-' FROM
+      lower(
+        regexp_replace(
+          regexp_replace(
+            concat_ws('-',
+              nullif(trim(brand), ''),
+              nullif(trim(model), ''),
+              CASE WHEN width > 0 THEN width::text END,
+              CASE WHEN aspect_ratio > 0 THEN aspect_ratio::text END,
+              CASE WHEN rim_diameter > 0 THEN 'r' || rim_diameter::text END,
+              coalesce(
+                nullif(trim(sku), ''),
+                nullif(trim((features->>'codigo_propio')::text), ''),
+                left(id::text, 8)
+              )
+            ),
+            '[^a-z0-9-]', '-', 'g'
+          ),
+          '-+', '-', 'g'
+        )
+      )
+    )
+    WHERE slug IS NULL OR slug = '';
+    ```
+  - **Verificación post-ejecución**:
+    1. `SELECT count(*) FROM products WHERE slug IS NULL OR slug = '';` → debe ser 0
+    2. `SELECT slug FROM products LIMIT 10;` → verificar formato correcto
+    3. `SELECT slug, count(*) FROM products GROUP BY slug HAVING count(*) > 1;` → no debe haber duplicados
+  - **Backward compat**: Si hay productos sin slug, el código usa `product.id` como fallback en los links
+
 - [ ] **Recalcular stock sumando SANTIAGO** (solicitado por Terminal App Code)
   - Contexto: La columna SANTIAGO del Excel no se leía durante la importación. 151 productos tienen stock en Santiago (1200 unidades totales). 33 productos figuran como stock=0 pero tienen unidades en Santiago.
   - El fix en código ya está aplicado (`importHelpers.ts` ahora incluye SANTIAGO). Pero los 741 productos ya importados necesitan recalcular su stock desde `features.stock_por_sucursal` + la data de SANTIAGO del Excel.

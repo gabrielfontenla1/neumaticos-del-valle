@@ -25,18 +25,7 @@ import { updateProductStock, deleteProduct } from '@/features/admin/api'
 import { createClient } from '@supabase/supabase-js'
 import { TableSkeleton } from '@/components/skeletons/TableSkeleton'
 import { EditProductDialog } from '@/features/admin/components/products'
-
-// Exact colors from rapicompras darkColors theme
-const colors = {
-  background: '#30302e',
-  foreground: '#fafafa',
-  card: '#262624',
-  primary: '#d97757',
-  mutedForeground: '#a1a1aa',
-  border: '#262626',
-  input: '#262626',
-  secondary: '#262626',
-}
+import { adminColors as colors } from '@/lib/constants/admin-theme'
 
 interface Product {
   id: string

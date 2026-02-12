@@ -208,16 +208,6 @@ export function openWhatsAppQuickInquiry(
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-// Generate simple cart message (no customer data required)
-// @deprecated Use generateAIOptimizedMessage instead
-export function generateSimpleCartMessage(
-  items: CartItem[],
-  totals: CartTotals
-): string {
-  // Redirect to AI-optimized version
-  return generateAIOptimizedMessage(items, totals)
-}
-
 /**
  * Generate AI-optimized WhatsApp message for cart checkout
  * Includes SKU, complete tire size, branch name, order number, and bot instruction tags

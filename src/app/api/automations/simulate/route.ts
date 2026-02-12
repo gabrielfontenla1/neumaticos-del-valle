@@ -37,8 +37,6 @@ export async function POST(request: NextRequest) {
 
     const executionId = createExecutionId()
 
-    console.log(`[Simulate] Starting workflow ${workflowId} (${executionId})`)
-
     // Run simulation in background
     simulateWorkflow(workflowId, nodes, executionId, delayMs)
 
@@ -72,8 +70,6 @@ async function simulateWorkflow(
       input: { step: i + 1, total: nodes.length }
     })
 
-    console.log(`[Simulate] Node ${nodeId} running...`)
-
     // Wait for simulated processing
     await sleep(delayMs)
 
@@ -82,11 +78,7 @@ async function simulateWorkflow(
       output: { completed: true },
       duration: delayMs
     })
-
-    console.log(`[Simulate] Node ${nodeId} completed`)
   }
-
-  console.log(`[Simulate] Workflow ${workflowId} completed (${executionId})`)
 }
 
 function sleep(ms: number): Promise<void> {

@@ -67,7 +67,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       transition={{ duration: 0.35 }}
       className="bg-white rounded-xl border border-gray-200 hover:border-[#FFC700] hover:shadow-lg transition-all duration-300 group overflow-hidden"
     >
-      <Link href={`/productos/${product.id}`}>
+      <Link href={`/productos/${product.slug || product.id}`}>
         <div className="relative aspect-square p-6 bg-gray-50">
           {product.is_featured && (
             <span className="absolute top-3 left-3 z-10 px-3 py-1 text-xs font-bold tracking-wide text-white bg-red-500 rounded-md shadow-sm">
@@ -90,7 +90,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <div className="p-5">
-        <Link href={`/productos/${product.id}`} className="block space-y-2">
+        <Link href={`/productos/${product.slug || product.id}`} className="block space-y-2">
           {/* Brand - First */}
           <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">
             {product.brand}

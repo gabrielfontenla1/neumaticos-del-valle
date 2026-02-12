@@ -114,18 +114,24 @@
 }
 
 html {
-  scroll-behavior: smooth;
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: none;
 }
 
 body {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: #30302e; /* Rapicompras background - prevents flash */
   min-height: 100vh;
+  overscroll-behavior: none;
+  background-color: #EDEDED;
+}
+
+/* Dark body background only for admin (dark mode) - prevents white flash on admin */
+html.dark body {
+  background-color: #30302e;
 }
 
 /* Remove native number input spinners for clean shadcn/ui look */
@@ -141,26 +147,6 @@ input[type="number"] {
 }
 
 /* Body styles now handled by @layer base to respect theme variables */
-
-/* Animated background gradient - commented out to allow theme colors */
-/*
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.animated-gradient {
-  background: linear-gradient(
-    -45deg,
-    #0a0a0a,
-    #1a1a1a,
-    #0f0f0f,
-    #2a2a2a
-  );
-  background-size: 400% 400%;
-  animation: gradient-shift 15s ease infinite;
-}
-*/
 
 * {
   box-sizing: border-box;
@@ -216,33 +202,6 @@ input[type="number"] {
   box-shadow: 0 20px 40px rgba(255, 215, 0, 0.1);
 }
 
-/* Golden glow effect */
-.golden-glow {
-  box-shadow: 
-    0 0 20px rgba(255, 215, 0, 0.3),
-    0 0 40px rgba(255, 215, 0, 0.2),
-    0 0 60px rgba(255, 215, 0, 0.1);
-}
-
-/* Subtle animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.floating {
-  animation: float 4s ease-in-out infinite;
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
 /* Mobile optimizations */
 @media (max-width: 768px) {
   html {
@@ -276,8 +235,8 @@ kbd {
   }
 }
 
-/* Smooth transitions */
-* {
+/* Smooth transitions - only for interactive elements, not all elements */
+button, a, input, select, textarea, [role="button"] {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -286,88 +245,6 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.02em;
-}
-
-/* Button ripple effect */
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.ripple:active::before {
-  width: 300px;
-  height: 300px;
-}
-
-/* Loading skeleton */
-@keyframes skeleton-loading {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s ease-in-out infinite;
-}
-
-/* Typewriter effect */
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink {
-  0%, 100% { border-color: transparent; }
-  50% { border-color: var(--pirelli-yellow); }
-}
-
-.typewriter {
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid var(--pirelli-yellow);
-  animation: 
-    typewriter 2s steps(40, end),
-    blink 1s step-end infinite;
-}
-
-/* Micro-interactions */
-.hover-lift {
-  transition: transform 0.2s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-}
-
-.hover-scale {
-  transition: transform 0.2s ease;
-}
-
-.hover-scale:hover {
-  transform: scale(1.02);
 }
 
 /* Reduced motion support */
@@ -379,11 +256,6 @@ h1, h2, h3, h4, h5, h6 {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* Animation delay utility */
-.animation-delay-2000 {
-  animation-delay: 2s;
 }
 
 .dark {
@@ -523,4 +395,10 @@ h1, h2, h3, h4, h5, h6 {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Admin dialogs: translucent overlay to show background grid */
+[data-slot="dialog-portal"]:has([data-overlay-translucent]) [data-slot="dialog-overlay"] {
+  background: rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(2px);
 }

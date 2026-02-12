@@ -48,12 +48,7 @@ function createTwiMLResponse(): NextResponse {
 // ============================================================================
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now()
-
   try {
-    console.log('\n' + '='.repeat(60))
-    console.log('[Twilio Webhook] Incoming request')
-
     // Validate Twilio signature in production
     if (ENABLE_SIGNATURE_VERIFICATION) {
       const isValid = await validateTwilioSignature(request.clone())
@@ -70,12 +65,10 @@ export async function POST(request: NextRequest) {
     const { From, Body, ProfileName } = payload
 
     if (!From || !Body) {
-      console.log('[Twilio Webhook] Missing required fields')
       return createTwiMLResponse()
     }
 
     const phoneNumber = From.replace(/^whatsapp:/, '')
-    console.log(`[Twilio] Message from ${ProfileName || phoneNumber}: "${Body.slice(0, 50)}..."`)
 
     // Process message asynchronously using shared processor
     processIncomingMessage(
@@ -90,7 +83,6 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    console.log(`[Twilio] Acknowledged in ${Date.now() - startTime}ms`)
     return createTwiMLResponse()
 
   } catch (error) {

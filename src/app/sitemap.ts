@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { createClient } from '@supabase/supabase-js'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://neumaticosdelvallesrl.com'
 
@@ -61,14 +62,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // TODO: Add dynamic product pages when needed
-  // const products = await getProducts()
-  // const productPages = products.map((product) => ({
-  //   url: `${BASE_URL}/productos/${product.id}`,
-  //   lastModified: product.updated_at,
-  //   changeFrequency: 'weekly' as const,
-  //   priority: 0.6,
-  // }))
+  // Dynamic product pages with slugs
+  let productPages: MetadataRoute.Sitemap = []
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    const { data: products } = await supabase
+      .from('products')
+      .select('slug, updated_at')
+      .not('slug', 'is', null)
+      .gt('stock', 0)
 
-  return [...staticPages]
+    productPages = (products || []).map((product) => ({
+      url: `${BASE_URL}/productos/${product.slug}`,
+      lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }))
+  } catch (error) {
+    console.error('Error fetching products for sitemap:', error)
+  }
+
+  return [...staticPages, ...productPages]
 }

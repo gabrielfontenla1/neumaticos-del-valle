@@ -296,6 +296,55 @@ _Escribí "CONFIRMAR" para reservar o "cancelar" para anular_`
 }
 
 // ============================================================================
+// URL CONFIRMATION (replaces direct booking)
+// ============================================================================
+
+/**
+ * Appointment summary with confirmation URL
+ * Sent instead of "escribí CONFIRMAR" flow
+ */
+export function appointmentURLMessage(pending: PendingAppointment, url: string): string {
+  const serviceList = pending.selected_services.map(id => {
+    const s = getServiceById(id)
+    return s ? `• ${s.name} - ${formatPrice(s.price)}` : null
+  }).filter(Boolean).join('\n')
+
+  const total = pending.selected_services.reduce((sum, id) => {
+    const s = getServiceById(id)
+    return sum + (s?.price || 0)
+  }, 0)
+
+  const [year, month, day] = (pending.preferred_date || '').split('-')
+  const dateFormatted = `${day}/${month}/${year}`
+
+  return `*Resumen de tu turno:*
+
+📍 Sucursal: *${pending.branch_name}*
+📅 Fecha: *${dateFormatted}*
+🕐 Hora: *${pending.preferred_time}*
+👤 Nombre: *${pending.customer_name}*
+
+*Servicios:*
+${serviceList}
+
+💰 *Total estimado: ${formatPrice(total)}*
+
+👉 *Confirmá tu turno acá:*
+${url}
+
+_Hacé click, revisá los datos y presioná "Reservar"._`
+}
+
+/**
+ * Response when user tries to confirm but no pending appointment exists
+ */
+export function noPendingAppointment(): string {
+  return `Para reservar tu turno, usá el link que te envié.
+
+Si necesitás uno nuevo, pedime un turno.`
+}
+
+// ============================================================================
 // SUCCESS / ERROR
 // ============================================================================
 

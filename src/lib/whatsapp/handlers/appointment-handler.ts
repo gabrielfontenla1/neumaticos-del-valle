@@ -17,12 +17,11 @@ import {
   parseDateInput,
   getAvailableSlots,
   parseTimeInput,
-  createWhatsAppAppointment,
   isGoBackCommand,
-  isCancelCommand,
-  isConfirmCommand
+  isCancelCommand
 } from '../services/appointment-service'
 import * as templates from '../templates/appointment-responses'
+import { buildAppointmentURL } from '@/features/appointments/url-params'
 import type { Branch } from '@/features/appointments/types'
 
 // ============================================================================
@@ -401,16 +400,27 @@ async function handleContactInput(
     customer_name: name
   }
 
+  // Generate URL and reset state instead of going to apt_confirm
+  const url = buildAppointmentURL({
+    branch_id: updatedPending.branch_id!,
+    services: updatedPending.selected_services,
+    preferred_date: updatedPending.preferred_date!,
+    preferred_time: updatedPending.preferred_time!,
+    customer_name: updatedPending.customer_name!,
+    customer_phone: conversation.phone,
+    source: 'wa'
+  })
+
   await updateConversation(conversation.id, {
-    conversation_state: 'apt_confirm',
-    pending_appointment: updatedPending
+    conversation_state: 'idle',
+    pending_appointment: null
   })
 
   return {
     handled: true,
-    response: templates.confirmationSummary(updatedPending),
-    newState: 'apt_confirm',
-    pendingAppointment: updatedPending
+    response: templates.appointmentURLMessage(updatedPending, url),
+    newState: 'idle',
+    pendingAppointment: null
   }
 }
 
@@ -423,27 +433,17 @@ async function handleConfirmation(
   pending: PendingAppointment,
   phoneNumber: string
 ): Promise<StateResult> {
-  if (!isConfirmCommand(messageText)) {
-    // User didn't confirm - show summary again
-    return {
-      handled: true,
-      response: `Para confirmar, escribí *CONFIRMAR*.
+  // Legacy fallback: generate URL instead of creating appointment directly
+  const url = buildAppointmentURL({
+    branch_id: pending.branch_id!,
+    services: pending.selected_services,
+    preferred_date: pending.preferred_date!,
+    preferred_time: pending.preferred_time!,
+    customer_name: pending.customer_name!,
+    customer_phone: phoneNumber,
+    source: 'wa'
+  })
 
-Para cancelar, escribí *cancelar*.`
-    }
-  }
-
-  // Create the appointment
-  const result = await createWhatsAppAppointment(pending, phoneNumber)
-
-  if (!result.success) {
-    return {
-      handled: true,
-      response: templates.appointmentError(result.error || 'Error desconocido')
-    }
-  }
-
-  // Clear pending and reset state
   await updateConversation(conversation.id, {
     conversation_state: 'idle',
     pending_appointment: null
@@ -451,12 +451,7 @@ Para cancelar, escribí *cancelar*.`
 
   return {
     handled: true,
-    response: templates.appointmentSuccess(
-      result.appointmentId || '',
-      pending.branch_name || '',
-      pending.preferred_date || '',
-      pending.preferred_time || ''
-    ),
+    response: templates.appointmentURLMessage(pending, url),
     newState: 'idle',
     pendingAppointment: null
   }

@@ -13,5 +13,5 @@ export const metadata = {
 
 export default async function AgroCamionesProductPage({ params }: PageProps) {
   const { id } = await params
-  return <ProductDetail productId={id} backUrl="/agro-camiones" backLabel="Volver a Agro y Camiones" />
+  return <ProductDetail productSlug={id} backUrl="/agro-camiones" backLabel="Volver a Agro y Camiones" />
 }

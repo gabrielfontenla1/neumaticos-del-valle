@@ -184,10 +184,7 @@ export function QuotationWizard() {
 
   const handleSubmit = async () => {
     try {
-      const result = await submit();
-      if (result && result.success) {
-        console.log('Cotización enviada:', result.id);
-      }
+      await submit();
     } catch (error) {
       console.error('Error al enviar cotización:', error);
     }

@@ -6,7 +6,6 @@ import {
   determineCategory,
   processStockBySucursal,
   normalizeExcelRow,
-  mapPirelliModelToImage,
   hasStockBySucursal,
   generateRealisticPrice,
 } from './importHelpers'
@@ -357,45 +356,6 @@ describe('importHelpers', () => {
       const result = normalizeExcelRow(row)
 
       expect(result.CUSTOM_COLUMN).toBe('value')
-    })
-  })
-
-  describe('mapPirelliModelToImage', () => {
-    it('should return CINTURATO P1 image for Pirelli CINTURATO P1', () => {
-      const result = mapPirelliModelToImage('PIRELLI', 'CINTURATO P1', '175/65R15')
-
-      expect(result).toContain('Cinturato')
-      expect(result).toContain('.webp')
-    })
-
-    it('should return P ZERO image for Pirelli P ZERO', () => {
-      const result = mapPirelliModelToImage('PIRELLI', 'P ZERO', '255/35R20')
-
-      expect(result).toContain('zero')
-    })
-
-    it('should return SCORPION image for Pirelli SCORPION', () => {
-      const result = mapPirelliModelToImage('PIRELLI', 'SCORPION ATR', '265/70R16')
-
-      expect(result).toContain('Scorpion')
-    })
-
-    it('should return default image for non-Pirelli brands', () => {
-      const result = mapPirelliModelToImage('MICHELIN', 'PRIMACY', '205/55R16')
-
-      expect(result).toBe('/mock-tire.png')
-    })
-
-    it('should return default image for unknown Pirelli model', () => {
-      const result = mapPirelliModelToImage('PIRELLI', 'UNKNOWN MODEL', '205/55R16')
-
-      expect(result).toBe('/mock-tire.png')
-    })
-
-    it('should be case insensitive for brand', () => {
-      const result = mapPirelliModelToImage('pirelli', 'CINTURATO P1', '175/65R15')
-
-      expect(result).toContain('.webp')
     })
   })
 

@@ -309,9 +309,6 @@ export async function submitQuotation(data: QuotationSubmission): Promise<{ succ
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // In a real app, this would send data to backend
-  console.log('Submitting quotation:', data);
-
   return {
     success: true,
     id: `QUO-${Date.now()}`

@@ -12,18 +12,4 @@ export { TestimonialsSection } from './TestimonialsSection'
 export { GuaranteesSection } from './GuaranteesSection'
 export { ProcessSection } from './ProcessSection'
 export { FAQSection } from './FAQSection'
-export { LiveSocialProofBanner } from './LiveSocialProofBanner'
 
-// Data exports (for potential reuse)
-export {
-  tireModels,
-  branches,
-  heroStats,
-  performanceStats,
-  tireImages,
-  oilImages,
-  footerLinks,
-  type TireModel,
-  type Branch,
-  type Stat,
-} from './data'

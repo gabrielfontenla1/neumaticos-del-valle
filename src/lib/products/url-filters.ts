@@ -169,49 +169,6 @@ export function deserializeFiltersFromURL(searchParams: URLSearchParams): Filter
 }
 
 /**
- * Updates a single filter parameter in the URL
- * Returns new URLSearchParams with the updated value
- */
-export function updateURLParam(
-  currentParams: URLSearchParams,
-  key: keyof typeof URL_PARAM_KEYS,
-  value: string | number
-): URLSearchParams {
-  const params = new URLSearchParams(currentParams)
-  const paramKey = URL_PARAM_KEYS[key]
-
-  // Convert value to string
-  const stringValue = String(value)
-
-  // Check if this is a default value and should be removed
-  const defaultValue = DEFAULT_FILTER_STATE[key]
-  if (
-    stringValue === String(defaultValue) ||
-    stringValue === 'all' ||
-    stringValue === ''
-  ) {
-    params.delete(paramKey)
-  } else {
-    params.set(paramKey, stringValue)
-  }
-
-  // Always reset page to 1 when changing filters (except page and limit changes)
-  if (key !== 'currentPage' && key !== 'itemsPerPage') {
-    params.delete(URL_PARAM_KEYS.currentPage)
-  }
-
-  return params
-}
-
-/**
- * Clears all filters from URL
- * Returns empty URLSearchParams
- */
-export function clearAllFilters(): URLSearchParams {
-  return new URLSearchParams()
-}
-
-/**
  * Builds a filter query string from state
  * Useful for router.push() operations
  */
@@ -256,29 +213,6 @@ export function parseTireSize(sizeString: string): {
 }
 
 /**
- * Formats tire size components into a display string
- */
-export function formatTireSize(
-  width: string,
-  profile: string,
-  diameter: string
-): string {
-  // Only format if all three values are provided and not "all"
-  if (
-    width !== 'all' &&
-    profile !== 'all' &&
-    diameter !== 'all' &&
-    width &&
-    profile &&
-    diameter
-  ) {
-    return `${width}/${profile}R${diameter}`
-  }
-
-  return ''
-}
-
-/**
  * Merges new filter values with existing state
  * Useful for partial updates
  */
@@ -295,11 +229,11 @@ export function mergeFilterState(
 }
 
 /**
- * Extracts filter state from Next.js ReadonlyURLSearchParams
+ * Extracts filter state from Next.js URLSearchParams
  * This is the main function to use in Next.js components
  */
 export function getFiltersFromSearchParams(
-  searchParams: ReadonlyURLSearchParams | null
+  searchParams: { forEach(callbackfn: (value: string, key: string) => void): void } | null
 ): FilterState {
   if (!searchParams) {
     return { ...DEFAULT_FILTER_STATE }
@@ -312,25 +246,6 @@ export function getFiltersFromSearchParams(
   })
 
   return deserializeFiltersFromURL(params)
-}
-
-/**
- * Type for Next.js ReadonlyURLSearchParams
- * (Next.js doesn't export this type)
- */
-export interface ReadonlyURLSearchParams {
-  get(name: string): string | null
-  getAll(name: string): string[]
-  has(name: string): boolean
-  keys(): IterableIterator<string>
-  values(): IterableIterator<string>
-  entries(): IterableIterator<[string, string]>
-  forEach(
-    callbackfn: (value: string, key: string, parent: ReadonlyURLSearchParams) => void,
-    thisArg?: unknown
-  ): void
-  [Symbol.iterator](): IterableIterator<[string, string]>
-  toString(): string
 }
 
 /**

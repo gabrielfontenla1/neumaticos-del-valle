@@ -1,9 +1,6 @@
 // Turnos Loading State - Shown during page transitions
 import { TableSkeleton } from '@/components/skeletons/TableSkeleton'
-
-const colors = {
-  background: '#30302e',
-}
+import { adminColors as colors } from '@/lib/constants/admin-theme'
 
 export default function TurnosLoading() {
   return (

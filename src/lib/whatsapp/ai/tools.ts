@@ -253,6 +253,7 @@ REGLAS:
 4. Si quiere cancelar, usa cancel_operation
 5. Si pide ayuda general, usa show_help
 6. Si quiere hablar con humano, usa request_human
+7. Una vez que tengas TODOS los datos del turno, el sistema genera un link de confirmación. NO confirmes el turno directamente.
 
 IMPORTANTE:
 - Extrae TODA la información posible del mensaje del usuario

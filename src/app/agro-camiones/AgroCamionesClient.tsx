@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useScrollRestoration } from "@/hooks/useScrollRestoration"
 import { Search, X, Package, RotateCcw, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, Share2, Copy, Truck, ArrowRight, Calendar } from "lucide-react"
 import { motion } from "framer-motion"
 import {
@@ -436,6 +437,8 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
   const [error, setError] = useState<string | null>(null)
   const [isRestoringFilters, setIsRestoringFilters] = useState(true)
 
+  const { isReturningRef, saveScrollPosition, restoreScrollPosition, clearSavedPosition } = useScrollRestoration('agro-camiones')
+
   // UI State
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [showSizeSuggestions, setShowSizeSuggestions] = useState(false)
@@ -756,27 +759,38 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
   const hasExactMatchWithoutStock = hasExactMatch && !hasExactMatchWithStock
 
   const scrollToTop = useCallback(() => {
+    // Force scroll to top on all possible scroll containers
+    document.body.scrollTop = 0
+    document.documentElement.scrollTop = 0
+    window.scrollTo(0, 0)
+    // Repeat after DOM settles to handle any layout shifts
     setTimeout(() => {
-      window.scrollTo(0, 0)
-      requestAnimationFrame(() => {
-        window.scrollTo({
-          top: 0,
-          left: 0,
-          behavior: 'smooth'
-        })
-      })
+      document.body.scrollTop = 0
+      document.documentElement.scrollTop = 0
     }, 50)
   }, [])
 
+  // Reset page when filters change (skip on back navigation to preserve page)
   useEffect(() => {
+    if (isReturningRef.current) return
     updateFilter('currentPage', 1)
-  }, [debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy, updateFilter])
+  }, [debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy, updateFilter, isReturningRef])
 
+  // Scroll to top when page changes in URL (skip on back navigation)
   useEffect(() => {
     if (currentPage && !isLoading) {
+      if (isReturningRef.current) return
       scrollToTop()
     }
-  }, [currentPage, isLoading, scrollToTop])
+  }, [currentPage, isLoading, scrollToTop, isReturningRef])
+
+  // Restore scroll position after products load on back navigation
+  // IMPORTANT: must be defined AFTER the scrollToTop effect so it runs last
+  useEffect(() => {
+    if (!isLoading) {
+      restoreScrollPosition()
+    }
+  }, [isLoading, restoreScrollPosition])
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
@@ -794,9 +808,10 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
   }, [clearFilters])
 
   const handlePageChange = useCallback((page: number) => {
+    clearSavedPosition()
     updateFilter('currentPage', page)
     scrollToTop()
-  }, [scrollToTop, updateFilter])
+  }, [scrollToTop, updateFilter, clearSavedPosition])
 
   const applyQuickSize = useCallback((width: string, profile: string, diameter: string) => {
     updateFilters({
@@ -1185,7 +1200,7 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                         <div className="bg-[#FFFFFF] rounded-lg border border-gray-200 hover:border-gray-300 overflow-hidden shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out h-full">
                           <div className="flex flex-col h-full">
                             <div className="w-full aspect-square bg-[#FFFFFF] relative overflow-hidden">
-                              <Link href={`/agro-camiones/${product.id}`} className="block w-full h-full">
+                              <Link href={`/agro-camiones/${product.slug || product.id}`} className="block w-full h-full" onClick={saveScrollPosition}>
                                 <img
                                   src={product.image_url || "/tire.webp"}
                                   alt={product.name}
@@ -1219,7 +1234,7 @@ export default function AgroCamionesClient({ products: initialProducts, stats: i
                                 {product.brand}
                               </div>
 
-                              <Link href={`/agro-camiones/${product.id}`} className="mb-1">
+                              <Link href={`/agro-camiones/${product.slug || product.id}`} className="mb-1" onClick={saveScrollPosition}>
                                 <h3 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
                                   {product.width && product.profile && product.diameter &&
                                    product.width > 0 && product.profile > 0 && product.diameter > 0

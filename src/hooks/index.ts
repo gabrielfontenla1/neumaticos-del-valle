@@ -5,14 +5,11 @@
  */
 
 // Product filter hooks - URL synchronization
-export { useURLFilters, isFilterKey, getFilterFromURL } from './useURLFilters'
+export { useURLFilters } from './useURLFilters'
 
 // Product filter hooks - Persistence
 export {
   useFilterPersistence,
-  formatPresetName,
-  getMostUsedPresets,
-  getRecentPresets,
 } from './useFilterPersistence'
 
 // Re-export types (interfaces need to be imported from their respective files)

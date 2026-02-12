@@ -707,35 +707,3 @@ export function useFilterPersistence(
     clearAll,
   }
 }
-
-/**
- * Helper to format preset name with metadata
- */
-export function formatPresetName(preset: FilterPreset): string {
-  const date = new Date(preset.createdAt).toLocaleDateString()
-  return `${preset.name} (${date})`
-}
-
-/**
- * Helper to get most used presets
- */
-export function getMostUsedPresets(
-  presets: FilterPreset[],
-  limit: number = 5
-): FilterPreset[] {
-  return [...presets]
-    .sort((a, b) => b.usageCount - a.usageCount)
-    .slice(0, limit)
-}
-
-/**
- * Helper to get recently updated presets
- */
-export function getRecentPresets(
-  presets: FilterPreset[],
-  limit: number = 5
-): FilterPreset[] {
-  return [...presets]
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, limit)
-}

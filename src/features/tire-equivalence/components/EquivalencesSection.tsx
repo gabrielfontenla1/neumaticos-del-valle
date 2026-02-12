@@ -155,7 +155,7 @@ export function EquivalencesSection({
                 <div className="flex flex-col h-full">
                   {/* Image */}
                   <div className="w-full aspect-square bg-[#FFFFFF] relative overflow-hidden">
-                    <Link href={`/productos/${tire.id}`} className="block w-full h-full">
+                    <Link href={`/productos/${(tire as any).slug || tire.id}`} className="block w-full h-full">
                       <img
                         src={tire.image_url || "/tire.webp"}
                         alt={tire.name}
@@ -202,7 +202,7 @@ export function EquivalencesSection({
 
                       {/* Size with Stock and Rating inline - Fixed height */}
                       <div className="flex items-center justify-between gap-2 h-7">
-                        <Link href={`/productos/${tire.id}`} className="flex-shrink min-w-0">
+                        <Link href={`/productos/${(tire as any).slug || tire.id}`} className="flex-shrink min-w-0">
                           <h3 className="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer whitespace-nowrap">
                             {tire.width}/{tire.profile}R{tire.diameter}
                           </h3>

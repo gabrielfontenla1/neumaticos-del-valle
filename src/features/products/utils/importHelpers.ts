@@ -4,6 +4,7 @@
  */
 
 import { getTireImage } from '@/config/tire-image-mapping'
+import { generateSlug } from '@/lib/products/slug'
 
 // Columnas que representan stock por sucursal
 const BRANCH_STOCK_COLUMNS = [
@@ -403,21 +404,17 @@ export function convertToProduct(row: Record<string, any>) {
       discount_percentage: finalPriceList > finalPrice ?
         Math.round(((finalPriceList - finalPrice) / finalPriceList) * 100) : 0
     },
-    image_url: imageUrl
+    image_url: imageUrl,
+    slug: generateSlug({
+      brand,
+      model: modelNormalized,
+      width: tireSize.width,
+      profile: tireSize.profile,
+      diameter: tireSize.diameter,
+      sku: codigoPropio
+    })
   }
 }
-
-/**
- * @deprecated Usar getTireImage() de '@/config/tire-image-mapping' en su lugar.
- * Esta función se mantiene por compatibilidad pero será eliminada en futuras versiones.
- *
- * Mapea un modelo de producto Pirelli a su imagen correspondiente
- */
-export function mapPirelliModelToImage(brand: string, model: string, description: string): string {
-  // Redirigir al nuevo sistema centralizado
-  return getTireImage(`${model} ${description}`, brand)
-}
-
 
 /**
  * Detecta la marca del producto a partir del nombre

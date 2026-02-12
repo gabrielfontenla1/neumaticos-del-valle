@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useScrollRestoration } from "@/hooks/useScrollRestoration"
 import { Search, X, Package, RotateCcw, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, Share2, Copy } from "lucide-react"
 import {
   Select,
@@ -431,15 +432,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   const [error, setError] = useState<string | null>(null)
   const [isRestoringFilters, setIsRestoringFilters] = useState(true)
 
-  // Debug logging
-  console.log('ProductsClientImproved state:', {
-    productsCount: products.length,
-    firstProduct: products[0],
-    stats,
-    isLoading,
-    error,
-    filters
-  })
+  const { isReturningRef, saveScrollPosition, restoreScrollPosition, clearSavedPosition } = useScrollRestoration('productos')
 
   // UI State
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
@@ -470,18 +463,11 @@ export default function ProductsClientImproved({ products: initialProducts, stat
       setError(null)
 
       try {
-        console.log('Fetching products from API...')
         // Fetch TODOS los productos (con y sin stock) para poder mostrar equivalencias
         const response = await fetch('/api/products?limit=1000')
         const data = await response.json()
 
         if (response.ok) {
-          console.log('API response:', {
-            productsCount: data.products?.length || 0,
-            total: data.metadata?.total,
-            firstProduct: data.products?.[0]
-          })
-
           setProducts(data.products || [])
 
           // Calculate stats
@@ -786,7 +772,6 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let filtered = [...products]
-    console.log('Starting filter with products:', filtered.length)
 
     // Check if searching by specific size (all 3 size filters selected)
     const isSearchingBySize =
@@ -798,9 +783,6 @@ export default function ProductsClientImproved({ products: initialProducts, stat
     // This allows showing out-of-stock tires for equivalence suggestions
     if (!isSearchingBySize) {
       filtered = filtered.filter(p => p.stock > 0)
-      console.log('Applied stock filter, remaining products:', filtered.length)
-    } else {
-      console.log('Searching by specific size - including out-of-stock items for equivalences')
     }
 
     // Search filter
@@ -858,19 +840,6 @@ export default function ProductsClientImproved({ products: initialProducts, stat
         break
     }
 
-    console.log('After filtering:', {
-      filteredCount: filtered.length,
-      filters: {
-        searchTerm: debouncedSearchTerm,
-        brand: selectedBrand,
-        category: selectedCategory,
-        model: selectedModel,
-        width: selectedWidth,
-        profile: selectedProfile,
-        diameter: selectedDiameter
-      }
-    })
-
     return filtered
   }, [products, debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy])
 
@@ -900,36 +869,38 @@ export default function ProductsClientImproved({ products: initialProducts, stat
 
   // Scroll to top when page changes
   const scrollToTop = useCallback(() => {
-    // Usar setTimeout para asegurar que el scroll ocurre después del renderizado
+    // Force scroll to top on all possible scroll containers
+    document.body.scrollTop = 0
+    document.documentElement.scrollTop = 0
+    window.scrollTo(0, 0)
+    // Repeat after DOM settles to handle any layout shifts
     setTimeout(() => {
-      // Hacer scroll al inicio de la página de manera más directa y confiable
-      // Primero hacer un scroll instantáneo para asegurar que llegamos arriba
-      window.scrollTo(0, 0)
-
-      // Luego aplicar el scroll suave para una mejor experiencia visual
-      // Esto asegura que siempre lleguemos al top incluso si hay algún problema con smooth scrolling
-      requestAnimationFrame(() => {
-        window.scrollTo({
-          top: 0,
-          left: 0,
-          behavior: 'smooth'
-        })
-      })
+      document.body.scrollTop = 0
+      document.documentElement.scrollTop = 0
     }, 50)
   }, [])
 
-  // Reset page when filters change
+  // Reset page when filters change (skip on back navigation to preserve page)
   useEffect(() => {
+    if (isReturningRef.current) return
     updateFilter('currentPage', 1)
-  }, [debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy, updateFilter])
+  }, [debouncedSearchTerm, selectedBrand, selectedCategory, selectedModel, selectedWidth, selectedProfile, selectedDiameter, sortBy, updateFilter, isReturningRef])
 
-  // Scroll to top when page changes in URL
+  // Scroll to top when page changes in URL (skip on back navigation)
   useEffect(() => {
-    // Solo hacer scroll si estamos cambiando de página y no es la carga inicial
     if (currentPage && !isLoading) {
+      if (isReturningRef.current) return
       scrollToTop()
     }
-  }, [currentPage, isLoading, scrollToTop])
+  }, [currentPage, isLoading, scrollToTop, isReturningRef])
+
+  // Restore scroll position after products load on back navigation
+  // IMPORTANT: must be defined AFTER the scrollToTop effect so it runs last
+  useEffect(() => {
+    if (!isLoading) {
+      restoreScrollPosition()
+    }
+  }, [isLoading, restoreScrollPosition])
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -950,9 +921,10 @@ export default function ProductsClientImproved({ products: initialProducts, stat
   }, [clearFilters])
 
   const handlePageChange = useCallback((page: number) => {
+    clearSavedPosition()
     updateFilter('currentPage', page)
     scrollToTop()
-  }, [scrollToTop, updateFilter])
+  }, [scrollToTop, updateFilter, clearSavedPosition])
 
   // Apply quick size filter
   const applyQuickSize = useCallback((width: string, profile: string, diameter: string) => {
@@ -1334,7 +1306,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                         <div className="flex flex-col h-full">
                           {/* Image - Using mock tire image for all products */}
                           <div className="w-full aspect-square bg-[#FFFFFF] relative overflow-hidden">
-                            <Link href={`/productos/${product.id}`} className="block w-full h-full">
+                            <Link href={`/productos/${product.slug || product.id}`} className="block w-full h-full" onClick={saveScrollPosition}>
                               <img
                                 src={product.image_url || "/tire.webp"}
                                 alt={product.name}
@@ -1373,7 +1345,7 @@ export default function ProductsClientImproved({ products: initialProducts, stat
                             </div>
 
                             {/* Size - Large and prominent */}
-                            <Link href={`/productos/${product.id}`} className="mb-1">
+                            <Link href={`/productos/${product.slug || product.id}`} className="mb-1" onClick={saveScrollPosition}>
                               <h3 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
                                 {product.width && product.profile && product.diameter &&
                                  product.width > 0 && product.profile > 0 && product.diameter > 0

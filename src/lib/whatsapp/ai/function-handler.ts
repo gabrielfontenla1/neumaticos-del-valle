@@ -42,6 +42,8 @@ import {
   getBranchByCode
 } from '../services/location-service'
 import * as stockTemplates from '../templates/stock-responses'
+import * as appointmentTemplates from '../templates/appointment-responses'
+import { buildAppointmentURL } from '@/features/appointments/url-params'
 import { generateEmbedding, searchSimilarContent, searchFAQs } from '@/lib/ai/embeddings'
 import { formatSystemPrompt, getBusinessContext } from '@/lib/ai/prompts/system'
 import { getAIPromptsConfig, getWhatsAppContextConfig } from '@/lib/ai/config-service'
@@ -871,16 +873,37 @@ ${formatTimeSlots(slots)}
 ¿A nombre de quién agendo el turno?`
   }
 
-  // Save updated pending
+  // If we have everything, generate URL and reset state
+  if (!needsMoreInfo) {
+    const url = buildAppointmentURL({
+      branch_id: pending.branch_id!,
+      services: pending.selected_services,
+      preferred_date: pending.preferred_date!,
+      preferred_time: pending.preferred_time!,
+      customer_name: pending.customer_name!,
+      customer_phone: conversation.phone,
+      source: 'wa'
+    })
+
+    await updateConversation(conversation.id, {
+      conversation_state: 'idle',
+      pending_appointment: null
+    })
+
+    response = appointmentTemplates.appointmentURLMessage(pending, url)
+
+    return {
+      response,
+      handled: true,
+      updatedPending: null
+    }
+  }
+
+  // Save updated pending (still collecting info)
   await updateConversation(conversation.id, {
     pending_appointment: pending,
     conversation_state: 'apt_confirm'
   })
-
-  // If we have everything, show summary
-  if (!needsMoreInfo) {
-    response = buildAppointmentSummary(pending)
-  }
 
   return {
     response,
@@ -914,40 +937,30 @@ export async function handleConfirmAppointment(
   const pending = conversation.pending_appointment
   if (!pending) {
     return {
-      response: 'No hay un turno pendiente para confirmar. ¿Querés sacar uno nuevo?',
+      response: appointmentTemplates.noPendingAppointment(),
       handled: true
     }
   }
 
-  // Create the appointment
-  const result = await createWhatsAppAppointment(pending, phoneNumber)
+  // If there's still a pending appointment (legacy flow or partial data),
+  // generate URL instead of creating directly
+  const url = buildAppointmentURL({
+    branch_id: pending.branch_id!,
+    services: pending.selected_services,
+    preferred_date: pending.preferred_date!,
+    preferred_time: pending.preferred_time!,
+    customer_name: pending.customer_name!,
+    customer_phone: phoneNumber,
+    source: 'wa'
+  })
 
-  if (!result.success) {
-    return {
-      response: `Hubo un problema: ${result.error}\n\n¿Querés intentar de nuevo?`,
-      handled: true
-    }
-  }
-
-  // Clear pending and reset state
   await updateConversation(conversation.id, {
     pending_appointment: null,
     conversation_state: 'idle'
   })
 
-  const [year, month, day] = (pending.preferred_date || '').split('-')
-  const dateFormatted = `${day}/${month}/${year}`
-
   return {
-    response: `*TURNO CONFIRMADO* ✅
-
-Sucursal: *${pending.branch_name}*
-Fecha: *${dateFormatted}*
-Hora: *${pending.preferred_time}*
-
-Te esperamos! Llegá 5 min antes.
-
-Si necesitás cancelar o cambiar, escribime.`,
+    response: appointmentTemplates.appointmentURLMessage(pending, url),
     handled: true,
     updatedPending: null
   }
