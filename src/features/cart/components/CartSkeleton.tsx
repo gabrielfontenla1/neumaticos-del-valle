@@ -1,9 +1,6 @@
-import { Navbar } from '@/components/layout/Navbar'
-
 export function CartSkeleton() {
   return (
     <div className="min-h-screen bg-[#EDEDED]">
-      <Navbar />
 
       {/* Breadcrumb */}
       <div className="bg-[#FFFFFF] border-b border-gray-200 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">

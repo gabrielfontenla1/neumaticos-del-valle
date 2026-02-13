@@ -1,13 +1,8 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import { Navbar } from '@/components/layout/Navbar'
 
 export default function ProductDetailSkeleton() {
   return (
     <div className="min-h-screen bg-white lg:bg-[#EDEDED]">
-      <Navbar />
-
-      {/* Mobile spacing for navbar */}
-      <div className="pt-4 lg:pt-0 bg-white lg:bg-[#EDEDED]"></div>
 
       <div className="lg:max-w-[1440px] lg:mx-auto lg:px-4 sm:px-6 lg:px-8 lg:py-6">
         {/* Desktop Breadcrumb Skeleton */}

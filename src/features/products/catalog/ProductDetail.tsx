@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Product } from '../types'
 import { getProductBySlug } from '../api'
 import { useCartContext } from '@/providers/CartProvider'
-import { Navbar } from '@/components/layout/Navbar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -223,7 +222,6 @@ export default function ProductDetail({ productSlug, backUrl = '/productos', bac
   if (loading) {
     return (
       <div className="min-h-screen bg-[#EDEDED]">
-        <Navbar />
         <div className="flex justify-center items-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
@@ -234,7 +232,6 @@ export default function ProductDetail({ productSlug, backUrl = '/productos', bac
   if (!product) {
     return (
       <div className="min-h-screen bg-[#EDEDED]">
-        <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center bg-[#FFFFFF] rounded-lg border border-gray-200 p-12">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -262,10 +259,6 @@ export default function ProductDetail({ productSlug, backUrl = '/productos', bac
 
   return (
     <div className="min-h-screen bg-white lg:bg-[#EDEDED]">
-      <Navbar />
-
-      {/* Mobile spacing for navbar - White background on mobile, gray on desktop */}
-      <div className="pt-4 lg:pt-0 bg-white lg:bg-[#EDEDED]"></div>
 
       <div className="lg:max-w-[1440px] lg:mx-auto lg:px-4 sm:px-6 lg:px-8 lg:py-6">
         {/* Desktop Breadcrumb - above grid so columns align */}

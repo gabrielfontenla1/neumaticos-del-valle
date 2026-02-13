@@ -1,4 +1,3 @@
-import { Navbar } from '@/components/layout/Navbar'
 import ProductsClient from './ProductsClient'
 
 // Force dynamic rendering for pages using useSearchParams
@@ -10,12 +9,5 @@ export const metadata = {
 }
 
 export default function ProductsPage() {
-  // Instead of fetching on server and passing to client,
-  // let the client component fetch the products itself
-  return (
-    <div>
-      <Navbar />
-      <ProductsClient products={[]} stats={null} />
-    </div>
-  )
+  return <ProductsClient products={[]} stats={null} />
 }

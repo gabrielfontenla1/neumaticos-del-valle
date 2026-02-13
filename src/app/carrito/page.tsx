@@ -13,7 +13,6 @@ import { generateAIOptimizedMessage, buildWhatsAppUrl, WHATSAPP_NUMBERS } from '
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/layout/Navbar'
 import type { Branch } from '@/types/branch'
 
 export default function CarritoPage() {
@@ -112,8 +111,6 @@ export default function CarritoPage() {
 
   return (
     <div className="min-h-screen bg-[#EDEDED]">
-      <Navbar />
-
       {/* Breadcrumb */}
       <div className="bg-[#FFFFFF] border-b border-gray-200 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6">

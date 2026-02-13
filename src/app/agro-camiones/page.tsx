@@ -1,5 +1,3 @@
-import { Navbar } from '@/components/layout/Navbar'
-
 export const metadata = {
   title: 'Agro y Camiones | Neumáticos del Valle',
   description: 'Neumáticos para agro y camiones. Amplio catálogo de marcas y medidas para vehículos pesados.'
@@ -8,7 +6,6 @@ export const metadata = {
 export default function AgroCamionesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto">

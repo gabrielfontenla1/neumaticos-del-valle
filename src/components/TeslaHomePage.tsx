@@ -1,6 +1,5 @@
 'use client'
 
-import { Navbar } from './layout/Navbar'
 import {
   HeroCarousel,
   StatsBar,
@@ -17,9 +16,6 @@ import {
 export function TeslaHomePage() {
   return (
     <div className="min-h-screen bg-black">
-      {/* Navigation */}
-      <Navbar />
-
       {/* Hero Carousel */}
       <HeroCarousel />
 

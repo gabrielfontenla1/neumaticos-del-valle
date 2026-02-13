@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Navbar } from '@/components/layout/Navbar'
 import { OilWizard } from '@/components/marketing/OilWizard'
 import { OilProductCard } from '@/components/marketing/OilProductCard'
 import { OilFilters } from '@/components/marketing/OilFilters'
@@ -61,9 +60,7 @@ export default function AceitesPage() {
   }
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-[#F7F7F7]">
+    <main className="min-h-screen bg-[#F7F7F7]">
         {/* Hero Compacto */}
         <section className="relative bg-black py-12 md:py-16">
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -208,6 +205,5 @@ export default function AceitesPage() {
           onClose={() => setIsCompareOpen(false)}
         />
       </main>
-    </>
   )
 }
